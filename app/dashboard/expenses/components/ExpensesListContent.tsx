@@ -1,0 +1,396 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Plus, Search, FileText, Eye, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ExpensesSummaryCards } from "./ExpensesSummaryCards";
+import { ProfileSelector } from "./ProfileSelector";
+import type { Expense } from "@/lib/types/expenses";
+import type { Profile } from "@/lib/types/profiles";
+
+interface ExpensesListContentProps {
+  expenses: Expense[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+  profiles: Profile[];
+  metrics: {
+    totalGastos: number;
+    totalFacturas: number;
+  };
+  initialProfileId?: string;
+  initialMes?: number;
+  initialAño?: number;
+  initialCategoria?: string;
+  initialSearch?: string;
+}
+
+const MONTHS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+const CATEGORIES = [
+  { value: "all", label: "Todas las categorías" },
+  { value: "Viáticos", label: "Viáticos" },
+  { value: "Oficina", label: "Oficina" },
+  { value: "Servicios", label: "Servicios" },
+  { value: "Transporte", label: "Transporte" },
+  { value: "Alimentación", label: "Alimentación" },
+];
+
+const getCategoryBadge = (categoria: string | null) => {
+  if (!categoria) return null;
+  
+  const categoryColors: Record<string, string> = {
+    Viáticos: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    Oficina: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    Servicios: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    Transporte: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+    Alimentación: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  };
+
+  const colorClass = categoryColors[categoria] || "bg-gray-500/20 text-gray-400 border-gray-500/30";
+
+  return (
+    <Badge variant="outline" className={colorClass}>
+      {categoria}
+    </Badge>
+  );
+};
+
+const getOriginBadge = (tipoOrigen: "XML" | "MANUAL") => {
+  if (tipoOrigen === "XML") {
+    return (
+      <Badge className="bg-green-500 hover:bg-green-600 text-white">
+        XML
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+      Manual
+    </Badge>
+  );
+};
+
+export function ExpensesListContent({
+  expenses,
+  pagination,
+  profiles,
+  metrics,
+  initialProfileId,
+  initialMes,
+  initialAño,
+  initialCategoria,
+  initialSearch,
+}: ExpensesListContentProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(initialSearch || "");
+  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "");
+  const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
+  const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
+  const [selectedCategoria, setSelectedCategoria] = useState(initialCategoria || "all");
+
+  const handleFilter = () => {
+    const params = new URLSearchParams();
+    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    if (selectedMes) params.set("mes", selectedMes.toString());
+    if (selectedAño) params.set("año", selectedAño.toString());
+    if (selectedCategoria && selectedCategoria !== "all") params.set("categoria", selectedCategoria);
+    if (search) params.set("search", search);
+    params.set("page", "1");
+    router.push(`/dashboard/expenses?${params.toString()}`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`/dashboard/expenses?${params.toString()}`);
+  };
+
+  const handleProfileChange = (profileId: string) => {
+    setSelectedProfileId(profileId);
+    const params = new URLSearchParams(searchParams.toString());
+    if (profileId) {
+      params.set("profileId", profileId);
+    } else {
+      params.delete("profileId");
+    }
+    params.set("page", "1");
+    router.push(`/dashboard/expenses?${params.toString()}`);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-MX", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  // Calcular métricas desde los gastos filtrados
+  const xmlExpenses = expenses.filter((e) => e.tipo_origen === "XML");
+  const manualExpenses = expenses.filter((e) => e.tipo_origen === "MANUAL");
+  const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
+  
+  // Usar totalGastos de las métricas del backend (más preciso)
+  const totalExpenses = metrics.totalGastos || expenses.reduce((sum, expense) => sum + expense.total, 0);
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Gestión de Gastos</h1>
+          <p className="text-muted-foreground mt-2">
+            Administra y monitorea todos tus gastos y egresos fiscales.
+          </p>
+        </div>
+        <ProfileSelector
+          profiles={profiles}
+          selectedProfileId={selectedProfileId}
+          onProfileChange={handleProfileChange}
+        />
+      </div>
+
+      {/* Summary Cards */}
+      <ExpensesSummaryCards
+        totalExpenses={totalExpenses}
+        xmlProcessed={xmlExpenses.length}
+        validXmlPercentage={xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0}
+        manualExpenses={manualExpenses.length}
+      />
+
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-card">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Concepto, Emisor o UUID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleFilter()}
+            className="pl-9"
+          />
+        </div>
+        <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="CATEGORÍA" />
+          </SelectTrigger>
+          <SelectContent>
+            {CATEGORIES.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedMes.toString()} onValueChange={(v) => setSelectedMes(Number(v))}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {MONTHS.map((month, index) => (
+              <SelectItem key={index} value={(index + 1).toString()}>
+                {month}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedAño.toString()} onValueChange={(v) => setSelectedAño(Number(v))}>
+          <SelectTrigger className="w-[100px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="border-primary/20 hover:bg-primary/10"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Gasto Manual
+          </Button>
+          <Link href="/dashboard/expenses/upload">
+            <Button className="bg-primary hover:bg-primary/90">
+              <FileText className="mr-2 h-4 w-4" />
+              Cargar Gastos XML
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Expenses Table */}
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>FECHA</TableHead>
+              <TableHead>EMISOR / CONCEPTO</TableHead>
+              <TableHead>CATEGORÍA</TableHead>
+              <TableHead>ORIGEN</TableHead>
+              <TableHead>UUID</TableHead>
+              <TableHead>TOTAL</TableHead>
+              <TableHead className="text-right">ACCIONES</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {expenses.length > 0 ? (
+              expenses.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell className="text-sm">{formatDate(expense.fecha)}</TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {expense.nombre_emisor || "Sin emisor"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {expense.concepto || "Sin concepto"}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {getCategoryBadge(expense.categoria)}
+                  </TableCell>
+                  <TableCell>{getOriginBadge(expense.tipo_origen)}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {expense.uuid ? `${expense.uuid.slice(0, 4)}...${expense.uuid.slice(-3)}` : "--"}
+                  </TableCell>
+                  <TableCell className="font-medium">{formatCurrency(expense.total)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" title="Ver detalles">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Descargar">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  No se encontraron gastos
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Mostrando {(pagination.page - 1) * pagination.limit + 1}-
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de{" "}
+            {pagination.total} resultados
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+            >
+              Anterior
+            </Button>
+            {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+              let pageNum;
+              if (pagination.totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (pagination.page <= 3) {
+                pageNum = i + 1;
+              } else if (pagination.page >= pagination.totalPages - 2) {
+                pageNum = pagination.totalPages - 4 + i;
+              } else {
+                pageNum = pagination.page - 2 + i;
+              }
+              return (
+                <Button
+                  key={pageNum}
+                  variant={pagination.page === pageNum ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(pageNum)}
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+            {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
+              <span className="px-2 text-muted-foreground">...</span>
+            )}
+            {pagination.totalPages > 5 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.totalPages)}
+              >
+                {pagination.totalPages}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+            >
+              Siguiente
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

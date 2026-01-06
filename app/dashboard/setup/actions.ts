@@ -1,0 +1,119 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { createProfile } from "@/lib/api/profiles";
+import { getProfiles } from "@/lib/api/profiles";
+import { getSubscription } from "@/lib/api/subscription";
+import { logoutUser } from "@/lib/api/auth";
+import {
+  canCreateProfile,
+  getProfileLimit,
+} from "@/lib/utils/subscription";
+import type { CreateProfileRequest } from "@/lib/types/profiles";
+
+export interface ActionResult {
+  error?: string;
+  success?: boolean;
+}
+
+export async function createProfileAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const nombre = formData.get("nombre") as string;
+  const rfc = formData.get("rfc") as string;
+  const tipoPersona = formData.get("tipo_persona") as "FISICA" | "MORAL";
+
+  if (!nombre || !rfc || !tipoPersona) {
+    return { error: "Todos los campos son requeridos" };
+  }
+
+  if (nombre.length < 2 || nombre.length > 255) {
+    return { error: "El nombre debe tener entre 2 y 255 caracteres" };
+  }
+
+  if (rfc.length < 12 || rfc.length > 13) {
+    return { error: "El RFC debe tener 12 o 13 caracteres" };
+  }
+
+  // Validación básica de formato RFC
+  const rfcPattern = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/;
+  if (!rfcPattern.test(rfc)) {
+    return { error: "Formato de RFC inválido" };
+  }
+
+  if (tipoPersona !== "FISICA" && tipoPersona !== "MORAL") {
+    return { error: "El tipo de persona debe ser FISICA o MORAL" };
+  }
+
+  try {
+    // Verificar límites antes de crear
+    const [subscription, profiles] = await Promise.all([
+      getSubscription().catch(() => null),
+      getProfiles().catch(() => null),
+    ]);
+
+    const currentProfileCount = profiles?.count || 0;
+    const plan = subscription?.plan || "FREE";
+
+    if (!canCreateProfile(currentProfileCount, plan)) {
+      const limit = getProfileLimit(plan);
+      const limitMessage =
+        limit === Infinity
+          ? "Has alcanzado el límite de tu plan actual."
+          : `Has alcanzado el límite de ${limit} perfil${limit > 1 ? "es" : ""} de tu plan actual.`;
+      return {
+        error: `${limitMessage} Actualiza tu plan para crear más perfiles.`,
+      };
+    }
+
+    const requestData: CreateProfileRequest = {
+      nombre,
+      rfc,
+      tipo_persona: tipoPersona,
+    };
+
+    await createProfile(requestData);
+
+    // Redirigir a la configuración después de crear el perfil
+    redirect("/dashboard/setup");
+  } catch (error) {
+    // Manejar excepciones de redirect de Next.js
+    if (error && typeof error === "object" && "digest" in error) {
+      const nextError = error as { digest?: string };
+      if (nextError.digest?.startsWith("NEXT_REDIRECT")) {
+        throw error;
+      }
+    }
+
+    if (error instanceof Error) {
+      // Manejar errores de la API
+      if (error.message.includes("Límite de perfiles")) {
+        return { error: "Has alcanzado el límite de perfiles de tu plan" };
+      }
+      if (error.message.includes("RFC")) {
+        return { error: "El RFC ingresado ya está registrado" };
+      }
+      return { error: error.message };
+    }
+
+    return { error: "Error al crear el perfil. Intenta nuevamente." };
+  }
+}
+
+export async function logoutAction() {
+  try {
+    await logoutUser();
+  } catch (error) {
+    // Continuar con el logout incluso si hay error en la API
+    console.error("Error al cerrar sesión:", error);
+  }
+
+  // Eliminar cookies locales
+  const cookieStore = await cookies();
+  cookieStore.delete("accessToken");
+  cookieStore.delete("refreshToken");
+
+  redirect("/auth/login");
+}
+

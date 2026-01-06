@@ -15,3 +15,23 @@ export interface GetProfilesResponse {
   count: number;
 }
 
+export interface CreateProfileRequest {
+  nombre: string;
+  rfc: string;
+  tipo_persona: "FISICA" | "MORAL";
+  regimen_fiscal?: string;
+  validaciones_habilitadas?: {
+    validarRFCIngresos?: boolean;
+    validarRFCGastos?: boolean;
+    validarRegimenFiscal?: boolean;
+    validarUUIDDuplicado?: boolean;
+    bloquearSiRFCNoCoincide?: boolean;
+    bloquearSiRegimenNoCoincide?: boolean;
+  };
+}
+
+export interface CreateProfileResponse {
+  message: string;
+  data: Profile;
+}
+
