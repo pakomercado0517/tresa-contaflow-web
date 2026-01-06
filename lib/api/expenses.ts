@@ -1,5 +1,4 @@
-import { apiClient } from "./client";
-import { cookies } from "next/headers";
+import { serverApiClient } from "./server-client";
 import type { GetExpensesResponse } from "@/lib/types/expenses";
 
 interface GetExpensesParams {
@@ -12,10 +11,13 @@ interface GetExpensesParams {
   limit?: number;
 }
 
+/**
+ * Obtiene los gastos del usuario (Server Component only)
+ * Maneja automáticamente el refresh de tokens cuando recibe 401
+ */
 export async function getExpenses(
   params?: GetExpensesParams
 ): Promise<GetExpensesResponse> {
-  const cookieStore = await cookies();
   const queryParams = new URLSearchParams();
 
   if (params?.profileId) queryParams.append("profileId", params.profileId);
@@ -29,13 +31,8 @@ export async function getExpenses(
   const queryString = queryParams.toString();
   const endpoint = `/api/expenses${queryString ? `?${queryString}` : ""}`;
 
-  const accessToken = cookieStore.get("accessToken")?.value;
-
-  return apiClient<GetExpensesResponse>(endpoint, {
-    headers: {
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      Cookie: cookieStore.toString(),
-    },
+  return serverApiClient<GetExpensesResponse>(endpoint, {
+    redirectOnAuthError: true,
   });
 }
 

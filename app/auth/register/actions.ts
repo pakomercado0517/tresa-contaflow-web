@@ -1,8 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { registerUser } from "@/lib/api/auth";
-import type { RegisterRequest } from "@/lib/types/auth";
+import type { RegisterResponse } from "@/lib/types/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export interface ActionResult {
   error?: string;
@@ -29,8 +30,24 @@ export async function registerAction(
   }
 
   try {
-    const requestData: RegisterRequest = { email, password };
-    await registerUser(requestData);
+    // Hacer fetch directo al backend sin usar apiClient
+    // (apiClient está diseñado para client components, no server actions)
+    const backendResponse = await fetch(`${API_URL}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const response = (await backendResponse.json()) as RegisterResponse;
+
+    if (!backendResponse.ok) {
+      const errorData = response as unknown as { error?: string; message?: string };
+      return {
+        error: errorData.error || errorData.message || "Error al registrar usuario",
+      };
+    }
 
     redirect(`/auth/verify-email?email=${encodeURIComponent(email)}`);
   } catch (error) {

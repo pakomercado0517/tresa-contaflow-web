@@ -1,5 +1,6 @@
 interface ApiClientOptions extends RequestInit {
   requireAuth?: boolean;
+  skipAuthRetry?: boolean; // Para evitar loops infinitos en el refresh
 }
 
 export class ApiError extends Error {
@@ -13,6 +14,58 @@ export class ApiError extends Error {
   }
 }
 
+// Flag para evitar múltiples refresh simultáneos
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+/**
+ * Intenta refrescar el access token usando el refresh token
+ * @returns El nuevo access token o null si falla
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  // Si ya hay un refresh en proceso, esperar a que termine
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Si el refresh token también expiró, redirigir a login
+        if (response.status === 401 || data.redirect) {
+          // Limpiar cualquier estado local
+          if (typeof window !== "undefined") {
+            window.location.href = "/auth/login";
+          }
+          return null;
+        }
+        return null;
+      }
+
+      return data.accessToken || null;
+    } catch (error) {
+      console.error("Error al refrescar token:", error);
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth/login";
+      }
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options?: ApiClientOptions
@@ -24,13 +77,47 @@ export async function apiClient<T>(
     ...options?.headers,
   };
 
-  const response = await fetch(`${apiUrl}${endpoint}`, {
+  // Primera petición
+  let response = await fetch(`${apiUrl}${endpoint}`, {
     ...options,
     credentials: "include",
     headers,
   });
 
-  const data = await response.json().catch(() => ({}));
+  let data = await response.json().catch(() => ({}));
+
+  // Si recibimos 401 y no estamos en un retry, intentar refrescar token
+  if (
+    response.status === 401 &&
+    !options?.skipAuthRetry &&
+    typeof window !== "undefined"
+  ) {
+    const newAccessToken = await refreshAccessToken();
+
+    if (newAccessToken) {
+      // Reintentar la petición original con el nuevo token
+      // Usar skipAuthRetry para evitar loops infinitos
+      const retryOptions: ApiClientOptions = {
+        ...options,
+        skipAuthRetry: true,
+      };
+      
+      response = await fetch(`${apiUrl}${endpoint}`, {
+        ...retryOptions,
+        credentials: "include",
+        headers,
+      });
+
+      data = await response.json().catch(() => ({}));
+    } else {
+      // Si el refresh falló, ya se redirigió a login
+      throw new ApiError(
+        "Sesión expirada. Redirigiendo a login...",
+        401,
+        data
+      );
+    }
+  }
 
   if (!response.ok) {
     throw new ApiError(

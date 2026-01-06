@@ -1,5 +1,4 @@
-import { apiClient } from "./client";
-import { cookies } from "next/headers";
+import { serverApiClient } from "./server-client";
 import type {
   GetInvoicesResponse,
   MetricsResponse,
@@ -14,10 +13,13 @@ interface GetInvoicesParams {
   limit?: number;
 }
 
+/**
+ * Obtiene las facturas del usuario (Server Component only)
+ * Maneja automáticamente el refresh de tokens cuando recibe 401
+ */
 export async function getInvoices(
   params?: GetInvoicesParams
 ): Promise<GetInvoicesResponse> {
-  const cookieStore = await cookies();
   const queryParams = new URLSearchParams();
 
   if (params?.profileId) queryParams.append("profileId", params.profileId);
@@ -30,22 +32,20 @@ export async function getInvoices(
   const queryString = queryParams.toString();
   const endpoint = `/api/invoices${queryString ? `?${queryString}` : ""}`;
 
-  const accessToken = cookieStore.get("accessToken")?.value;
-
-  return apiClient<GetInvoicesResponse>(endpoint, {
-    headers: {
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      Cookie: cookieStore.toString(),
-    },
+  return serverApiClient<GetInvoicesResponse>(endpoint, {
+    redirectOnAuthError: true,
   });
 }
 
+/**
+ * Obtiene las métricas del usuario (Server Component only)
+ * Maneja automáticamente el refresh de tokens cuando recibe 401
+ */
 export async function getMetrics(
   profileId?: string,
   mes?: number,
   año?: number
 ): Promise<MetricsResponse> {
-  const cookieStore = await cookies();
   const queryParams = new URLSearchParams();
 
   if (profileId) queryParams.append("profileId", profileId);
@@ -55,13 +55,8 @@ export async function getMetrics(
   const queryString = queryParams.toString();
   const endpoint = `/api/invoices/metrics${queryString ? `?${queryString}` : ""}`;
 
-  const accessToken = cookieStore.get("accessToken")?.value;
-
-  return apiClient<MetricsResponse>(endpoint, {
-    headers: {
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      Cookie: cookieStore.toString(),
-    },
+  return serverApiClient<MetricsResponse>(endpoint, {
+    redirectOnAuthError: true,
   });
 }
 

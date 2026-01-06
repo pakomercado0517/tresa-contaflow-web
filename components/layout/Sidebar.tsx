@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   FileText,
@@ -12,6 +19,7 @@ import {
   FileSearch,
   Download,
   Settings,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +37,7 @@ const navigationItems: NavItem[] = [
   },
   {
     title: "Facturas (Ingresos)",
-    href: "/invoices",
+    href: "/dashboard/invoices/upload",
     icon: <FileText className="h-5 w-5" />,
   },
   {
@@ -56,6 +64,23 @@ const navigationItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      // Llamar al endpoint de logout
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      await fetch(`${apiUrl}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    } finally {
+      // Redirigir al login
+      router.push("/auth/login");
+    }
+  };
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border">
@@ -71,7 +96,7 @@ export function Sidebar() {
 
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigationItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -104,12 +129,33 @@ export function Sidebar() {
               Contador Jr.
             </p>
           </div>
-          <Link
-            href="/settings"
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Settings className="h-5 w-5" />
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={cn(
+                "p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                pathname?.includes("/dashboard/setup") && "text-primary"
+              )}
+            >
+              <Settings className="h-5 w-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/setup" className="flex items-center gap-2 cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  Configuración
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                variant="destructive"
+                className="cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+                Cerrar sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </aside>

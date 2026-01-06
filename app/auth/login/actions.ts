@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { loginUser } from "@/lib/api/auth";
-import type { LoginRequest } from "@/lib/types/auth";
+import type { LoginResponse } from "@/lib/types/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export interface ActionResult {
   error?: string;
@@ -21,8 +22,24 @@ export async function loginAction(
   }
 
   try {
-    const requestData: LoginRequest = { email, password };
-    const response = await loginUser(requestData);
+    // Hacer fetch directo al backend sin usar apiClient
+    // (apiClient está diseñado para client components, no server actions)
+    const backendResponse = await fetch(`${API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const response = (await backendResponse.json()) as LoginResponse;
+
+    if (!backendResponse.ok) {
+      const errorData = response as unknown as { error?: string; message?: string };
+      return {
+        error: errorData.error || errorData.message || "Error al iniciar sesión",
+      };
+    }
 
     const cookieStore = await cookies();
     
