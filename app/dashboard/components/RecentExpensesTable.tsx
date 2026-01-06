@@ -46,7 +46,7 @@ export function RecentExpensesTable({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Últimos Gastos</h3>
         <Link
-          href="/expenses"
+          href="/dashboard/expenses"
           className="text-sm text-primary hover:underline"
         >
           Ver todos

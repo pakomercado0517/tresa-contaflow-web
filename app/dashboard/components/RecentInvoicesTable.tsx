@@ -41,7 +41,7 @@ export function RecentInvoicesTable({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Últimos Ingresos</h3>
         <Link
-          href="/invoices"
+          href="/dashboard/invoices"
           className="text-sm text-primary hover:underline"
         >
           Ver todos

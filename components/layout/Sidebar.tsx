@@ -37,12 +37,12 @@ const navigationItems: NavItem[] = [
   },
   {
     title: "Facturas (Ingresos)",
-    href: "/dashboard/invoices/upload",
+    href: "/dashboard/invoices",
     icon: <FileText className="h-5 w-5" />,
   },
   {
     title: "Gastos (Egresos)",
-    href: "/expenses",
+    href: "/dashboard/expenses",
     icon: <Receipt className="h-5 w-5" />,
   },
   {
@@ -96,7 +96,19 @@ export function Sidebar() {
 
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigationItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+            // Lógica mejorada para evitar múltiples elementos activos
+            // Para Dashboard, solo activo si es exactamente /dashboard (sin subrutas)
+            // Para otros items, activo si coincide exactamente o es una subruta
+            let isActive = false;
+            
+            if (item.href === "/dashboard") {
+              // Dashboard solo activo en la ruta exacta
+              isActive = pathname === "/dashboard";
+            } else {
+              // Otros items: activo si coincide exactamente o es subruta
+              isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+            }
+            
             return (
               <Link
                 key={item.href}
