@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, X, AlertCircle } from "lucide-react";
+import { FileText, X, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,70 @@ export function FilesQueue({
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getStatusIcon = (status: QueuedFile["status"]) => {
+    switch (status) {
+      case "error":
+        return (
+          <div className="rounded-full bg-destructive/10 p-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+          </div>
+        );
+      case "success":
+        return (
+          <div className="rounded-full bg-green-500/10 p-2">
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+          </div>
+        );
+      case "uploading":
+        return (
+          <div className="rounded-full bg-blue-500/10 p-2">
+            <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+          </div>
+        );
+      default:
+        return (
+          <div className="rounded-full bg-primary/10 p-2">
+            <FileText className="h-5 w-5 text-primary" />
+          </div>
+        );
+    }
+  };
+
+  const getStatusBadge = (status: QueuedFile["status"]) => {
+    switch (status) {
+      case "valid":
+        return (
+          <Badge variant="default">
+            VÁLIDO
+          </Badge>
+        );
+      case "error":
+        return (
+          <Badge variant="destructive">
+            ERROR
+          </Badge>
+        );
+      case "success":
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600">
+            ÉXITO
+          </Badge>
+        );
+      case "uploading":
+        return (
+          <Badge className="bg-blue-500 hover:bg-blue-600">
+            SUBIENDO...
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary">
+            PENDIENTE
+          </Badge>
+        );
+    }
   };
 
   return (
@@ -45,28 +109,15 @@ export function FilesQueue({
           {files.map((file) => (
             <div
               key={file.id}
-              className="flex items-center gap-4 p-3 rounded-lg border bg-muted/30"
+              className="flex flex-col gap-2 p-3 rounded-lg border bg-muted/30"
             >
-              <div className="flex-shrink-0">
-                {file.status === "error" ? (
-                  <div className="rounded-full bg-destructive/10 p-2">
-                    <AlertCircle className="h-5 w-5 text-destructive" />
-                  </div>
-                ) : (
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                )}
-              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  {getStatusIcon(file.status)}
+                </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{file.file.name}</p>
-                {file.status === "error" && file.errorMessage && (
-                  <p className="text-xs text-destructive mt-1">
-                    {file.errorMessage}
-                  </p>
-                )}
-                {file.status === "valid" && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.file.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-muted-foreground">
                       {formatFileSize(file.size)}
@@ -80,34 +131,67 @@ export function FilesQueue({
                       </>
                     )}
                   </div>
-                )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(file.status)}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onRemoveFile(file.id)}
+                    className="h-8 w-8"
+                    disabled={file.status === "uploading"}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    file.status === "valid"
-                      ? "default"
-                      : file.status === "error"
-                      ? "destructive"
-                      : "secondary"
-                  }
-                >
-                  {file.status === "valid"
-                    ? "VÁLIDO"
-                    : file.status === "error"
-                    ? "ERROR"
-                    : "PENDIENTE"}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemoveFile(file.id)}
-                  className="h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Mostrar mensaje de error */}
+              {file.status === "error" && file.errorMessage && (
+                <div className="pl-14 pr-2">
+                  <p className="text-xs text-destructive">
+                    {file.errorMessage}
+                  </p>
+                </div>
+              )}
+
+              {/* Mostrar validaciones */}
+              {file.validacion && (
+                <div className="pl-14 pr-2 space-y-1">
+                  {/* Advertencias */}
+                  {file.validacion.advertencias && file.validacion.advertencias.length > 0 && (
+                    <div className="flex items-start gap-2 text-xs text-yellow-600 dark:text-yellow-500">
+                      <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-0.5">
+                        {file.validacion.advertencias.map((adv, idx) => (
+                          <p key={idx}>{adv}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Errores de validación */}
+                  {file.validacion.errores && file.validacion.errores.length > 0 && (
+                    <div className="flex items-start gap-2 text-xs text-destructive">
+                      <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-0.5">
+                        {file.validacion.errores.map((err, idx) => (
+                          <p key={idx}>{err}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Información de validación exitosa */}
+                  {file.status === "success" && file.validacion.valido && (
+                    <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-500">
+                      <CheckCircle2 className="h-3 w-3" />
+                      <p>Archivo procesado y guardado correctamente</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

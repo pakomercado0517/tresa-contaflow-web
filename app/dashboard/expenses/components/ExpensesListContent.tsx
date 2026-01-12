@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, FileText, Eye, Download } from "lucide-react";
+import { Plus, Search, FileText, Eye, Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +24,15 @@ import {
 } from "@/components/ui/table";
 import { ExpensesSummaryCards } from "./ExpensesSummaryCards";
 import { ProfileSelector } from "./ProfileSelector";
+import { ManualExpenseDialog } from "./ManualExpenseDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Expense } from "@/lib/types/expenses";
 import type { Profile } from "@/lib/types/profiles";
 
@@ -124,14 +133,62 @@ export function ExpensesListContent({
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
   const [selectedCategoria, setSelectedCategoria] = useState(initialCategoria || "all");
+  const [isManualExpenseDialogOpen, setIsManualExpenseDialogOpen] = useState(false);
+  const [showProfileWarning, setShowProfileWarning] = useState(false);
 
-  const handleFilter = () => {
+  // Asegurarse de que siempre haya un perfil seleccionado
+  useEffect(() => {
+    if (!selectedProfileId && profiles.length > 0) {
+      setSelectedProfileId(profiles[0].id);
+    }
+  }, [profiles, selectedProfileId]);
+
+  const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
     if (selectedProfileId) params.set("profileId", selectedProfileId);
     if (selectedMes) params.set("mes", selectedMes.toString());
     if (selectedAño) params.set("año", selectedAño.toString());
     if (selectedCategoria && selectedCategoria !== "all") params.set("categoria", selectedCategoria);
     if (search) params.set("search", search);
+    params.set("page", "1");
+    router.push(`/dashboard/expenses?${params.toString()}`);
+  }, [selectedProfileId, selectedMes, selectedAño, selectedCategoria, search, router]);
+
+  // Aplicar filtros automáticamente cuando cambien (excepto búsqueda)
+  useEffect(() => {
+    // Solo aplicar si no es la carga inicial
+    if (
+      selectedMes !== initialMes ||
+      selectedAño !== initialAño ||
+      selectedCategoria !== initialCategoria
+    ) {
+      applyFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMes, selectedAño, selectedCategoria]); // Solo estos filtros se aplican automáticamente
+
+  // Debounce para la búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== initialSearch) {
+        applyFilters();
+      }
+    }, 500); // 500ms de delay
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setSelectedMes(new Date().getMonth() + 1);
+    setSelectedAño(new Date().getFullYear());
+    setSelectedCategoria("all");
+    // El perfil no se resetea porque es un filtro principal
+    const params = new URLSearchParams();
+    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    params.set("mes", (new Date().getMonth() + 1).toString());
+    params.set("año", new Date().getFullYear().toString());
     params.set("page", "1");
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
@@ -175,86 +232,38 @@ export function ExpensesListContent({
   const manualExpenses = expenses.filter((e) => e.tipo_origen === "MANUAL");
   const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
   
-  // Usar totalGastos de las métricas del backend (más preciso)
-  const totalExpenses = metrics.totalGastos || expenses.reduce((sum, expense) => sum + expense.total, 0);
+  // Calcular el total sumando todos los gastos (en pesos)
+  const totalExpensesAmount = expenses.reduce((sum, expense) => {
+    const total = typeof expense.total === "number" ? expense.total : parseFloat(expense.total) || 0;
+    return sum + total;
+  }, 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Gastos</h1>
           <p className="text-muted-foreground mt-2">
             Administra y monitorea todos tus gastos y egresos fiscales.
           </p>
         </div>
-        <ProfileSelector
-          profiles={profiles}
-          selectedProfileId={selectedProfileId}
-          onProfileChange={handleProfileChange}
-        />
-      </div>
-
-      {/* Summary Cards */}
-      <ExpensesSummaryCards
-        totalExpenses={totalExpenses}
-        xmlProcessed={xmlExpenses.length}
-        validXmlPercentage={xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0}
-        manualExpenses={manualExpenses.length}
-      />
-
-      {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-card">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Concepto, Emisor o UUID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleFilter()}
-            className="pl-9"
+        <div className="flex items-center gap-4">
+          <ProfileSelector
+            profiles={profiles}
+            selectedProfileId={selectedProfileId}
+            onProfileChange={handleProfileChange}
           />
-        </div>
-        <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="CATEGORÍA" />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedMes.toString()} onValueChange={(v) => setSelectedMes(Number(v))}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {MONTHS.map((month, index) => (
-              <SelectItem key={index} value={(index + 1).toString()}>
-                {month}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedAño.toString()} onValueChange={(v) => setSelectedAño(Number(v))}>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex gap-2">
           <Button
             variant="outline"
             className="border-primary/20 hover:bg-primary/10"
+            onClick={() => {
+              if (!selectedProfileId) {
+                setShowProfileWarning(true);
+                return;
+              }
+              setIsManualExpenseDialogOpen(true);
+            }}
           >
             <Plus className="mr-2 h-4 w-4" />
             Gasto Manual
@@ -268,64 +277,148 @@ export function ExpensesListContent({
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <ExpensesSummaryCards
+        totalExpenses={totalExpensesAmount}
+        xmlProcessed={xmlExpenses.length}
+        validXmlPercentage={xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0}
+        manualExpenses={manualExpenses.length}
+        selectedMonth={selectedMes}
+      />
+
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-card">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Concepto, Emisor o UUID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 pr-9"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+          <SelectTrigger className="w-full md:w-[200px]">
+            <SelectValue placeholder="CATEGORÍA" />
+          </SelectTrigger>
+          <SelectContent>
+            {CATEGORIES.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedMes.toString()} onValueChange={(v) => setSelectedMes(Number(v))}>
+          <SelectTrigger className="w-full md:w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {MONTHS.map((month, index) => (
+              <SelectItem key={index} value={(index + 1).toString()}>
+                {month}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedAño.toString()} onValueChange={(v) => setSelectedAño(Number(v))}>
+          <SelectTrigger className="w-full md:w-[100px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button 
+          onClick={handleClearFilters} 
+          variant="outline"
+          className="w-full md:w-auto"
+        >
+          <X className="mr-2 h-4 w-4" />
+          Limpiar
+        </Button>
+      </div>
+
       {/* Expenses Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>FECHA</TableHead>
-              <TableHead>EMISOR / CONCEPTO</TableHead>
-              <TableHead>CATEGORÍA</TableHead>
-              <TableHead>ORIGEN</TableHead>
-              <TableHead>UUID</TableHead>
-              <TableHead>TOTAL</TableHead>
-              <TableHead className="text-right">ACCIONES</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {expenses.length > 0 ? (
-              expenses.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell className="text-sm">{formatDate(expense.fecha)}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {expense.nombre_emisor || "Sin emisor"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {expense.concepto || "Sin concepto"}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {getCategoryBadge(expense.categoria)}
-                  </TableCell>
-                  <TableCell>{getOriginBadge(expense.tipo_origen)}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {expense.uuid ? `${expense.uuid.slice(0, 4)}...${expense.uuid.slice(-3)}` : "--"}
-                  </TableCell>
-                  <TableCell className="font-medium">{formatCurrency(expense.total)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Ver detalles">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Descargar">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="overflow-x-auto">
+          <div className="max-h-[600px] overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
+                <TableRow>
+                  <TableHead className="min-w-[120px]">FECHA</TableHead>
+                  <TableHead className="min-w-[250px]">EMISOR / CONCEPTO</TableHead>
+                  <TableHead className="min-w-[150px]">CATEGORÍA</TableHead>
+                  <TableHead className="min-w-[100px]">ORIGEN</TableHead>
+                  <TableHead className="min-w-[150px]">UUID</TableHead>
+                  <TableHead className="min-w-[120px]">TOTAL</TableHead>
+                  <TableHead className="min-w-[120px] text-right">ACCIONES</TableHead>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No se encontraron gastos
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {expenses.length > 0 ? (
+                  expenses.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {formatDate(expense.fecha)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[250px]">
+                          <p className="text-sm font-medium truncate" title={expense.nombre_emisor || "Sin emisor"}>
+                            {expense.nombre_emisor || "Sin emisor"}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate" title={expense.concepto || "Sin concepto"}>
+                            {expense.concepto || "Sin concepto"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {getCategoryBadge(expense.categoria)}
+                      </TableCell>
+                      <TableCell>{getOriginBadge(expense.tipo_origen)}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <div className="max-w-[150px] truncate" title={expense.uuid || "--"}>
+                          {expense.uuid ? `${expense.uuid.slice(0, 8)}...${expense.uuid.slice(-4)}` : "--"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {formatCurrency(expense.total)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" title="Ver detalles">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Descargar">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No se encontraron gastos
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
 
       {/* Pagination */}
@@ -390,6 +483,32 @@ export function ExpensesListContent({
           </div>
         </div>
       )}
+
+      {/* Manual Expense Dialog */}
+      {selectedProfileId && (
+        <ManualExpenseDialog
+          isOpen={isManualExpenseDialogOpen}
+          onClose={() => setIsManualExpenseDialogOpen(false)}
+          profileId={selectedProfileId}
+        />
+      )}
+
+      {/* Profile Warning Dialog */}
+      <Dialog open={showProfileWarning} onOpenChange={setShowProfileWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Empresa no seleccionada</DialogTitle>
+            <DialogDescription>
+              Por favor selecciona una empresa antes de agregar un gasto manual.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowProfileWarning(false)}>
+              Entendido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

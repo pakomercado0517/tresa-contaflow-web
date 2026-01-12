@@ -15,6 +15,8 @@ import type {
   ResetPasswordResponse,
   ResendVerificationEmailRequest,
   ResendVerificationEmailResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
   ErrorResponse,
 } from "@/lib/types/auth";
 
@@ -87,6 +89,16 @@ export async function resendVerificationEmail(
       body: JSON.stringify(data),
     }
   );
+}
+
+export async function updateProfile(
+  data: UpdateProfileRequest
+): Promise<UpdateProfileResponse> {
+  return apiClient<UpdateProfileResponse>("/api/auth/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    requireAuth: true,
+  });
 }
 
 

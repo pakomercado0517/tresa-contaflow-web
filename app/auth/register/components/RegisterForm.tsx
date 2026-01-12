@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { UserPlus, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Lock, ArrowRight, Loader2, User, Phone } from "lucide-react";
 import { registerAction } from "../actions";
 
 export function RegisterForm() {
@@ -44,6 +44,42 @@ export function RegisterForm() {
         )}
 
         <form action={handleSubmit} className="w-full space-y-5">
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="nombre" className="text-foreground">
+                Nombre
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  type="text"
+                  placeholder="Juan"
+                  disabled={isPending}
+                  className="pl-10 bg-background"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="apellido" className="text-foreground">
+                Apellido
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="apellido"
+                  name="apellido"
+                  type="text"
+                  placeholder="Pérez"
+                  disabled={isPending}
+                  className="pl-10 bg-background"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground">
               Correo electrónico
@@ -56,6 +92,23 @@ export function RegisterForm() {
                 type="email"
                 placeholder="nombre@empresa.com"
                 required
+                disabled={isPending}
+                className="pl-10 bg-background"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="telefono" className="text-foreground">
+              Teléfono
+            </Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="telefono"
+                name="telefono"
+                type="tel"
+                placeholder="+52 55 1234 5678"
                 disabled={isPending}
                 className="pl-10 bg-background"
               />

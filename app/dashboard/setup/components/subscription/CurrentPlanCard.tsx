@@ -31,9 +31,9 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
 
     setIsLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      // Usar proxy de Next.js para evitar CORS
       const response = await fetch(
-        `${apiUrl}/api/subscription/create-portal-session`,
+        "/backend/api/subscription/create-portal-session",
         {
           method: "POST",
           credentials: "include",

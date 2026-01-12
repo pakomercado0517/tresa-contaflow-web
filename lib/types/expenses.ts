@@ -1,7 +1,7 @@
 export interface Expense {
   id: string;
   profile_id: string;
-  tipo_origen: "XML" | "MANUAL";
+  tipo_origen: 'XML' | 'MANUAL';
   fecha: string;
   mes: number;
   año: number;
@@ -11,7 +11,7 @@ export interface Expense {
   concepto: string | null;
   categoria: string | null;
   uuid: string | null;
-  tipo: "PUE" | "PPD" | "COMPLEMENTO_PAGO" | null;
+  tipo: 'PUE' | 'PPD' | 'COMPLEMENTO_PAGO' | null;
   rfc_emisor: string | null;
   nombre_emisor: string | null;
   rfc_receptor: string | null;
@@ -68,3 +68,33 @@ export interface GetExpensesResponse {
   };
 }
 
+export interface ValidationState {
+  rfcVerificado: boolean;
+  regimenFiscalVerificado: boolean;
+  uuidDuplicado: boolean;
+  advertencias: string[];
+  errores: string[];
+  valido: boolean;
+}
+
+export interface UploadExpenseResponse {
+  message: string;
+  data: Expense;
+  validacion: ValidationState;
+  tipo: 'gasto';
+}
+
+export interface CreateExpenseRequest {
+  profileId: string;
+  fecha: string;
+  total: number;
+  subtotal: number;
+  iva: number;
+  concepto?: string;
+  categoria?: string;
+}
+
+export interface CreateExpenseResponse {
+  message: string;
+  data: Expense;
+}

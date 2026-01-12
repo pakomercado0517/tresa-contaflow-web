@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Filter, Eye, Download, AlertTriangle } from "lucide-react";
+import { Plus, Search, Eye, Download, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -90,13 +90,52 @@ export function InvoicesListContent({
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
   const [selectedTipo, setSelectedTipo] = useState(initialTipo || "all");
 
-  const handleFilter = () => {
+  const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
     if (selectedProfileId) params.set("profileId", selectedProfileId);
     if (selectedMes) params.set("mes", selectedMes.toString());
     if (selectedAño) params.set("año", selectedAño.toString());
     if (selectedTipo && selectedTipo !== "all") params.set("tipo", selectedTipo);
     if (search) params.set("search", search);
+    params.set("page", "1");
+    router.push(`/dashboard/invoices?${params.toString()}`);
+  }, [selectedProfileId, selectedMes, selectedAño, selectedTipo, search, router]);
+
+  // Aplicar filtros automáticamente cuando cambien (excepto búsqueda)
+  useEffect(() => {
+    // Solo aplicar si no es la carga inicial
+    if (
+      selectedMes !== initialMes ||
+      selectedAño !== initialAño ||
+      selectedTipo !== initialTipo
+    ) {
+      applyFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMes, selectedAño, selectedTipo]); // Solo estos filtros se aplican automáticamente
+
+  // Debounce para la búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== initialSearch) {
+        applyFilters();
+      }
+    }, 500); // 500ms de delay
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setSelectedMes(new Date().getMonth() + 1);
+    setSelectedAño(new Date().getFullYear());
+    setSelectedTipo("all");
+    // El perfil no se resetea porque es un filtro principal
+    const params = new URLSearchParams();
+    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    params.set("mes", (new Date().getMonth() + 1).toString());
+    params.set("año", new Date().getFullYear().toString());
     params.set("page", "1");
     router.push(`/dashboard/invoices?${params.toString()}`);
   };
@@ -171,7 +210,7 @@ export function InvoicesListContent({
   const errorInvoices = invoices.filter((inv) => !inv.validacion?.valido).length;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -210,12 +249,19 @@ export function InvoicesListContent({
             placeholder="Buscar por RFC, Nombre o UUID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleFilter()}
-            className="pl-9"
+            className="pl-9 pr-9"
           />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <Select value={selectedMes.toString()} onValueChange={(v) => setSelectedMes(Number(v))}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full md:w-[140px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -227,7 +273,7 @@ export function InvoicesListContent({
           </SelectContent>
         </Select>
         <Select value={selectedAño.toString()} onValueChange={(v) => setSelectedAño(Number(v))}>
-          <SelectTrigger className="w-[100px]">
+          <SelectTrigger className="w-full md:w-[100px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -239,7 +285,7 @@ export function InvoicesListContent({
           </SelectContent>
         </Select>
         <Select value={selectedTipo} onValueChange={setSelectedTipo}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full md:w-[160px]">
             <SelectValue placeholder="Tipo CFDI: Todos" />
           </SelectTrigger>
           <SelectContent>
@@ -250,71 +296,89 @@ export function InvoicesListContent({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleFilter} className="bg-primary hover:bg-primary/90">
-          <Filter className="mr-2 h-4 w-4" />
-          Filtrar
+        <Button 
+          onClick={handleClearFilters} 
+          variant="outline"
+          className="w-full md:w-auto"
+        >
+          <X className="mr-2 h-4 w-4" />
+          Limpiar
         </Button>
       </div>
 
       {/* Invoices Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>UUID / FOLIO</TableHead>
-              <TableHead>FECHA</TableHead>
-              <TableHead>EMISOR</TableHead>
-              <TableHead>RECEPTOR</TableHead>
-              <TableHead>TOTAL</TableHead>
-              <TableHead>TIPO</TableHead>
-              <TableHead>ESTADO</TableHead>
-              <TableHead className="text-right">ACCIONES</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invoices.length > 0 ? (
-              invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell className="font-mono text-sm">
-                    {invoice.uuid || `F-${invoice.id.slice(-4)}`}
-                  </TableCell>
-                  <TableCell className="text-sm">{formatDate(invoice.fecha)}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm font-medium">{invoice.nombre_emisor}</p>
-                      <p className="text-xs text-muted-foreground">{invoice.rfc_emisor}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm font-medium">{invoice.nombre_receptor}</p>
-                      <p className="text-xs text-muted-foreground">{invoice.rfc_receptor}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{formatCurrency(invoice.total)}</TableCell>
-                  <TableCell>{getTypeBadge(invoice.tipo)}</TableCell>
-                  <TableCell>{getStatusBadge(invoice)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Ver detalles">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Descargar">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="overflow-x-auto">
+          <div className="max-h-[600px] overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
+                <TableRow>
+                  <TableHead className="min-w-[200px]">UUID / FOLIO</TableHead>
+                  <TableHead className="min-w-[150px]">FECHA</TableHead>
+                  <TableHead className="min-w-[200px]">EMISOR</TableHead>
+                  <TableHead className="min-w-[200px]">RECEPTOR</TableHead>
+                  <TableHead className="min-w-[120px]">TOTAL</TableHead>
+                  <TableHead className="min-w-[100px]">TIPO</TableHead>
+                  <TableHead className="min-w-[100px]">ESTADO</TableHead>
+                  <TableHead className="min-w-[120px] text-right">ACCIONES</TableHead>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No se encontraron facturas
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {invoices.length > 0 ? (
+                  invoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-mono text-sm">
+                        <div className="max-w-[200px] truncate" title={invoice.uuid}>
+                          {invoice.uuid || `F-${invoice.id.slice(-4)}`}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm whitespace-nowrap">
+                        {formatDate(invoice.fecha)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[200px]">
+                          <p className="text-sm font-medium truncate" title={invoice.nombre_emisor}>
+                            {invoice.nombre_emisor}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{invoice.rfc_emisor}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[200px]">
+                          <p className="text-sm font-medium truncate" title={invoice.nombre_receptor}>
+                            {invoice.nombre_receptor}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{invoice.rfc_receptor}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {formatCurrency(invoice.total)}
+                      </TableCell>
+                      <TableCell>{getTypeBadge(invoice.tipo)}</TableCell>
+                      <TableCell>{getStatusBadge(invoice)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" title="Ver detalles">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Descargar">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      No se encontraron facturas
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
 
       {/* Pagination */}

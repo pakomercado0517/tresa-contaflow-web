@@ -45,8 +45,8 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const response = await fetch(`${apiUrl}/api/subscription/create-checkout`, {
+      // Usar proxy de Next.js para evitar CORS
+      const response = await fetch("/backend/api/subscription/create-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

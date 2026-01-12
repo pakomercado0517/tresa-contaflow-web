@@ -6,7 +6,19 @@ import { FilesQueue } from "./FilesQueue";
 import { UploadSummary } from "./UploadSummary";
 import { DidYouKnowCard } from "./DidYouKnowCard";
 import { ProfileSelector } from "./ProfileSelector";
+import { uploadExpense } from "@/lib/api/expenses.client";
+import { ApiError } from "@/lib/api/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import type { Profile } from "@/lib/types/profiles";
+import type { ValidationState } from "@/lib/types/expenses";
 
 interface UploadExpensesContentProps {
   profiles: Profile[];
@@ -15,10 +27,11 @@ interface UploadExpensesContentProps {
 export interface QueuedFile {
   id: string;
   file: File;
-  status: "valid" | "error" | "pending";
+  status: "pending" | "valid" | "uploading" | "success" | "error";
   errorMessage?: string;
   size: number;
   type?: string; // CFDI 3.3, CFDI 4.0, Nómina 1.2, etc.
+  validacion?: ValidationState; // Guardar validación de la API
 }
 
 export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) {
@@ -27,6 +40,12 @@ export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) 
   );
   const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Estados para el dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [dialogType, setDialogType] = useState<"success" | "error" | "warning">("success");
 
   const handleFilesSelected = (files: File[]) => {
     const newFiles: QueuedFile[] = files.map((file) => {
@@ -54,28 +73,117 @@ export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) 
     setQueuedFiles([]);
   };
 
+  const showDialog = (
+    title: string,
+    message: string,
+    type: "success" | "error" | "warning" = "success"
+  ) => {
+    setDialogTitle(title);
+    setDialogMessage(message);
+    setDialogType(type);
+    setIsDialogOpen(true);
+  };
+
   const handleProcess = async () => {
     if (!selectedProfileId) {
-      alert("Por favor selecciona una empresa");
+      showDialog(
+        "Empresa no seleccionada",
+        "Por favor selecciona una empresa antes de procesar los archivos.",
+        "warning"
+      );
       return;
     }
 
     const validFiles = queuedFiles.filter((f) => f.status === "valid");
     if (validFiles.length === 0) {
-      alert("No hay archivos válidos para procesar");
+      showDialog(
+        "Sin archivos válidos",
+        "No hay archivos válidos para procesar. Por favor, agrega archivos XML válidos.",
+        "warning"
+      );
       return;
     }
 
     setIsProcessing(true);
-    // TODO: Implementar lógica de procesamiento
-    console.log("Procesando archivos de gastos:", validFiles);
-    
-    // Simular procesamiento
-    setTimeout(() => {
-      setIsProcessing(false);
-      alert("Gastos procesados exitosamente");
-      setQueuedFiles([]);
-    }, 2000);
+
+    // Procesar cada archivo individualmente
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const queuedFile of validFiles) {
+      // Marcar como uploading
+      setQueuedFiles((prev) =>
+        prev.map((f) =>
+          f.id === queuedFile.id ? { ...f, status: "uploading" } : f
+        )
+      );
+
+      try {
+        const result = await uploadExpense(queuedFile.file, selectedProfileId);
+        
+        // Marcar como success
+        setQueuedFiles((prev) =>
+          prev.map((f) =>
+            f.id === queuedFile.id
+              ? { ...f, status: "success", validacion: result.validacion }
+              : f
+          )
+        );
+        successCount++;
+      } catch (error) {
+        errorCount++;
+        let errorMessage = "Error al subir archivo";
+        
+        if (error instanceof ApiError) {
+          errorMessage = error.message;
+          // Si hay datos de validación en el error, guardarlos
+          const validationData = (error.data as { validacion?: ValidationState })?.validacion;
+          
+          setQueuedFiles((prev) =>
+            prev.map((f) =>
+              f.id === queuedFile.id
+                ? {
+                    ...f,
+                    status: "error",
+                    errorMessage,
+                    validacion: validationData,
+                  }
+                : f
+            )
+          );
+        } else {
+          // Marcar como error
+          setQueuedFiles((prev) =>
+            prev.map((f) =>
+              f.id === queuedFile.id
+                ? {
+                    ...f,
+                    status: "error",
+                    errorMessage: error instanceof Error ? error.message : errorMessage,
+                  }
+                : f
+            )
+          );
+        }
+      }
+    }
+
+    setIsProcessing(false);
+
+    // Mostrar resumen
+    if (errorCount === 0) {
+      showDialog(
+        "¡Procesamiento exitoso!",
+        `Se procesaron ${successCount} archivo(s) correctamente.`,
+        "success"
+      );
+    } else {
+      showDialog(
+        "Procesamiento completado",
+        `✓ ${successCount} archivo(s) exitoso(s)\n✗ ${errorCount} archivo(s) con error(es)\n\nRevisa los detalles de cada archivo en la lista.`,
+        errorCount === validFiles.length ? "error" : "warning"
+      );
+    }
   };
 
   const validCount = queuedFiles.filter((f) => f.status === "valid").length;
@@ -130,6 +238,23 @@ export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) 
 
       {/* Did You Know Card */}
       <DidYouKnowCard />
+
+      {/* Dialog para mensajes */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription className="whitespace-pre-line">
+              {dialogMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setIsDialogOpen(false)}>
+              Entendido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -139,17 +264,12 @@ function validateFile(file: File): { valid: boolean; error?: string; type?: stri
   const fileName = file.name.toLowerCase();
   const fileExtension = fileName.split(".").pop();
 
-  // Validar extensión
-  if (fileExtension !== "xml" && fileExtension !== "zip") {
+  // Validar extensión - solo XML
+  if (fileExtension !== "xml") {
     return {
       valid: false,
-      error: "Formato inválido. Solo se permiten archivos .xml o .zip",
+      error: "Formato inválido. Solo se permiten archivos .xml",
     };
-  }
-
-  // Si es ZIP, es válido (se procesará después)
-  if (fileExtension === "zip") {
-    return { valid: true, type: "ZIP" };
   }
 
   // Para XML, validación básica (el tipo se detectará al leer el contenido)

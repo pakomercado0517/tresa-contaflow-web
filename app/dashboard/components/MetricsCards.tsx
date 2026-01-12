@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, DollarSign, FileText } from "lucide-react";
+import { TrendingDown, DollarSign, FileText } from "lucide-react";
 import type { MetricsResponse } from "@/lib/types/invoices";
 
 interface MetricsCardsProps {
@@ -29,10 +29,6 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Ingresos totales</p>
             <p className="text-3xl font-bold">{formatCurrency(totalIngresos)}</p>
-            <div className="flex items-center gap-1 text-sm text-primary">
-              <TrendingUp className="h-4 w-4" />
-              <span>+5%</span>
-            </div>
           </div>
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
             <DollarSign className="h-6 w-6 text-primary" />
@@ -45,10 +41,6 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Gastos totales</p>
             <p className="text-3xl font-bold">{formatCurrency(totalGastos)}</p>
-            <div className="flex items-center gap-1 text-sm text-destructive">
-              <TrendingDown className="h-4 w-4" />
-              <span>-10%</span>
-            </div>
           </div>
           <div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center">
             <TrendingDown className="h-6 w-6 text-destructive" />
@@ -66,7 +58,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
             </p>
           </div>
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 text-primary" />
+            <DollarSign className="h-6 w-6 text-primary" />
           </div>
         </div>
       </Card>

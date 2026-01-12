@@ -5,7 +5,7 @@ import { MetricsCards } from "./MetricsCards";
 import { FlowTrendChart } from "./FlowTrendChart";
 import { RecentInvoicesTable } from "./RecentInvoicesTable";
 import { RecentExpensesTable } from "./RecentExpensesTable";
-import { getMetrics, getInvoices } from "@/lib/api/invoices";
+import { getMetrics, getInvoices, getTrendData } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 
@@ -27,11 +27,12 @@ export async function DashboardContent({
 
   // No usar .catch() aquí porque captura los errores de redirect()
   // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
-  const [metrics, invoices, expenses, profiles] = await Promise.all([
+  const [metrics, invoices, expenses, profiles, trendData] = await Promise.all([
     getMetrics(profileId, mes, año),
     getInvoices({ profileId, mes, año, limit: 3 }),
     getExpenses({ profileId, mes, año, limit: 3 }),
     getProfiles(),
+    getTrendData(profileId, año),
   ]);
 
   const activeProfile = profiles.data.find((p) => p.id === profileId) ||
@@ -51,7 +52,7 @@ export async function DashboardContent({
         <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
           <DashboardGreeting companyName={activeProfile?.nombre} />
           <MetricsCards metrics={metrics.metrics} />
-          <FlowTrendChart />
+          <FlowTrendChart data={trendData} />
           <div className="grid gap-6 md:grid-cols-2">
             <RecentInvoicesTable invoices={invoices.data} />
             <RecentExpensesTable expenses={expenses.data} />

@@ -68,9 +68,8 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      // Llamar al endpoint de logout
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      await fetch(`${apiUrl}/api/auth/logout`, {
+      // Llamar al endpoint de logout usando proxy de Next.js
+      await fetch("/backend/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });

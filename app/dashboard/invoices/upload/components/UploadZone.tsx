@@ -30,14 +30,12 @@ export function UploadZone({ onFilesSelected }: UploadZoneProps) {
       setIsDragging(false);
 
       const files = Array.from(e.dataTransfer.files);
-      const xmlOrZipFiles = files.filter(
-        (file) =>
-          file.name.toLowerCase().endsWith(".xml") ||
-          file.name.toLowerCase().endsWith(".zip")
+      const xmlFiles = files.filter((file) =>
+        file.name.toLowerCase().endsWith(".xml")
       );
 
-      if (xmlOrZipFiles.length > 0) {
-        onFilesSelected(xmlOrZipFiles);
+      if (xmlFiles.length > 0) {
+        onFilesSelected(xmlFiles);
       }
     },
     [onFilesSelected]
@@ -95,7 +93,7 @@ export function UploadZone({ onFilesSelected }: UploadZoneProps) {
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".xml,.zip"
+          accept=".xml"
           onChange={handleFileInput}
           className="hidden"
         />

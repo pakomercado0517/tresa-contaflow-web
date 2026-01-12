@@ -2,6 +2,9 @@
 export interface RegisterRequest {
   email: string;
   password: string;
+  nombre?: string;
+  apellido?: string;
+  telefono?: string;
 }
 
 export interface LoginRequest {
@@ -30,6 +33,9 @@ export interface ResetPasswordRequest {
 export interface User {
   id: string;
   email: string;
+  nombre: string | null;
+  apellido: string | null;
+  telefono: string | null;
   email_verified: boolean;
 }
 
@@ -71,6 +77,17 @@ export interface ResendVerificationEmailRequest {
 
 export interface ResendVerificationEmailResponse {
   message: string;
+}
+
+export interface UpdateProfileRequest {
+  nombre?: string;
+  apellido?: string;
+  telefono?: string;
+}
+
+export interface UpdateProfileResponse {
+  message: string;
+  user: User;
 }
 
 export interface ErrorResponse {

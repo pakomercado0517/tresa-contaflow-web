@@ -8,6 +8,7 @@ interface ExpensesSummaryCardsProps {
   xmlProcessed: number;
   validXmlPercentage: number;
   manualExpenses: number;
+  selectedMonth?: number;
 }
 
 export function ExpensesSummaryCards({
@@ -15,18 +16,28 @@ export function ExpensesSummaryCards({
   xmlProcessed,
   validXmlPercentage,
   manualExpenses,
+  selectedMonth,
 }: ExpensesSummaryCardsProps) {
   const formatCurrency = (amount: number) => {
+    // Validar que amount sea un número válido
+    const validAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
+    
     return new Intl.NumberFormat("es-MX", {
       style: "currency",
       currency: "MXN",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amount);
+    }).format(validAmount);
   };
 
-  const currentMonth = new Date().toLocaleString("es-MX", { month: "long" });
-  const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
+  const MONTHS = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+
+  // Usar el mes seleccionado o el mes actual
+  const monthIndex = selectedMonth ? selectedMonth - 1 : new Date().getMonth();
+  const monthName = MONTHS[monthIndex];
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -36,7 +47,7 @@ export function ExpensesSummaryCards({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">
-                Total Gastos ({capitalizedMonth})
+                Total Gastos ({monthName})
               </p>
               <p className="text-3xl font-bold">{formatCurrency(totalExpenses)}</p>
               <div className="flex items-center gap-1 mt-2">

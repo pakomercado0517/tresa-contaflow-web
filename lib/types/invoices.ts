@@ -8,7 +8,7 @@ export interface Invoice {
   total: number;
   subtotal: number;
   iva: number;
-  tipo: "PUE" | "PPD" | "COMPLEMENTO_PAGO";
+  tipo: 'PUE' | 'PPD' | 'COMPLEMENTO_PAGO';
   rfc_emisor: string;
   nombre_emisor: string;
   regimen_fiscal_emisor: string | null;
@@ -88,3 +88,18 @@ export interface MetricsResponse {
   };
 }
 
+export interface ValidationState {
+  rfcVerificado: boolean;
+  regimenFiscalVerificado: boolean;
+  uuidDuplicado: boolean;
+  advertencias: string[];
+  errores: string[];
+  valido: boolean;
+}
+
+export interface UploadInvoiceResponse {
+  message: string;
+  data: Invoice;
+  validacion: ValidationState;
+  tipo: 'factura' | 'gasto';
+}

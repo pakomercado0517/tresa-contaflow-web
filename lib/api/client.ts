@@ -19,6 +19,30 @@ let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
 /**
+ * Obtiene el access token actual desde las cookies mediante una API route
+ * @returns El access token o null si no está disponible
+ */
+async function getAccessToken(): Promise<string | null> {
+  try {
+    // Usar la API route de Next.js para leer las cookies httpOnly
+    const response = await fetch("/api/auth/token", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data.accessToken || null;
+  } catch (error) {
+    console.error("Error al obtener token:", error);
+    return null;
+  }
+}
+
+/**
  * Intenta refrescar el access token usando el refresh token
  * @returns El nuevo access token o null si falla
  */
@@ -70,12 +94,29 @@ export async function apiClient<T>(
   endpoint: string,
   options?: ApiClientOptions
 ): Promise<T> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  // Usar proxy de Next.js en el navegador para evitar problemas de CORS
+  // En el servidor (SSR), usar la URL del backend directamente
+  const apiUrl = typeof window !== "undefined" 
+    ? "/backend" // Proxy de Next.js (sin CORS)
+    : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001");
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
     ...options?.headers,
   };
+
+  // Solo agregar Content-Type si no es FormData
+  // El browser setea automáticamente el Content-Type correcto para FormData (con boundary)
+  if (!(options?.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  // Si se requiere autenticación, agregar el token al header
+  if (options?.requireAuth && typeof window !== "undefined") {
+    const accessToken = await getAccessToken();
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+  }
 
   // Primera petición
   let response = await fetch(`${apiUrl}${endpoint}`, {
@@ -101,11 +142,16 @@ export async function apiClient<T>(
         ...options,
         skipAuthRetry: true,
       };
+
+      const retryHeaders: HeadersInit = {
+        ...headers,
+        Authorization: `Bearer ${newAccessToken}`,
+      };
       
       response = await fetch(`${apiUrl}${endpoint}`, {
         ...retryOptions,
         credentials: "include",
-        headers,
+        headers: retryHeaders,
       });
 
       data = await response.json().catch(() => ({}));

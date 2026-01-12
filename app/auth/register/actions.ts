@@ -16,6 +16,9 @@ export async function registerAction(
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
+  const nombre = formData.get("nombre") as string;
+  const apellido = formData.get("apellido") as string;
+  const telefono = formData.get("telefono") as string;
 
   if (!email || !password) {
     return { error: "Email y contraseña son requeridos" };
@@ -30,6 +33,29 @@ export async function registerAction(
   }
 
   try {
+    // Preparar el body del request con los campos opcionales
+    const requestBody: {
+      email: string;
+      password: string;
+      nombre?: string;
+      apellido?: string;
+      telefono?: string;
+    } = {
+      email,
+      password,
+    };
+
+    // Solo agregar los campos si tienen valor
+    if (nombre?.trim()) {
+      requestBody.nombre = nombre.trim();
+    }
+    if (apellido?.trim()) {
+      requestBody.apellido = apellido.trim();
+    }
+    if (telefono?.trim()) {
+      requestBody.telefono = telefono.trim();
+    }
+
     // Hacer fetch directo al backend sin usar apiClient
     // (apiClient está diseñado para client components, no server actions)
     const backendResponse = await fetch(`${API_URL}/api/auth/register`, {
@@ -37,7 +63,7 @@ export async function registerAction(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(requestBody),
     });
 
     const response = (await backendResponse.json()) as RegisterResponse;
