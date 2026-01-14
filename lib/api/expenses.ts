@@ -10,6 +10,7 @@ interface GetExpensesParams {
   categoria?: string;
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 /**
@@ -28,6 +29,7 @@ export async function getExpenses(
   if (params?.categoria) queryParams.append("categoria", params.categoria);
   if (params?.page) queryParams.append("page", params.page.toString());
   if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.search) queryParams.append("search", params.search);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/expenses${queryString ? `?${queryString}` : ""}`;

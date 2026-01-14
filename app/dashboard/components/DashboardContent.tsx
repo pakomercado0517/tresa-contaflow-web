@@ -1,13 +1,14 @@
-import { Sidebar } from "@/components/layout/Sidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardGreeting } from "./DashboardGreeting";
 import { MetricsCards } from "./MetricsCards";
 import { FlowTrendChart } from "./FlowTrendChart";
 import { RecentInvoicesTable } from "./RecentInvoicesTable";
 import { RecentExpensesTable } from "./RecentExpensesTable";
+import { ExportPDFButton } from "./ExportPDFButton";
 import { getMetrics, getInvoices, getTrendData } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
+import { getCurrentUser } from "@/lib/api/auth.server";
 
 interface DashboardContentProps {
   searchParams?: Promise<{
@@ -27,39 +28,63 @@ export async function DashboardContent({
 
   // No usar .catch() aquí porque captura los errores de redirect()
   // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
-  const [metrics, invoices, expenses, profiles, trendData] = await Promise.all([
+  const [metrics, invoices, expenses, profiles, trendData, currentUser] = await Promise.all([
     getMetrics(profileId, mes, año),
     getInvoices({ profileId, mes, año, limit: 3 }),
     getExpenses({ profileId, mes, año, limit: 3 }),
     getProfiles(),
     getTrendData(profileId, año),
+    getCurrentUser(),
   ]);
 
   const activeProfile = profiles.data.find((p) => p.id === profileId) ||
     profiles.data[0];
 
+  // Obtener el nombre del usuario para mostrar
+  const userName = currentUser.user.nombre || currentUser.user.email.split("@")[0];
+
+  // Calcular métricas para el PDF
+  const totalFacturado = metrics.metrics.totalFacturado || 0;
+  const totalPagado = metrics.metrics.totalPagado || 0;
+  const totalCompras = metrics.metrics.totalGastos || 0;
+  const pendientePorPagar = totalFacturado - totalPagado;
+  const diferencia = totalFacturado - totalCompras;
+
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col md:ml-64">
-        <DashboardHeader
-          profiles={profiles.data || []}
-          selectedProfileId={profileId}
-          selectedMonth={mes}
-          selectedYear={año}
-          companyName={activeProfile?.nombre}
-        />
-        <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
-          <DashboardGreeting companyName={activeProfile?.nombre} />
-          <MetricsCards metrics={metrics.metrics} />
-          <FlowTrendChart data={trendData} />
-          <div className="grid gap-6 md:grid-cols-2">
-            <RecentInvoicesTable invoices={invoices.data} />
-            <RecentExpensesTable expenses={expenses.data} />
-          </div>
-        </main>
-      </div>
-    </div>
+    <>
+      <DashboardHeader
+        profiles={profiles.data || []}
+        selectedProfileId={profileId}
+        selectedMonth={mes}
+        selectedYear={año}
+        companyName={activeProfile?.nombre}
+      />
+      <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <DashboardGreeting userName={userName} companyName={activeProfile?.nombre} />
+          <ExportPDFButton
+            profileId={profileId}
+            profileName={activeProfile?.nombre}
+            rfc={activeProfile?.rfc}
+            mes={mes}
+            año={año}
+            metrics={{
+              totalFacturado,
+              totalPagado,
+              totalCompras,
+              pendientePorPagar,
+              diferencia,
+            }}
+          />
+        </div>
+        <MetricsCards metrics={metrics.metrics} />
+        <FlowTrendChart data={trendData} />
+        <div className="grid gap-6 md:grid-cols-2">
+          <RecentInvoicesTable invoices={invoices.data} />
+          <RecentExpensesTable expenses={expenses.data} />
+        </div>
+      </main>
+    </>
   );
 }
 

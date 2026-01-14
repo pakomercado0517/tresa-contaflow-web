@@ -11,7 +11,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
   const totalGastos = metrics?.totalCompras || 0;
   const utilidadNeta = totalIngresos - totalGastos;
   const margen = totalIngresos > 0 ? (utilidadNeta / totalIngresos) * 100 : 0;
-  const facturasPendientes = metrics?.totalFacturas || 0;
+  const totalFacturas = metrics?.totalFacturas || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-MX", {
@@ -66,11 +66,8 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
       <Card className="p-6 bg-card border-border">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Facturas Pendientes</p>
-            <p className="text-3xl font-bold">{facturasPendientes}</p>
-            <p className="text-sm text-muted-foreground">
-              Regulares / Atendidas
-            </p>
+            <p className="text-sm text-muted-foreground">Total de facturas</p>
+            <p className="text-3xl font-bold">{totalFacturas}</p>
           </div>
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
             <FileText className="h-6 w-6 text-primary" />

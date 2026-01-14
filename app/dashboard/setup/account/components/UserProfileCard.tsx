@@ -5,23 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import type { User } from "@/lib/types/auth";
 
-export function UserProfileCard() {
-  // TODO: Obtener datos del usuario desde la API
-  const user = {
-    name: "Juan Pérez",
-    email: "juan.perez@empresa.com",
-    role: "ADMIN",
-    memberSince: "2021",
-    avatar: null,
-  };
+interface UserProfileCardProps {
+  user: User;
+}
 
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+export function UserProfileCard({ user }: UserProfileCardProps) {
+  // Obtener el nombre completo o usar email como fallback
+  const displayName = user.nombre
+    ? user.apellido
+      ? `${user.nombre} ${user.apellido}`
+      : user.nombre
+    : user.email.split("@")[0];
+
+  // Obtener iniciales para el avatar
+  const initials = user.nombre
+    ? `${user.nombre[0]}${user.apellido?.[0] || ""}`.toUpperCase()
+    : user.email[0].toUpperCase();
 
   return (
     <Card>
@@ -30,7 +31,6 @@ export function UserProfileCard() {
           {/* Avatar */}
           <div className="relative">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={user.avatar || undefined} alt={user.name} />
               <AvatarFallback className="text-2xl bg-primary/20 text-primary">
                 {initials}
               </AvatarFallback>
@@ -42,15 +42,14 @@ export function UserProfileCard() {
 
           {/* User Info */}
           <div className="flex-1">
-            <h2 className="text-2xl font-semibold mb-1">{user.name}</h2>
+            <h2 className="text-2xl font-semibold mb-1">{displayName}</h2>
             <p className="text-muted-foreground mb-3">{user.email}</p>
             <div className="flex items-center gap-3">
-              <Badge className="bg-primary text-primary-foreground">
-                {user.role}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Miembro desde {user.memberSince}
-              </span>
+              {user.email_verified && (
+                <Badge className="bg-primary text-primary-foreground">
+                  Verificado
+                </Badge>
+              )}
             </div>
           </div>
 

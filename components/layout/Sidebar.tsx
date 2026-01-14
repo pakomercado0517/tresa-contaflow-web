@@ -14,19 +14,20 @@ import {
   LayoutDashboard,
   FileText,
   Receipt,
-  Users,
-  BarChart3,
-  FileSearch,
-  Download,
   Settings,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { User } from "@/lib/types/auth";
 
 interface NavItem {
   title: string;
   href: string;
   icon: React.ReactNode;
+}
+
+interface SidebarProps {
+  user: User;
 }
 
 const navigationItems: NavItem[] = [
@@ -45,26 +46,23 @@ const navigationItems: NavItem[] = [
     href: "/dashboard/expenses",
     icon: <Receipt className="h-5 w-5" />,
   },
-  {
-    title: "Clientes y Proveedores",
-    href: "/clients",
-    icon: <Users className="h-5 w-5" />,
-  },
-  {
-    title: "Análisis Fiscal",
-    href: "/reports",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
-    title: "Descarga masiva XML",
-    href: "/bulk-download",
-    icon: <Download className="h-5 w-5" />,
-  },
 ];
 
-export function Sidebar() {
+export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+
+  // Obtener el nombre completo o usar email como fallback
+  const displayName = user.nombre
+    ? user.apellido
+      ? `${user.nombre} ${user.apellido}`
+      : user.nombre
+    : user.email.split("@")[0];
+
+  // Obtener iniciales para el avatar
+  const initials = user.nombre
+    ? `${user.nombre[0]}${user.apellido?.[0] || ""}`.toUpperCase()
+    : user.email[0].toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -129,15 +127,15 @@ export function Sidebar() {
         <div className="flex items-center gap-3 p-4 border-t border-border">
           <Avatar className="h-10 w-10">
             <AvatarFallback className="bg-orange-500/20 text-orange-400 border border-orange-500/30">
-              JD
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              Juan Doe
+              {displayName}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              Contador Jr.
+              {user.email}
             </p>
           </div>
           <DropdownMenu>

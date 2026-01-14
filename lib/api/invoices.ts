@@ -13,6 +13,7 @@ interface GetInvoicesParams {
   tipo?: string;
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 /**
@@ -30,6 +31,7 @@ export async function getInvoices(
   if (params?.tipo) queryParams.append("tipo", params.tipo);
   if (params?.page) queryParams.append("page", params.page.toString());
   if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.search) queryParams.append("search", params.search);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/invoices${queryString ? `?${queryString}` : ""}`;
@@ -63,23 +65,49 @@ export async function getMetrics(
 }
 
 /**
- * Obtiene datos de tendencia mensual para el año completo (Server Component only)
- * Hace 12 llamadas a getMetrics (una por mes) y agrega los resultados
+ * Obtiene datos de tendencia mensual (Server Component only)
+ * Solo hace peticiones hasta el mes actual del año para optimizar
+ * Si el año es pasado, obtiene todos los 12 meses
  */
 export async function getTrendData(
   profileId?: string,
   año?: number
 ): Promise<Array<{ mes: number; ingresos: number; gastos: number }>> {
-  const year = año || new Date().getFullYear();
-  const promises = Array.from({ length: 12 }, (_, i) =>
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
+  const year = año || currentYear;
+  
+  // Si es el año actual, solo obtener hasta el mes actual
+  // Si es un año pasado, obtener todos los 12 meses
+  const monthsToFetch = year < currentYear ? 12 : currentMonth;
+  
+  // Crear array de promesas solo para los meses necesarios
+  const promises = Array.from({ length: monthsToFetch }, (_, i) =>
     getMetrics(profileId, i + 1, year)
   );
+  
   const results = await Promise.all(promises);
-  return results.map((result, i) => ({
-    mes: i + 1,
-    ingresos: result.metrics.totalFacturado,
-    gastos: result.metrics.totalCompras,
-  }));
+  
+  // Mapear resultados y rellenar con ceros los meses futuros
+  const trendData = Array.from({ length: 12 }, (_, i) => {
+    const mes = i + 1;
+    if (mes <= monthsToFetch && results[i]) {
+      return {
+        mes,
+        ingresos: results[i].metrics.totalFacturado,
+        gastos: results[i].metrics.totalCompras,
+      };
+    }
+    // Meses futuros o sin datos
+    return {
+      mes,
+      ingresos: 0,
+      gastos: 0,
+    };
+  });
+  
+  return trendData;
 }
 
 /**

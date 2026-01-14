@@ -90,6 +90,10 @@ export interface UpdateProfileResponse {
   user: User;
 }
 
+export interface GetCurrentUserResponse {
+  user: User;
+}
+
 export interface ErrorResponse {
   error: string;
   message?: string;

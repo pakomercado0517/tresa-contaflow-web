@@ -100,8 +100,8 @@ export async function apiClient<T>(
     ? "/backend" // Proxy de Next.js (sin CORS)
     : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001");
 
-  const headers: HeadersInit = {
-    ...options?.headers,
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string>),
   };
 
   // Solo agregar Content-Type si no es FormData

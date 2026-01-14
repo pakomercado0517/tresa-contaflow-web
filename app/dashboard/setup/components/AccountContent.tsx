@@ -4,16 +4,18 @@ import { SubscriptionCard } from "../account/components/SubscriptionCard";
 import { PreferencesCard } from "../account/components/PreferencesCard";
 import { AddNewCompanyCard } from "../account/components/AddNewCompanyCard";
 import type { Subscription } from "@/lib/types/subscription";
+import type { User } from "@/lib/types/auth";
 
 interface AccountContentProps {
   subscription: Subscription | null;
+  user: User;
 }
 
-export function AccountContent({ subscription }: AccountContentProps) {
+export function AccountContent({ subscription, user }: AccountContentProps) {
   return (
     <div className="space-y-6">
       {/* User Profile Card */}
-      <UserProfileCard />
+      <UserProfileCard user={user} />
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">

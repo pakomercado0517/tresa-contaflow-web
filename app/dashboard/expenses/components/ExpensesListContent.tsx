@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import type { Expense } from "@/lib/types/expenses";
 import type { Profile } from "@/lib/types/profiles";
+import { exportToPDF } from "@/lib/utils/pdf-export";
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -129,23 +130,17 @@ export function ExpensesListContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch || "");
-  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "");
+  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "all");
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
   const [selectedCategoria, setSelectedCategoria] = useState(initialCategoria || "all");
   const [isManualExpenseDialogOpen, setIsManualExpenseDialogOpen] = useState(false);
   const [showProfileWarning, setShowProfileWarning] = useState(false);
-
-  // Asegurarse de que siempre haya un perfil seleccionado
-  useEffect(() => {
-    if (!selectedProfileId && profiles.length > 0) {
-      setSelectedProfileId(profiles[0].id);
-    }
-  }, [profiles, selectedProfileId]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
-    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    if (selectedProfileId && selectedProfileId !== "all") params.set("profileId", selectedProfileId);
     if (selectedMes) params.set("mes", selectedMes.toString());
     if (selectedAño) params.set("año", selectedAño.toString());
     if (selectedCategoria && selectedCategoria !== "all") params.set("categoria", selectedCategoria);
@@ -167,17 +162,22 @@ export function ExpensesListContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMes, selectedAño, selectedCategoria]); // Solo estos filtros se aplican automáticamente
 
-  // Debounce para la búsqueda
+  // Marcar que la carga inicial ya terminó
   useEffect(() => {
+    setIsInitialLoad(false);
+  }, []);
+
+  // Debounce para la búsqueda - SOLO se ejecuta cuando cambia search
+  useEffect(() => {
+    if (isInitialLoad) return;
+
     const timer = setTimeout(() => {
-      if (search !== initialSearch) {
-        applyFilters();
-      }
+      applyFilters();
     }, 500); // 500ms de delay
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search]); // SOLO search como dependencia
 
   const handleClearFilters = () => {
     setSearch("");
@@ -186,7 +186,7 @@ export function ExpensesListContent({
     setSelectedCategoria("all");
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
-    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    if (selectedProfileId && selectedProfileId !== "all") params.set("profileId", selectedProfileId);
     params.set("mes", (new Date().getMonth() + 1).toString());
     params.set("año", new Date().getFullYear().toString());
     params.set("page", "1");
@@ -199,10 +199,33 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
+  const handleExportPDF = async () => {
+    const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+    
+    // Calcular métricas para el resumen
+    const totalGastos = expenses.reduce((sum, exp) => sum + exp.total, 0);
+
+    await exportToPDF({
+      tipo: "gastos",
+      expenses,
+      profileName: selectedProfile?.nombre || "Todos los perfiles",
+      rfc: selectedProfile?.rfc || "",
+      mes: selectedMes,
+      año: selectedAño,
+      metrics: {
+        totalFacturado: 0,
+        totalPagado: 0,
+        totalCompras: totalGastos,
+        pendientePorPagar: 0,
+        diferencia: 0,
+      },
+    });
+  };
+
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     const params = new URLSearchParams(searchParams.toString());
-    if (profileId) {
+    if (profileId && profileId !== "all") {
       params.set("profileId", profileId);
     } else {
       params.delete("profileId");
@@ -254,6 +277,14 @@ export function ExpensesListContent({
             selectedProfileId={selectedProfileId}
             onProfileChange={handleProfileChange}
           />
+          <Button
+            onClick={handleExportPDF}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary/10"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
           <Button
             variant="outline"
             className="border-primary/20 hover:bg-primary/10"
@@ -410,8 +441,19 @@ export function ExpensesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No se encontraron gastos
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <p className="text-base font-medium">
+                          {search
+                            ? `No se encontraron gastos que coincidan con "${search}"`
+                            : "No se encontraron gastos"}
+                        </p>
+                        {search && (
+                          <p className="text-sm">
+                            Intenta con otros términos de búsqueda o ajusta los filtros
+                          </p>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

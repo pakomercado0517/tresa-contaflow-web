@@ -6,11 +6,13 @@ import type { Subscription } from "@/lib/types/subscription";
 interface SubscriptionContentProps {
   subscription: Subscription | null;
   currentProfilesCount: number;
+  xmlUsed: number;
 }
 
 export function SubscriptionContent({
   subscription,
   currentProfilesCount,
+  xmlUsed,
 }: SubscriptionContentProps) {
   return (
     <div className="space-y-8">
@@ -29,6 +31,7 @@ export function SubscriptionContent({
         <ConsumptionCard
           subscription={subscription}
           currentProfilesCount={currentProfilesCount}
+          xmlUsed={xmlUsed}
         />
       </div>
 

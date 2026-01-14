@@ -21,11 +21,12 @@ export function ProfileSelector({
   onProfileChange,
 }: ProfileSelectorProps) {
   return (
-    <Select value={selectedProfileId} onValueChange={onProfileChange}>
+    <Select value={selectedProfileId || "all"} onValueChange={onProfileChange}>
       <SelectTrigger className="w-[280px]">
         <SelectValue placeholder="SELECCIONAR EMPRESA / RFC" />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value="all">TODOS LOS PERFILES</SelectItem>
         {profiles.map((profile) => (
           <SelectItem key={profile.id} value={profile.id}>
             {profile.nombre} ({profile.rfc})

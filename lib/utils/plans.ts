@@ -32,10 +32,10 @@ export const PLANS: PlanDetails[] = [
     icon: "Leaf",
     features: [
       { label: "RFC Emisor", value: 1 },
-      { label: "Archivos XML / mes", value: 10 },
+      { label: "Archivos XML / mes", value: 50 },
       { label: "Validación básica", value: "Sí" },
     ],
-    xmlLimit: 10,
+    xmlLimit: 50,
     profilesLimit: 1,
   },
   {
@@ -43,17 +43,18 @@ export const PLANS: PlanDetails[] = [
     name: "Básico",
     description: "Pequeños negocios en crecimiento.",
     price: {
-      monthly: 299,
-      annual: 239, // 20% descuento
+      monthly: 300,
+      annual: 240, // 20% descuento
     },
     icon: "Rocket",
     features: [
       { label: "RFCs Emisores", value: 3 },
-      { label: "Archivos XML / mes", value: 100 },
-      { label: "Descarga masiva XML", value: "Sí" },
-      { label: "Reportes mensuales", value: "Sí" },
+      { label: "Archivos XML / mes", value: 500 },
+      { label: "Exportación PDF", value: "Sí" },
+      { label: "Reportes completos", value: "Sí" },
+      { label: "Soporte por email", value: "Sí" },
     ],
-    xmlLimit: 100,
+    xmlLimit: 500,
     profilesLimit: 3,
   },
   {
@@ -61,18 +62,19 @@ export const PLANS: PlanDetails[] = [
     name: "Pro",
     description: "Contadores y despachos.",
     price: {
-      monthly: 699,
-      annual: 559, // 20% descuento
+      monthly: 800,
+      annual: 640, // 20% descuento
     },
     icon: "Gem",
     features: [
       { label: "RFCs Emisores", value: 10 },
-      { label: "Archivos XML / mes", value: 1000 },
+      { label: "Archivos XML ilimitados", value: "Sí" },
+      { label: "Exportación PDF y Excel", value: "Sí" },
       { label: "Acceso a API", value: "Sí" },
       { label: "Soporte Prioritario", value: "Sí" },
     ],
     isPopular: true,
-    xmlLimit: 1000,
+    xmlLimit: "unlimited",
     profilesLimit: 10,
   },
   {
@@ -86,9 +88,10 @@ export const PLANS: PlanDetails[] = [
     icon: "Building2",
     features: [
       { label: "RFCs Emisores", value: "Ilimitados" },
-      { label: "Archivos XML / mes", value: "5000+" },
+      { label: "Archivos XML", value: "Ilimitados" },
       { label: "Multi-usuario (Roles)", value: "Sí" },
       { label: "Gerente de cuenta", value: "Sí" },
+      { label: "Integraciones personalizadas", value: "Sí" },
     ],
     xmlLimit: "unlimited",
     profilesLimit: "unlimited",

@@ -6,10 +6,48 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPlanDetails, formatPrice } from "@/lib/utils/plans";
-import type { Subscription } from "@/lib/types/subscription";
+import { createPortalSessionClient } from "@/lib/api/subscription.client";
+import type { Subscription, SubscriptionStatus } from "@/lib/types/subscription";
 
 interface CurrentPlanCardProps {
   subscription: Subscription | null;
+}
+
+function getStatusBadge(status: SubscriptionStatus) {
+  switch (status) {
+    case "ACTIVE":
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600">Activo</Badge>
+      );
+    case "TRIALING":
+      return (
+        <Badge className="bg-blue-500 hover:bg-blue-600 text-white">
+          Período de Prueba
+        </Badge>
+      );
+    case "PAST_DUE":
+      return (
+        <Badge className="bg-orange-500 hover:bg-orange-600">
+          Pago Pendiente
+        </Badge>
+      );
+    case "UNPAID":
+      return <Badge variant="destructive">Pago Fallido</Badge>;
+    case "CANCELLED":
+      return (
+        <Badge variant="outline" className="border-red-500 text-red-500">
+          Cancelado
+        </Badge>
+      );
+    case "EXPIRED":
+      return (
+        <Badge variant="outline" className="border-gray-500 text-gray-500">
+          Expirado
+        </Badge>
+      );
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
 }
 
 export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
@@ -17,6 +55,7 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
   const plan = subscription?.plan || "FREE";
   const planDetails = getPlanDetails(plan);
   const price = subscription?.planPrice || planDetails.price.monthly;
+  const status = subscription?.status || "ACTIVE";
 
   const nextRenewal = subscription?.currentPeriodEnd
     ? new Date(subscription.currentPeriodEnd).toLocaleDateString("es-MX", {
@@ -31,25 +70,19 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
 
     setIsLoading(true);
     try {
-      // Usar proxy de Next.js para evitar CORS
-      const response = await fetch(
-        "/backend/api/subscription/create-portal-session",
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const data = await response.json();
+      // Usar la función del cliente que maneja automáticamente la autenticación
+      const data = await createPortalSessionClient();
 
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (error) {
       console.error("Error al crear portal session:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Error al abrir el portal. Por favor, intenta nuevamente."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -60,9 +93,7 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Plan Actual</h3>
-          <Badge className="bg-primary text-primary-foreground">
-            PLAN ACTUAL
-          </Badge>
+          {getStatusBadge(status)}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -74,7 +105,7 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
         <div>
           <p className="text-3xl font-bold">{planDetails.name}</p>
           <p className="text-lg text-muted-foreground mt-1">
-            {formatPrice(price)} MXN / mes
+            {formatPrice(price)} / mes
           </p>
         </div>
         {subscription?.stripeCustomerId && (
@@ -92,4 +123,3 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
     </Card>
   );
 }
-

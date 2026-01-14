@@ -26,6 +26,7 @@ import { SummaryCards } from "./SummaryCards";
 import { ProfileSelector } from "./ProfileSelector";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Profile } from "@/lib/types/profiles";
+import { exportToPDF } from "@/lib/utils/pdf-export";
 
 interface InvoicesListContentProps {
   invoices: Invoice[];
@@ -85,14 +86,15 @@ export function InvoicesListContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch || "");
-  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "");
+  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "all");
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
   const [selectedTipo, setSelectedTipo] = useState(initialTipo || "all");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
-    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    if (selectedProfileId && selectedProfileId !== "all") params.set("profileId", selectedProfileId);
     if (selectedMes) params.set("mes", selectedMes.toString());
     if (selectedAño) params.set("año", selectedAño.toString());
     if (selectedTipo && selectedTipo !== "all") params.set("tipo", selectedTipo);
@@ -114,17 +116,22 @@ export function InvoicesListContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMes, selectedAño, selectedTipo]); // Solo estos filtros se aplican automáticamente
 
-  // Debounce para la búsqueda
+  // Marcar que la carga inicial ya terminó
   useEffect(() => {
+    setIsInitialLoad(false);
+  }, []);
+
+  // Debounce para la búsqueda - SOLO se ejecuta cuando cambia search
+  useEffect(() => {
+    if (isInitialLoad) return;
+
     const timer = setTimeout(() => {
-      if (search !== initialSearch) {
-        applyFilters();
-      }
+      applyFilters();
     }, 500); // 500ms de delay
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search]); // SOLO search como dependencia
 
   const handleClearFilters = () => {
     setSearch("");
@@ -133,7 +140,7 @@ export function InvoicesListContent({
     setSelectedTipo("all");
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
-    if (selectedProfileId) params.set("profileId", selectedProfileId);
+    if (selectedProfileId && selectedProfileId !== "all") params.set("profileId", selectedProfileId);
     params.set("mes", (new Date().getMonth() + 1).toString());
     params.set("año", new Date().getFullYear().toString());
     params.set("page", "1");
@@ -143,7 +150,7 @@ export function InvoicesListContent({
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     const params = new URLSearchParams(searchParams.toString());
-    if (profileId) {
+    if (profileId && profileId !== "all") {
       params.set("profileId", profileId);
     } else {
       params.delete("profileId");
@@ -173,6 +180,53 @@ export function InvoicesListContent({
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+    });
+  };
+
+  const handleExportPDF = async () => {
+    const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+    
+    // Calcular métricas para el resumen
+    const totalFacturado = invoices.reduce((sum, inv) => {
+      const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total) || 0;
+      return sum + total;
+    }, 0);
+    
+    // Las facturas PUE están pagadas automáticamente
+    // Las facturas PPD están pagadas si tienen complementos de pago o están completamente pagadas
+    const facturasPagadas = invoices.filter((inv) => {
+      if (inv.tipo === "PUE") return true; // PUE siempre están pagadas
+      if (inv.tipo === "PPD") {
+        // Para PPD, considerar pagadas si tienen complemento_pago completo
+        // Por ahora, todas las PPD se consideran pagadas si tienen complemento_pago
+        return inv.complemento_pago !== null;
+      }
+      return false;
+    });
+    const totalPagado = facturasPagadas.reduce((sum, inv) => {
+      const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total) || 0;
+      return sum + total;
+    }, 0);
+    
+    const pendientePorPagar = totalFacturado - totalPagado;
+
+    await exportToPDF({
+      tipo: "facturas",
+      invoices,
+      profileName: selectedProfile?.nombre || "Todos los perfiles",
+      rfc: selectedProfile?.rfc || "",
+      mes: selectedMes,
+      año: selectedAño,
+      metrics: {
+        totalFacturado,
+        totalPagado,
+        totalCompras: 0,
+        pendientePorPagar,
+        diferencia: 0,
+        totalFacturas: invoices.length,
+        facturasPUE: invoices.filter((inv) => inv.tipo === "PUE").length,
+        facturasPPD: invoices.filter((inv) => inv.tipo === "PPD").length,
+      },
     });
   };
 
@@ -225,6 +279,14 @@ export function InvoicesListContent({
             selectedProfileId={selectedProfileId}
             onProfileChange={handleProfileChange}
           />
+          <Button
+            onClick={handleExportPDF}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary/10"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
           <Link href="/dashboard/invoices/upload">
             <Button className="bg-primary hover:bg-primary/90">
               <Plus className="mr-2 h-4 w-4" />
@@ -370,8 +432,19 @@ export function InvoicesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No se encontraron facturas
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <p className="text-base font-medium">
+                          {search
+                            ? `No se encontraron facturas que coincidan con "${search}"`
+                            : "No se encontraron facturas"}
+                        </p>
+                        {search && (
+                          <p className="text-sm">
+                            Intenta con otros términos de búsqueda o ajusta los filtros
+                          </p>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

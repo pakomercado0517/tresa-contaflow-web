@@ -7,17 +7,17 @@ import type { Subscription } from "@/lib/types/subscription";
 interface ConsumptionCardProps {
   subscription: Subscription | null;
   currentProfilesCount: number;
+  xmlUsed: number;
 }
 
 export function ConsumptionCard({
   subscription,
   currentProfilesCount,
+  xmlUsed,
 }: ConsumptionCardProps) {
   const plan = subscription?.plan || "FREE";
   const planDetails = getPlanDetails(plan);
 
-  // TODO: Obtener datos reales de consumo de XML desde la API
-  const xmlUsed = 850;
   const xmlLimit =
     planDetails.xmlLimit === "unlimited" ? Infinity : planDetails.xmlLimit;
   const xmlPercentage =

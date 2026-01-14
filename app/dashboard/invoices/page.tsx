@@ -1,4 +1,3 @@
-import { Sidebar } from "@/components/layout/Sidebar";
 import { getInvoices } from "@/lib/api/invoices";
 import { getProfiles } from "@/lib/api/profiles";
 import { getMetrics } from "@/lib/api/invoices";
@@ -17,7 +16,7 @@ interface InvoicesPageProps {
 
 export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
   const params = await searchParams;
-  const profileId = params?.profileId;
+  const profileId = params?.profileId && params.profileId !== "all" ? params.profileId : undefined;
   const mes = params?.mes ? Number(params.mes) : new Date().getMonth() + 1;
   const año = params?.año ? Number(params.año) : new Date().getFullYear();
   const tipo = params?.tipo && params.tipo !== "all" ? params.tipo : undefined;
@@ -32,29 +31,25 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       tipo,
       page,
       limit: 20,
+      search,
     }),
     getProfiles(),
     getMetrics(profileId, mes, año),
   ]);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col md:ml-64 min-w-0">
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          <InvoicesListContent
-            invoices={invoices.data}
-            pagination={invoices.pagination}
-            profiles={profiles.data}
-            metrics={metrics.metrics}
-            initialProfileId={profileId}
-            initialMes={mes}
-            initialAño={año}
-            initialTipo={tipo}
-            initialSearch={search}
-          />
-        </main>
-      </div>
-    </div>
+    <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+      <InvoicesListContent
+        invoices={invoices.data}
+        pagination={invoices.pagination}
+        profiles={profiles.data}
+        metrics={metrics.metrics}
+        initialProfileId={profileId}
+        initialMes={mes}
+        initialAño={año}
+        initialTipo={tipo}
+        initialSearch={search}
+      />
+    </main>
   );
 }

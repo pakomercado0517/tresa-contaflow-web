@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PLANS, getPlanDetails, formatPrice } from "@/lib/utils/plans";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PLANS, formatPrice } from "@/lib/utils/plans";
+import { createCheckoutSession } from "@/lib/api/subscription.client";
 import {
   Leaf,
   Rocket,
@@ -30,50 +32,62 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly"
   );
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpgrade = async (planId: Plan) => {
-    if (planId === "FREE" || planId === currentPlan) {
+    // Validaciones
+    if (planId === "FREE") {
+      setError("El plan FREE no requiere suscripción");
       return;
     }
 
-    // Solo BASIC y PRO están disponibles para checkout directo
+    if (planId === currentPlan) {
+      setError("Ya tienes este plan activo");
+      return;
+    }
+
     // ENTERPRISE requiere contacto con ventas
     if (planId === "ENTERPRISE") {
-      // TODO: Implementar flujo de contacto con ventas
-      alert("Por favor, contacta a ventas para el plan Empresarial");
+      setError(
+        "El plan Empresarial requiere contacto directo. Por favor, escríbenos a ventas@contaflow.com"
+      );
       return;
     }
 
+    setError(null);
+    setLoadingPlan(planId);
+
     try {
-      // Usar proxy de Next.js para evitar CORS
-      const response = await fetch("/backend/api/subscription/create-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          plan: planId as "BASIC" | "PRO",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al crear sesión de checkout");
-      }
-
-      const data = await response.json();
+      const data = await createCheckoutSession(planId as "BASIC" | "PRO");
 
       if (data.url) {
+        // Redirigir a Stripe Checkout
         window.location.href = data.url;
+      } else {
+        throw new Error("No se recibió URL de checkout");
       }
-    } catch (error) {
-      console.error("Error al crear checkout:", error);
-      alert("Error al procesar la solicitud. Por favor, intenta nuevamente.");
+    } catch (err) {
+      console.error("Error al crear checkout:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error al procesar la solicitud. Por favor, intenta nuevamente."
+      );
+      setLoadingPlan(null);
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-semibold">Planes Disponibles</h3>
@@ -82,6 +96,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
         <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
           <button
             onClick={() => setBillingCycle("monthly")}
+            disabled={loadingPlan !== null}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               billingCycle === "monthly"
                 ? "bg-primary text-primary-foreground"
@@ -92,6 +107,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
           </button>
           <button
             onClick={() => setBillingCycle("annual")}
+            disabled={loadingPlan !== null}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               billingCycle === "annual"
                 ? "bg-primary text-primary-foreground"
@@ -165,14 +181,23 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
                 <Button
                   className="w-full"
                   variant={isCurrentPlan ? "outline" : "default"}
-                  disabled={isCurrentPlan}
+                  disabled={isCurrentPlan || loadingPlan !== null}
                   onClick={() => handleUpgrade(plan.id)}
                 >
-                  {isCurrentPlan
-                    ? "Plan Actual"
-                    : plan.id === "FREE"
-                      ? "Seleccionar"
-                      : "Mejorar Plan"}
+                  {loadingPlan === plan.id ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : isCurrentPlan ? (
+                    "Plan Actual"
+                  ) : plan.id === "FREE" ? (
+                    "Plan Gratuito"
+                  ) : plan.id === "ENTERPRISE" ? (
+                    "Contactar Ventas"
+                  ) : (
+                    "Mejorar Plan"
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -192,4 +217,3 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
     </div>
   );
 }
-

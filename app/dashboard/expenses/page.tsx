@@ -1,4 +1,3 @@
-import { Sidebar } from "@/components/layout/Sidebar";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 import { getMetrics } from "@/lib/api/invoices";
@@ -17,7 +16,7 @@ interface ExpensesPageProps {
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
   const params = await searchParams;
-  const profileId = params?.profileId;
+  const profileId = params?.profileId && params.profileId !== "all" ? params.profileId : undefined;
   const mes = params?.mes ? Number(params.mes) : new Date().getMonth() + 1;
   const año = params?.año ? Number(params.año) : new Date().getFullYear();
   const categoria = params?.categoria && params.categoria !== "all" ? params.categoria : undefined;
@@ -32,30 +31,26 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
       categoria,
       page,
       limit: 20,
+      search,
     }),
     getProfiles(),
     getMetrics(profileId, mes, año),
   ]);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 flex flex-col md:ml-64 min-w-0">
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          <ExpensesListContent
-            expenses={expenses.data}
-            pagination={expenses.pagination}
-            profiles={profiles.data}
-            metrics={metrics.metrics}
-            initialProfileId={profileId}
-            initialMes={mes}
-            initialAño={año}
-            initialCategoria={params?.categoria || "all"}
-            initialSearch={search}
-          />
-        </main>
-      </div>
-    </div>
+    <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+      <ExpensesListContent
+        expenses={expenses.data}
+        pagination={expenses.pagination}
+        profiles={profiles.data}
+        metrics={metrics.metrics}
+        initialProfileId={profileId}
+        initialMes={mes}
+        initialAño={año}
+        initialCategoria={params?.categoria || "all"}
+        initialSearch={search}
+      />
+    </main>
   );
 }
 
