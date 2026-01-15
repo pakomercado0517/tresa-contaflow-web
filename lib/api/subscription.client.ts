@@ -24,11 +24,19 @@ export async function getSubscriptionClient(): Promise<GetSubscriptionResponse> 
 /**
  * Crea una sesión de checkout de Stripe (Client Component)
  * Solo acepta planes BASIC y PRO
+ * @param plan - Plan a suscribirse (BASIC o PRO)
+ * @param promotionCode - Código de descuento opcional (3-50 caracteres)
  */
 export async function createCheckoutSession(
-  plan: "BASIC" | "PRO"
+  plan: "BASIC" | "PRO",
+  promotionCode?: string
 ): Promise<CreateCheckoutResponse> {
   const body: CreateCheckoutRequest = { plan };
+  
+  // Solo agregar promotionCode si existe y no está vacío
+  if (promotionCode && promotionCode.trim()) {
+    body.promotionCode = promotionCode.trim().toUpperCase();
+  }
 
   return apiClient<CreateCheckoutResponse>(
     "/api/subscription/create-checkout",

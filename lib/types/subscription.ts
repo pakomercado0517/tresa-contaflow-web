@@ -23,6 +23,7 @@ export interface GetSubscriptionResponse extends Subscription {}
 
 export interface CreateCheckoutRequest {
   plan: "BASIC" | "PRO";
+  promotionCode?: string;
 }
 
 export interface CreateCheckoutResponse {

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PLANS, formatPrice } from "@/lib/utils/plans";
 import { createCheckoutSession } from "@/lib/api/subscription.client";
+import { PromotionCodeInput } from "./PromotionCodeInput";
 import {
   Leaf,
   Rocket,
@@ -34,6 +35,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
   );
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [promotionCode, setPromotionCode] = useState<string>("");
 
   const handleUpgrade = async (planId: Plan) => {
     // Validaciones
@@ -59,7 +61,11 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
     setLoadingPlan(planId);
 
     try {
-      const data = await createCheckoutSession(planId as "BASIC" | "PRO");
+      // Llamar a createCheckoutSession con el código de promoción (si existe)
+      const data = await createCheckoutSession(
+        planId as "BASIC" | "PRO",
+        promotionCode || undefined
+      );
 
       if (data.url) {
         // Redirigir a Stripe Checkout
@@ -69,11 +75,24 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
       }
     } catch (err) {
       console.error("Error al crear checkout:", err);
-      setError(
+      
+      // Manejar errores específicos de código de descuento
+      const errorMessage =
         err instanceof Error
           ? err.message
-          : "Error al procesar la solicitud. Por favor, intenta nuevamente."
-      );
+          : "Error al procesar la solicitud. Por favor, intenta nuevamente.";
+      
+      // Si el error es sobre código inválido, limpiar el código
+      if (
+        errorMessage.includes("código") ||
+        errorMessage.includes("descuento") ||
+        errorMessage.includes("inválido") ||
+        errorMessage.includes("expiró")
+      ) {
+        setPromotionCode("");
+      }
+      
+      setError(errorMessage);
       setLoadingPlan(null);
     }
   };
@@ -87,6 +106,13 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      {/* Promotion Code Input */}
+      <PromotionCodeInput
+        value={promotionCode}
+        onChange={setPromotionCode}
+        disabled={loadingPlan !== null}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between">
