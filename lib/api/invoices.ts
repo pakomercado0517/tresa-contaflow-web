@@ -72,42 +72,60 @@ export async function getMetrics(
 export async function getTrendData(
   profileId?: string,
   año?: number
-): Promise<Array<{ mes: number; ingresos: number; gastos: number }>> {
+): Promise<Array<{ mes: number; año: number; ingresos: number; gastos: number }>> {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
   const year = año || currentYear;
   
-  // Si es el año actual, solo obtener hasta el mes actual
+  // Si es el año actual, incluir últimos 3 meses del año anterior
   // Si es un año pasado, obtener todos los 12 meses
   const monthsToFetch = year < currentYear ? 12 : currentMonth;
-  
-  // Crear array de promesas solo para los meses necesarios
-  const promises = Array.from({ length: monthsToFetch }, (_, i) =>
+  const shouldIncludePrevYearTail = year === currentYear;
+  const previousYear = year - 1;
+
+  const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
     getMetrics(profileId, i + 1, year)
   );
-  
-  const results = await Promise.all(promises);
-  
-  // Mapear resultados y rellenar con ceros los meses futuros
-  const trendData = Array.from({ length: 12 }, (_, i) => {
+
+  const previousYearMonths = [10, 11, 12];
+  const previousYearPromises = shouldIncludePrevYearTail
+    ? previousYearMonths.map((mes) => getMetrics(profileId, mes, previousYear))
+    : [];
+
+  const [currentYearResults, previousYearResults] = await Promise.all([
+    Promise.all(currentYearPromises),
+    Promise.all(previousYearPromises),
+  ]);
+
+  const previousYearData = shouldIncludePrevYearTail
+    ? previousYearMonths.map((mes, index) => ({
+        mes,
+        año: previousYear,
+        ingresos: previousYearResults[index]?.metrics.totalFacturado || 0,
+        gastos: previousYearResults[index]?.metrics.totalCompras || 0,
+      }))
+    : [];
+
+  const currentYearData = Array.from({ length: 12 }, (_, i) => {
     const mes = i + 1;
-    if (mes <= monthsToFetch && results[i]) {
+    if (mes <= monthsToFetch && currentYearResults[i]) {
       return {
         mes,
-        ingresos: results[i].metrics.totalFacturado,
-        gastos: results[i].metrics.totalCompras,
+        año: year,
+        ingresos: currentYearResults[i].metrics.totalFacturado,
+        gastos: currentYearResults[i].metrics.totalCompras,
       };
     }
-    // Meses futuros o sin datos
     return {
       mes,
+      año: year,
       ingresos: 0,
       gastos: 0,
     };
   });
-  
-  return trendData;
+
+  return [...previousYearData, ...currentYearData];
 }
 
 /**

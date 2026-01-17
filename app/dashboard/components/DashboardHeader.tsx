@@ -34,6 +34,7 @@ export function DashboardHeader({
   const currentDate = new Date();
   const currentMonth = selectedMonth || currentDate.getMonth() + 1;
   const currentYear = selectedYear || currentDate.getFullYear();
+  const previousYear = currentYear - 1;
 
   const months = [
     "Enero",
@@ -50,14 +51,30 @@ export function DashboardHeader({
     "Diciembre",
   ];
 
-  function handleMonthChange(month: number) {
+  function handleMonthChange(month: number, year: number) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("mes", month.toString());
+    params.set("año", year.toString());
     if (selectedProfileId) {
       params.set("profileId", selectedProfileId);
+    } else {
+      params.delete("profileId");
     }
     router.push(`/dashboard?${params.toString()}`);
   }
+
+  const monthOptions = [
+    { month: 10, year: previousYear, label: `Oct ${previousYear}` },
+    { month: 11, year: previousYear, label: `Nov ${previousYear}` },
+    { month: 12, year: previousYear, label: `Dic ${previousYear}` },
+    ...months.map((month, index) => ({
+      month: index + 1,
+      year: currentYear,
+      label: `${month} ${currentYear}`,
+    })),
+  ];
+
+  const selectedValue = `${currentYear}-${currentMonth}`;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -65,17 +82,23 @@ export function DashboardHeader({
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold">Resumen General</h1>
           <Select
-            value={currentMonth.toString()}
-            onValueChange={(value) => handleMonthChange(Number(value))}
+            value={selectedValue}
+            onValueChange={(value) => {
+              const [yearValue, monthValue] = value.split("-");
+              handleMonthChange(Number(monthValue), Number(yearValue));
+            }}
           >
             <SelectTrigger className="w-[160px]">
               <Calendar className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {months.map((month, index) => (
-                <SelectItem key={index + 1} value={(index + 1).toString()}>
-                  {month} {currentYear}
+              {monthOptions.map((option) => (
+                <SelectItem
+                  key={`${option.year}-${option.month}`}
+                  value={`${option.year}-${option.month}`}
+                >
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

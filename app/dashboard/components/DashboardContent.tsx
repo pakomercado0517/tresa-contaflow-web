@@ -39,6 +39,11 @@ export async function DashboardContent({
 
   const activeProfile = profiles.data.find((p) => p.id === profileId) ||
     profiles.data[0];
+  const selectedCompanyName = profileId
+    ? activeProfile?.nombre
+    : profiles.data.length > 0
+      ? "Todas las empresas"
+      : undefined;
 
   // Obtener el nombre del usuario para mostrar
   const userName = currentUser.user.nombre || currentUser.user.email.split("@")[0];
@@ -46,7 +51,7 @@ export async function DashboardContent({
   // Calcular métricas para el PDF
   const totalFacturado = metrics.metrics.totalFacturado || 0;
   const totalPagado = metrics.metrics.totalPagado || 0;
-  const totalCompras = metrics.metrics.totalGastos || 0;
+  const totalCompras = metrics.metrics.totalCompras || 0;
   const pendientePorPagar = totalFacturado - totalPagado;
   const diferencia = totalFacturado - totalCompras;
 
@@ -57,7 +62,7 @@ export async function DashboardContent({
         selectedProfileId={profileId}
         selectedMonth={mes}
         selectedYear={año}
-        companyName={activeProfile?.nombre}
+        companyName={selectedCompanyName}
       />
       <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
         <div className="flex items-center justify-between">

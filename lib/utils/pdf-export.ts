@@ -95,6 +95,79 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString("es-MX");
 }
 
+function getPaidAmount(invoice: Invoice): number {
+  if (invoice.tipo === "PUE") {
+    return invoice.total;
+  }
+
+  if (!invoice.pagos || invoice.pagos.length === 0) {
+    return 0;
+  }
+
+  return invoice.pagos.reduce((sum, pago) => sum + pago.monto, 0);
+}
+
+function getComplementCount(invoice: Invoice): number {
+  if (invoice.tipo === "PPD") {
+    return invoice.pagos?.length ?? 0;
+  }
+
+  if (invoice.tipo === "COMPLEMENTO_PAGO") {
+    return invoice.complemento_pago?.facturasRelacionadas?.length ?? 0;
+  }
+
+  return 0;
+}
+
+function getComplementLabel(invoice: Invoice): string {
+  if (invoice.tipo === "PPD") {
+    const count = getComplementCount(invoice);
+    return count > 0 ? `Con pagos (${count})` : "-";
+  }
+
+  if (invoice.tipo === "COMPLEMENTO_PAGO") {
+    return `Rel: ${getComplementCount(invoice)}`;
+  }
+
+  return "-";
+}
+
+function getPendingAmount(invoice: Invoice): number {
+  if (invoice.tipo !== "PUE" && invoice.tipo !== "PPD") {
+    return 0;
+  }
+
+  const pendiente = invoice.total - getPaidAmount(invoice);
+  return pendiente > 0 ? pendiente : 0;
+}
+
+function formatAmountOrDash(amount: number, shouldShow: boolean): string {
+  return shouldShow ? formatCurrency(amount) : "-";
+}
+
+function isComplementoOrphan(invoice: Invoice, invoices: Invoice[]): boolean {
+  if (invoice.tipo !== "COMPLEMENTO_PAGO") return false;
+  const relatedUuids =
+    invoice.complemento_pago?.facturasRelacionadas?.map((rel) => rel.uuid) || [];
+
+  if (relatedUuids.length === 0) return true;
+
+  return !invoices.some((item) => relatedUuids.includes(item.uuid));
+}
+
+function isInvoicePending(invoice: Invoice): boolean {
+  if (invoice.tipo !== "PPD") return false;
+  const pagado = getPaidAmount(invoice);
+  return pagado < invoice.total;
+}
+
+function isInvoicePaid(invoice: Invoice): boolean {
+  if (invoice.tipo === "PUE") return true;
+  if (invoice.tipo !== "PPD") return false;
+  const pagado = getPaidAmount(invoice);
+  return pagado >= invoice.total && invoice.total > 0;
+}
+
 function lightenColor(color: [number, number, number], percent: number): [number, number, number] {
   return [
     Math.min(255, Math.round(color[0] + (255 - color[0]) * percent)),
@@ -283,14 +356,7 @@ function addFacturasPendientes(doc: jsPDF, y: number, invoices: Invoice[]): numb
   const margin = 15;
   
   // Filtrar facturas pendientes (PPD no completamente pagadas)
-  const facturasPendientes = invoices.filter((inv) => {
-    if (inv.tipo === "PUE") return false; // PUE siempre están pagadas
-    if (inv.tipo === "PPD") {
-      // PPD están pendientes si no tienen complemento_pago completo
-      return inv.complemento_pago === null;
-    }
-    return false;
-  });
+  const facturasPendientes = invoices.filter((inv) => isInvoicePending(inv));
   
   if (facturasPendientes.length === 0) return y;
   
@@ -309,7 +375,7 @@ function addFacturasPendientes(doc: jsPDF, y: number, invoices: Invoice[]): numb
   
   // Preparar datos para tabla
   const tableData = facturasPendientes.map((inv) => {
-    const totalPagado = 0; // TODO: Calcular de complementos si existen
+    const totalPagado = getPaidAmount(inv);
     const pendiente = inv.total - totalPagado;
     
     return [
@@ -318,13 +384,16 @@ function addFacturasPendientes(doc: jsPDF, y: number, invoices: Invoice[]): numb
       formatCurrency(inv.total),
       formatCurrency(totalPagado),
       formatCurrency(pendiente),
+      getComplementLabel(inv),
       inv.rfc_emisor || "N/A",
     ];
   });
   
   autoTable(doc, {
     startY: y,
-    head: [["UUID", "Fecha", "Total", "Pagado", "Pendiente", "RFC Emisor"]],
+    head: [
+      ["UUID", "Fecha", "Total", "Pagado", "Pendiente", "Complementos", "RFC Emisor"],
+    ],
     body: tableData,
     styles: {
       fontSize: 8,
@@ -354,11 +423,7 @@ function addFacturasPagadas(doc: jsPDF, y: number, invoices: Invoice[]): number 
   const margin = 15;
   
   // Filtrar facturas pagadas (PUE + PPD completamente pagadas)
-  const facturasPagadas = invoices.filter((inv) => {
-    if (inv.tipo === "PUE") return true; // PUE siempre están pagadas
-    if (inv.tipo === "PPD" && inv.complemento_pago !== null) return true; // PPD pagadas si tienen complemento_pago
-    return false;
-  });
+  const facturasPagadas = invoices.filter((inv) => isInvoicePaid(inv));
   
   if (facturasPagadas.length === 0) return y;
   
@@ -376,18 +441,25 @@ function addFacturasPagadas(doc: jsPDF, y: number, invoices: Invoice[]): number 
   y += 10;
   
   // Preparar datos para tabla
-  const tableData = facturasPagadas.map((inv) => [
-    inv.uuid?.substring(0, 8) + "..." || "N/A",
-    formatDate(inv.fecha),
-    inv.tipo || "N/A",
-    formatCurrency(inv.total),
-    formatCurrency(inv.total), // Pagado = Total para facturas pagadas
-    inv.rfc_emisor || "N/A",
-  ]);
+  const tableData = facturasPagadas.map((inv) => {
+    const totalPagado = getPaidAmount(inv);
+
+    return [
+      inv.uuid?.substring(0, 8) + "..." || "N/A",
+      formatDate(inv.fecha),
+      inv.tipo || "N/A",
+      formatCurrency(inv.total),
+      formatCurrency(totalPagado),
+      getComplementLabel(inv),
+      inv.rfc_emisor || "N/A",
+    ];
+  });
   
   autoTable(doc, {
     startY: y,
-    head: [["UUID", "Fecha", "Tipo", "Total", "Pagado", "RFC Emisor"]],
+    head: [
+      ["UUID", "Fecha", "Tipo", "Total", "Pagado", "Complementos", "RFC Emisor"],
+    ],
     body: tableData,
     styles: {
       fontSize: 8,
@@ -477,7 +549,11 @@ function addGastos(doc: jsPDF, y: number, expenses: Expense[]): number {
 
 // ==================== TODAS LAS FACTURAS ====================
 function addTodasLasFacturas(doc: jsPDF, y: number, invoices: Invoice[]): number {
-  if (invoices.length === 0) return y;
+  const visibleInvoices = invoices.filter(
+    (inv) => inv.tipo !== "COMPLEMENTO_PAGO" || isComplementoOrphan(inv, invoices)
+  );
+
+  if (visibleInvoices.length === 0) return y;
   
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
@@ -496,18 +572,33 @@ function addTodasLasFacturas(doc: jsPDF, y: number, invoices: Invoice[]): number
   y += 10;
   
   // Preparar datos para tabla
-  const tableData = invoices.map((inv) => [
+  const tableData = visibleInvoices.map((inv) => [
     inv.uuid?.substring(0, 8) + "..." || "N/A",
     formatDate(inv.fecha),
     inv.tipo || "N/A",
     formatCurrency(inv.total),
+    formatAmountOrDash(getPaidAmount(inv), inv.tipo !== "COMPLEMENTO_PAGO"),
+    formatAmountOrDash(getPendingAmount(inv), inv.tipo !== "COMPLEMENTO_PAGO"),
+    getComplementLabel(inv),
     inv.rfc_emisor || "N/A",
     inv.rfc_receptor || "N/A",
   ]);
   
   autoTable(doc, {
     startY: y,
-    head: [["UUID", "Fecha", "Tipo", "Total", "RFC Emisor", "RFC Receptor"]],
+    head: [
+      [
+        "UUID",
+        "Fecha",
+        "Tipo",
+        "Total",
+        "Pagado",
+        "Pendiente",
+        "Complementos",
+        "RFC Emisor",
+        "RFC Receptor",
+      ],
+    ],
     body: tableData,
     styles: {
       fontSize: 8,

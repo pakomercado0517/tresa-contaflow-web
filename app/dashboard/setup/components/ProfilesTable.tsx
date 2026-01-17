@@ -18,6 +18,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -26,15 +35,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ApiError } from "@/lib/api/client";
+import { deleteProfile } from "@/lib/api/profiles.client";
+import type { Profile } from "@/lib/types/profiles";
 import type { Plan, SubscriptionStatus } from "@/lib/types/subscription";
-
-interface Profile {
-  id: string;
-  nombre: string;
-  rfc: string;
-  tipo_persona: "FISICA" | "MORAL";
-  regimen_fiscal: string | null;
-}
 
 interface ProfilesTableProps {
   profiles: Profile[];
@@ -81,6 +85,27 @@ function SubscriptionStatusBadge({ status }: { status: SubscriptionStatus }) {
   );
 }
 
+function getDeleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return "No tienes permisos para eliminar este perfil.";
+    }
+    if (error.status === 404) {
+      return "El perfil ya no existe o fue eliminado.";
+    }
+    if (error.status === 409) {
+      return "No se puede eliminar el perfil porque tiene datos asociados.";
+    }
+    return error.message || "No se pudo eliminar el perfil.";
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "No se pudo eliminar el perfil. Intenta nuevamente.";
+}
+
 export function ProfilesTable({
   profiles,
   canCreate,
@@ -92,6 +117,10 @@ export function ProfilesTable({
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 4;
 
   // Filtrar perfiles por búsqueda
@@ -117,12 +146,44 @@ export function ProfilesTable({
     console.log("Exportar perfiles");
   };
 
-  const handleDelete = (profileId: string) => {
-    // TODO: Implementar eliminación con confirmación
-    if (confirm("¿Estás seguro de que quieres eliminar este perfil?")) {
-      console.log("Eliminar perfil:", profileId);
+  const handleDeleteClick = (profile: Profile) => {
+    setProfileToDelete(profile);
+    setDeleteError(null);
+    setDeleteConfirmation("");
+  };
+
+  const handleEditClick = (profileId?: string) => {
+    if (!profileId) return;
+    router.push(`/dashboard/setup/profiles/${profileId}`);
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    if (!open && !isDeleting) {
+      setProfileToDelete(null);
+      setDeleteError(null);
+      setDeleteConfirmation("");
     }
   };
+
+  const handleConfirmDelete = async () => {
+    if (!profileToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteProfile(profileToDelete.id);
+      setProfileToDelete(null);
+      router.refresh();
+    } catch (error) {
+      setDeleteError(getDeleteErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const deleteKeyword = profileToDelete ? `ELIMINAR ${profileToDelete.rfc}` : "";
+  const isDeleteBlocked =
+    isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
   if (profiles.length === 0) {
     return (
@@ -222,16 +283,16 @@ export function ProfilesTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() =>
-                          router.push(`/dashboard/setup/profiles/${profile.id}`)
-                        }
+                        onClick={() => handleEditClick(profile.id)}
+                        disabled={!profile.id}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(profile.id)}
+                        onClick={() => handleDeleteClick(profile)}
+                        disabled={isDeleting}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -293,6 +354,63 @@ export function ProfilesTable({
           </Button>
         </div>
       </div>
+
+      <Dialog open={!!profileToDelete} onOpenChange={handleCloseDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar perfil</DialogTitle>
+            <DialogDescription>
+              Esta acción eliminará el perfil seleccionado y no se puede deshacer. También
+              se borrarán todas las facturas subidas relacionadas a este perfil o RFC.
+            </DialogDescription>
+          </DialogHeader>
+          {profileToDelete && (
+            <div className="rounded-lg border p-4 text-sm">
+              <p className="font-medium">{profileToDelete.nombre}</p>
+              <p className="text-muted-foreground font-mono">{profileToDelete.rfc}</p>
+            </div>
+          )}
+          {profileToDelete && (
+            <div className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Para confirmar, escribe{" "}
+                <span className="font-mono font-medium text-foreground">
+                  {deleteKeyword}
+                </span>
+                .
+              </p>
+              <Input
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={deleteKeyword}
+                autoComplete="off"
+              />
+            </div>
+          )}
+          {deleteError && (
+            <Alert variant="destructive">
+              <AlertTitle>No se pudo eliminar</AlertTitle>
+              <AlertDescription>{deleteError}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleCloseDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleteBlocked}
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

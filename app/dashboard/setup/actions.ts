@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { createProfile } from "@/lib/api/profiles";
+import { createProfile, updateProfile } from "@/lib/api/profiles";
 import { getProfiles } from "@/lib/api/profiles";
 import { getSubscription } from "@/lib/api/subscription";
 import { logoutUser } from "@/lib/api/auth";
@@ -10,7 +10,7 @@ import {
   canCreateProfile,
   getProfileLimit,
 } from "@/lib/utils/subscription";
-import type { CreateProfileRequest } from "@/lib/types/profiles";
+import type { CreateProfileRequest, UpdateProfileRequest } from "@/lib/types/profiles";
 
 export interface ActionResult {
   error?: string;
@@ -98,6 +98,67 @@ export async function createProfileAction(
     }
 
     return { error: "Error al crear el perfil. Intenta nuevamente." };
+  }
+}
+
+export async function updateProfileAction(
+  profileId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const nombre = formData.get("nombre") as string;
+  const rfc = formData.get("rfc") as string;
+  const tipoPersona = formData.get("tipo_persona") as "FISICA" | "MORAL";
+
+  if (!profileId || !nombre || !rfc || !tipoPersona) {
+    return { error: "Todos los campos son requeridos" };
+  }
+
+  if (nombre.length < 2 || nombre.length > 255) {
+    return { error: "El nombre debe tener entre 2 y 255 caracteres" };
+  }
+
+  if (rfc.length < 12 || rfc.length > 13) {
+    return { error: "El RFC debe tener 12 o 13 caracteres" };
+  }
+
+  const rfcPattern = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/;
+  if (!rfcPattern.test(rfc)) {
+    return { error: "Formato de RFC inválido" };
+  }
+
+  if (tipoPersona !== "FISICA" && tipoPersona !== "MORAL") {
+    return { error: "El tipo de persona debe ser FISICA o MORAL" };
+  }
+
+  try {
+    const requestData: UpdateProfileRequest = {
+      nombre,
+      rfc,
+      tipo_persona: tipoPersona,
+    };
+
+    await updateProfile(profileId, requestData);
+
+    redirect("/dashboard/setup/profiles");
+  } catch (error) {
+    if (error && typeof error === "object" && "digest" in error) {
+      const nextError = error as { digest?: string };
+      if (nextError.digest?.startsWith("NEXT_REDIRECT")) {
+        throw error;
+      }
+    }
+
+    if (error instanceof Error) {
+      if (error.message.includes("RFC")) {
+        return { error: "El RFC ingresado ya está registrado" };
+      }
+      if (error.message.includes("Perfil no encontrado")) {
+        return { error: "El perfil ya no existe o fue eliminado" };
+      }
+      return { error: error.message };
+    }
+
+    return { error: "Error al actualizar el perfil. Intenta nuevamente." };
   }
 }
 

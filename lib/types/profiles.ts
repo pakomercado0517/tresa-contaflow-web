@@ -15,6 +15,10 @@ export interface GetProfilesResponse {
   count: number;
 }
 
+export interface GetProfileResponse {
+  data: Profile;
+}
+
 export interface CreateProfileRequest {
   nombre: string;
   rfc: string;
@@ -35,3 +39,26 @@ export interface CreateProfileResponse {
   data: Profile;
 }
 
+export interface UpdateProfileRequest {
+  nombre?: string;
+  rfc?: string;
+  tipo_persona?: "FISICA" | "MORAL";
+  regimen_fiscal?: string;
+  validaciones_habilitadas?: {
+    validarRFCIngresos?: boolean;
+    validarRFCGastos?: boolean;
+    validarRegimenFiscal?: boolean;
+    validarUUIDDuplicado?: boolean;
+    bloquearSiRFCNoCoincide?: boolean;
+    bloquearSiRegimenNoCoincide?: boolean;
+  };
+}
+
+export interface UpdateProfileResponse {
+  message: string;
+  data: Profile;
+}
+
+export interface DeleteProfileResponse {
+  message: string;
+}

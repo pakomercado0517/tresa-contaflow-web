@@ -33,6 +33,7 @@ const MONTHS_SHORT = [
 interface FlowTrendChartProps {
   data: Array<{
     mes: number;
+    año: number;
     ingresos: number;
     gastos: number;
   }>;
@@ -44,11 +45,18 @@ export function FlowTrendChart({ data }: FlowTrendChartProps) {
   );
 
   // Transformar datos de API (mes numérico) a formato de gráfico (nombre de mes)
-  const chartData = data.map((item) => ({
-    fecha: MONTHS_SHORT[item.mes - 1],
-    ingresos: item.ingresos,
-    gastos: item.gastos,
-  }));
+  const currentYear = new Date().getFullYear();
+  const chartData = data.map((item) => {
+    const monthLabel = MONTHS_SHORT[item.mes - 1];
+    const label =
+      item.año === currentYear ? monthLabel : `${monthLabel} ${item.año}`;
+
+    return {
+      fecha: label,
+      ingresos: item.ingresos,
+      gastos: item.gastos,
+    };
+  });
 
   // Verificar si hay datos
   const hasData = data.some((item) => item.ingresos > 0 || item.gastos > 0);
