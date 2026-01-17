@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { logger } from "@/lib/utils/logger";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -116,8 +116,17 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
             onClick={handleStripePortal}
             disabled={isLoading}
           >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            {isLoading ? "Cargando..." : "Administrar facturación en Stripe"}
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Cargando...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Administrar facturación en Stripe
+              </>
+            )}
           </Button>
         )}
       </CardContent>
