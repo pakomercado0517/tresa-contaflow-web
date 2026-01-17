@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { loginAction } from "../actions";
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const resetParam = searchParams.get("reset");
+  const successMessage = resetParam === "success" 
+    ? "Contraseña restablecida correctamente. Ya puedes iniciar sesión."
+    : null;
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -40,6 +46,15 @@ export function LoginForm() {
         {error && (
           <div className="w-full p-3 bg-destructive/10 border border-destructive/20 rounded-md">
             <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="w-full p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <p className="text-sm text-green-600">{successMessage}</p>
+            </div>
           </div>
         )}
 

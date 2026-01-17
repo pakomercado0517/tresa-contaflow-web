@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, ArrowRight } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,7 +31,7 @@ export function SubscriptionSuccessContent() {
         const data = await getSubscriptionClient();
         setSubscription(data);
       } catch (error) {
-        console.error("Error fetching subscription:", error);
+        logger.error("Error fetching subscription", error);
       } finally {
         setIsLoading(false);
       }

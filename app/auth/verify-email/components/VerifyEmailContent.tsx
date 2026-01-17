@@ -16,19 +16,18 @@ export function VerifyEmailContent({
 }: VerifyEmailContentProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(!!token);
 
   useEffect(() => {
-    if (token) {
-      setIsVerifying(true);
-      startTransition(async () => {
-        const result = await verifyEmailAction(token);
-        if (result.error) {
-          setError(result.error);
-          setIsVerifying(false);
-        }
-      });
-    }
+    if (!token) return;
+    
+    startTransition(async () => {
+      const result = await verifyEmailAction(token);
+      if (result.error) {
+        setError(result.error);
+        setIsVerifying(false);
+      }
+    });
   }, [token]);
 
   if (isVerifying || isPending) {

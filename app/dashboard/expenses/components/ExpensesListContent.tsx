@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, FileText, Eye, Download, X } from "lucide-react";
+import { Plus, Search, FileText, Eye, Download, X, FileX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,6 +25,7 @@ import {
 import { ExpensesSummaryCards } from "./ExpensesSummaryCards";
 import { ProfileSelector } from "./ProfileSelector";
 import { ManualExpenseDialog } from "./ManualExpenseDialog";
+import { EmptyState } from "@/components/common/EmptyState";
 import {
   Dialog,
   DialogContent,
@@ -46,10 +47,6 @@ interface ExpensesListContentProps {
     totalPages: number;
   };
   profiles: Profile[];
-  metrics: {
-    totalGastos: number;
-    totalFacturas: number;
-  };
   initialProfileId?: string;
   initialMes?: number;
   initialAño?: number;
@@ -120,7 +117,6 @@ export function ExpensesListContent({
   expenses,
   pagination,
   profiles,
-  metrics,
   initialProfileId,
   initialMes,
   initialAño,
@@ -441,19 +437,24 @@ export function ExpensesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <p className="text-base font-medium">
-                          {search
+                    <TableCell colSpan={7} className="py-8">
+                      <EmptyState
+                        icon={FileX}
+                        title={
+                          search
                             ? `No se encontraron gastos que coincidan con "${search}"`
-                            : "No se encontraron gastos"}
-                        </p>
-                        {search && (
-                          <p className="text-sm">
-                            Intenta con otros términos de búsqueda o ajusta los filtros
-                          </p>
-                        )}
-                      </div>
+                            : "No se encontraron gastos"
+                        }
+                        description={
+                          search
+                            ? "Intenta con otros términos de búsqueda o ajusta los filtros"
+                            : "Comienza subiendo archivos XML o creando gastos manuales"
+                        }
+                        actionLabel={search ? undefined : "Subir Gastos XML"}
+                        actionHref={search ? undefined : "/dashboard/expenses/upload"}
+                        variant="search"
+                        compact
+                      />
                     </TableCell>
                   </TableRow>
                 )}

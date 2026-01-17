@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Settings } from "lucide-react";
-import { SubscriptionSection } from "./SubscriptionSection";
 
 interface SetupTabsProps {
   profilesContent: ReactNode;
@@ -22,7 +21,7 @@ export function SetupTabs({
   const searchParams = useSearchParams();
 
   // Determinar el tab activo basado en la ruta o query params
-  const getActiveTab = () => {
+  const getActiveTabValue = () => {
     const tabParam = searchParams?.get("tab");
     if (tabParam === "account") return "account";
     if (tabParam === "subscription") return "subscription";
@@ -32,28 +31,9 @@ export function SetupTabs({
     return "profiles"; // default
   };
 
-  const [activeTab, setActiveTab] = useState(getActiveTab());
-
-  // Actualizar el tab cuando cambien los query params o la ruta
-  useEffect(() => {
-    const tabParam = searchParams?.get("tab");
-    if (tabParam === "account") {
-      setActiveTab("account");
-    } else if (tabParam === "subscription") {
-      setActiveTab("subscription");
-    } else if (pathname?.includes("/profiles")) {
-      setActiveTab("profiles");
-    } else if (pathname?.includes("/account")) {
-      setActiveTab("account");
-    } else if (pathname?.includes("/subscription")) {
-      setActiveTab("subscription");
-    } else {
-      setActiveTab("profiles");
-    }
-  }, [searchParams, pathname]);
+  const activeTab = getActiveTabValue();
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
     // Actualizar la URL sin recargar la página
     const newPath =
       value === "profiles"

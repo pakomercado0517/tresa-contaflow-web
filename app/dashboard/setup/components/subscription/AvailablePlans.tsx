@@ -2,10 +2,18 @@
 
 import { useState } from "react";
 import { Check, Loader2, AlertCircle } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PLANS, formatPrice } from "@/lib/utils/plans";
 import { createCheckoutSession } from "@/lib/api/subscription.client";
 import { PromotionCodeInput } from "./PromotionCodeInput";
@@ -74,7 +82,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
         throw new Error("No se recibió URL de checkout");
       }
     } catch (err) {
-      console.error("Error al crear checkout:", err);
+      logger.error("Error al crear checkout", err);
       
       // Manejar errores específicos de código de descuento
       const errorMessage =
@@ -99,6 +107,29 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
 
   return (
     <div className="space-y-6">
+      {/* Loading Overlay Dialog */}
+      <Dialog open={loadingPlan !== null} modal>
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              Procesando checkout...
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Estamos preparando tu sesión de pago con Stripe. Por favor espera mientras te redirigimos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-4">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">
+                Redirigiendo a Stripe Checkout...
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">

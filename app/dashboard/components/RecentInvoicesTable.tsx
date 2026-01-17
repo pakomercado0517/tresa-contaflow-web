@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FileText } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
 import type { Invoice } from "@/lib/types/invoices";
 
 interface RecentInvoicesTableProps {
@@ -91,8 +92,16 @@ export function RecentInvoicesTable({
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="py-8 text-center text-muted-foreground">
-                  No hay facturas recientes
+                <td colSpan={4} className="py-8">
+                  <EmptyState
+                    icon={FileText}
+                    title="No hay facturas recientes"
+                    description="Las facturas que subas aparecerán aquí"
+                    actionLabel="Ver todas las facturas"
+                    actionHref="/dashboard/invoices"
+                    variant="search"
+                    compact
+                  />
                 </td>
               </tr>
             )}

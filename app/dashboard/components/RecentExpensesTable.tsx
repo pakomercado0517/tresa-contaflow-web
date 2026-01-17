@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
 import type { Expense } from "@/lib/types/expenses";
 
 interface RecentExpensesTableProps {
@@ -100,8 +101,16 @@ export function RecentExpensesTable({
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="py-8 text-center text-muted-foreground">
-                  No hay gastos recientes
+                <td colSpan={4} className="py-8">
+                  <EmptyState
+                    icon={FileText}
+                    title="No hay gastos recientes"
+                    description="Los gastos que subas aparecerán aquí"
+                    actionLabel="Ver todos los gastos"
+                    actionHref="/dashboard/expenses"
+                    variant="search"
+                    compact
+                  />
                 </td>
               </tr>
             )}

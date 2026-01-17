@@ -26,10 +26,6 @@ interface ProfilesListProps {
 
 export function ProfilesList({
   profiles,
-  canCreate,
-  remaining,
-  plan,
-  currentCount,
 }: ProfilesListProps) {
   const router = useRouter();
 
@@ -104,7 +100,6 @@ export function ProfilesList({
                   className="flex-1"
                   onClick={() => {
                     // TODO: Implementar eliminación
-                    console.log("Eliminar perfil:", profile.id);
                   }}
                 >
                   <Trash2 className="h-4 w-4 mr-1" />

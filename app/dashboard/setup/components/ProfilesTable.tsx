@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/utils/logger";
 import Link from "next/link";
 import {
   Search,
@@ -14,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +38,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ApiError } from "@/lib/api/client";
+import { apiClient } from "@/lib/api/client";
 import { deleteProfile } from "@/lib/api/profiles.client";
+import { exportProfilesToPDF, type ProfileStats } from "@/lib/utils/pdf-export";
 import type { Profile } from "@/lib/types/profiles";
 import type { Plan, SubscriptionStatus } from "@/lib/types/subscription";
+import type { Invoice } from "@/lib/types/invoices";
+import type { Expense } from "@/lib/types/expenses";
 
 interface ProfilesTableProps {
   profiles: Profile[];
@@ -108,10 +114,6 @@ function getDeleteErrorMessage(error: unknown): string {
 
 export function ProfilesTable({
   profiles,
-  canCreate,
-  remaining,
-  plan,
-  currentCount,
   subscriptionStatus,
 }: ProfilesTableProps) {
   const router = useRouter();
@@ -141,9 +143,85 @@ export function ProfilesTable({
   const endIndex = startIndex + itemsPerPage;
   const paginatedProfiles = filteredProfiles.slice(startIndex, endIndex);
 
-  const handleExport = () => {
-    // TODO: Implementar exportación
-    console.log("Exportar perfiles");
+  const [isExporting, setIsExporting] = useState(false);
+
+  const calculateProfileStats = (
+    invoices: Invoice[],
+    expenses: Expense[],
+    profileId: string
+  ): ProfileStats => {
+    const profileInvoices = invoices.filter((inv) => inv.profile_id === profileId);
+    const profileExpenses = expenses.filter((exp) => exp.profile_id === profileId);
+
+    const totalInvoiced = profileInvoices.reduce((sum, inv) => {
+      const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total) || 0;
+      return sum + total;
+    }, 0);
+
+    const totalSpent = profileExpenses.reduce((sum, exp) => {
+      const total = typeof exp.total === "number" ? exp.total : parseFloat(exp.total) || 0;
+      return sum + total;
+    }, 0);
+
+    const invoiceDates = profileInvoices
+      .map((inv) => inv.fecha)
+      .filter((fecha): fecha is string => Boolean(fecha))
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    
+    const expenseDates = profileExpenses
+      .map((exp) => exp.fecha)
+      .filter((fecha): fecha is string => Boolean(fecha))
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+    return {
+      profileId,
+      totalInvoices: profileInvoices.length,
+      totalExpenses: profileExpenses.length,
+      totalInvoiced,
+      totalSpent,
+      firstInvoiceDate: invoiceDates.length > 0 ? invoiceDates[0] : null,
+      lastInvoiceDate: invoiceDates.length > 0 ? invoiceDates[invoiceDates.length - 1] : null,
+      firstExpenseDate: expenseDates.length > 0 ? expenseDates[0] : null,
+      lastExpenseDate: expenseDates.length > 0 ? expenseDates[expenseDates.length - 1] : null,
+    };
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      // Obtener todas las facturas y gastos (sin límite)
+      const [invoicesResponse, expensesResponse] = await Promise.all([
+        apiClient<{ data: Invoice[] }>("/api/invoices?limit=10000", {
+          requireAuth: true,
+        }),
+        apiClient<{ data: Expense[] }>("/api/expenses?limit=10000", {
+          requireAuth: true,
+        }),
+      ]);
+
+      const invoices = invoicesResponse.data || [];
+      const expenses = expensesResponse.data || [];
+
+      // Calcular estadísticas por perfil
+      const profilesStats: ProfileStats[] = profiles.map((profile) =>
+        calculateProfileStats(invoices, expenses, profile.id)
+      );
+
+      // Exportar a PDF
+      await exportProfilesToPDF({
+        profiles,
+        profilesStats,
+      });
+    } catch (error) {
+      logger.error("Error al exportar perfiles", error);
+      if (error instanceof ApiError) {
+        alert(`Error al generar el PDF: ${error.message}`);
+      } else {
+        alert("Error al generar el PDF. Por favor intenta nuevamente.");
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleDeleteClick = (profile: Profile) => {
@@ -224,9 +302,23 @@ export function ProfilesTable({
             <Filter className="h-4 w-4 mr-2" />
             Filtros
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </>
+            )}
           </Button>
         </div>
       </div>

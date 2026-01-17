@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { logger } from "@/lib/utils/logger";
 import { createProfile, updateProfile } from "@/lib/api/profiles";
 import { getProfiles } from "@/lib/api/profiles";
 import { getSubscription } from "@/lib/api/subscription";
@@ -167,7 +168,7 @@ export async function logoutAction() {
     await logoutUser();
   } catch (error) {
     // Continuar con el logout incluso si hay error en la API
-    console.error("Error al cerrar sesión:", error);
+    logger.error("Error al cerrar sesión", error);
   }
 
   // Eliminar cookies locales

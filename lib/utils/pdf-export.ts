@@ -7,7 +7,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Expense } from "@/lib/types/expenses";
-import type { Plan } from "@/lib/types/subscription";
+import type { Profile } from "@/lib/types/profiles";
 
 // ==================== COLORES ====================
 const COLORS = {
@@ -75,6 +75,27 @@ interface PDFOptions {
     facturasPUE?: number;
     facturasPPD?: number;
   };
+}
+
+export interface ProfileStats {
+  profileId: string;
+  totalInvoices: number;
+  totalExpenses: number;
+  totalInvoiced: number;
+  totalSpent: number;
+  firstInvoiceDate: string | null;
+  lastInvoiceDate: string | null;
+  firstExpenseDate: string | null;
+  lastExpenseDate: string | null;
+}
+
+interface ProfileWithStats extends Profile {
+  stats: ProfileStats;
+}
+
+interface ExportProfilesOptions {
+  profiles: Profile[];
+  profilesStats: ProfileStats[];
 }
 
 // ==================== UTILIDADES ====================
@@ -413,6 +434,7 @@ function addFacturasPendientes(doc: jsPDF, y: number, invoices: Invoice[]): numb
     showHead: "everyPage",
   });
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const finalY = (doc as any).lastAutoTable?.finalY;
   return finalY ? finalY + 15 : y + 15;
 }
@@ -479,6 +501,7 @@ function addFacturasPagadas(doc: jsPDF, y: number, invoices: Invoice[]): number 
     showHead: "everyPage",
   });
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const finalY = (doc as any).lastAutoTable?.finalY;
   return finalY ? finalY + 15 : y + 15;
 }
@@ -543,6 +566,7 @@ function addGastos(doc: jsPDF, y: number, expenses: Expense[]): number {
     showHead: "everyPage",
   });
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const finalY = (doc as any).lastAutoTable?.finalY;
   return finalY ? finalY + 15 : y + 15;
 }
@@ -618,6 +642,7 @@ function addTodasLasFacturas(doc: jsPDF, y: number, invoices: Invoice[]): number
     showHead: "everyPage",
   });
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const finalY = (doc as any).lastAutoTable?.finalY;
   return finalY ? finalY + 15 : y + 15;
 }
@@ -688,7 +713,7 @@ export async function exportToPDF(options: PDFOptions): Promise<void> {
     y = addTodasLasFacturas(doc, y, invoices);
   } else if (tipo === "gastos") {
     // Solo gastos
-    y = addGastos(doc, y, expenses);
+    addGastos(doc, y, expenses);
   }
   
   // Agregar footer
@@ -697,6 +722,278 @@ export async function exportToPDF(options: PDFOptions): Promise<void> {
   // Generar nombre de archivo
   const tipoTexto = tipo === "completo" ? "completo" : tipo === "facturas" ? "facturas" : "gastos";
   const fileName = `contaflow-${tipoTexto}-${MESES[mes - 1].toLowerCase()}-${año}.pdf`;
+  
+  // Descargar
+  doc.save(fileName);
+}
+
+// ==================== EXPORTACIÓN DE PERFILES ====================
+
+function formatDateShort(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function addProfilesHeader(doc: jsPDF): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const now = new Date();
+  const fechaGeneracion = formatDateShort(now.toISOString());
+  
+  // Fondo azul
+  doc.setFillColor(...COLORS.headerBg);
+  doc.rect(0, 0, pageWidth, 50, "F");
+  
+  // Título principal
+  doc.setTextColor(...COLORS.white);
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("Reporte de Perfiles RFC", 15, 22);
+  
+  // Fecha de generación
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Generado el ${fechaGeneracion}`, 15, 38);
+  
+  return 70;
+}
+
+function addProfilesResumen(doc: jsPDF, y: number, profiles: Profile[]): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // Título
+  doc.setTextColor(...COLORS.black);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Resumen General", 15, y);
+  y += 20;
+  
+  // Cajas de resumen
+  const boxWidth = (pageWidth - 45) / 2;
+  const boxHeight = 50;
+  
+  // Total de perfiles
+  doc.setFillColor(219, 234, 254); // blue-100
+  doc.rect(15, y, boxWidth, boxHeight, "F");
+  doc.setDrawColor(96, 165, 250); // blue-400
+  doc.rect(15, y, boxWidth, boxHeight, "S");
+  
+  doc.setTextColor(...COLORS.black);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Total de Perfiles", 25, y + 15);
+  doc.setFontSize(18);
+  doc.text(profiles.length.toString(), 25, y + 35);
+  
+  // Perfiles activos (con facturas o gastos)
+  doc.setFillColor(220, 252, 231); // green-100
+  doc.rect(30 + boxWidth, y, boxWidth, boxHeight, "F");
+  doc.setDrawColor(74, 222, 128); // green-400
+  doc.rect(30 + boxWidth, y, boxWidth, boxHeight, "S");
+  
+  doc.setTextColor(...COLORS.black);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Perfiles Activos", 40 + boxWidth, y + 15);
+  doc.setFontSize(18);
+  
+  // Por ahora todos los perfiles se consideran activos
+  // En el futuro se puede filtrar por perfiles con facturas o gastos
+  const profilesActive = profiles.length;
+  
+  doc.text(profilesActive.toString(), 40 + boxWidth, y + 35);
+  
+  return y + boxHeight + 25;
+}
+
+function formatValidationStatus(
+  validaciones: Record<string, unknown>,
+  key: string
+): string {
+  const value = validaciones[key];
+  if (typeof value === "boolean") {
+    return value ? "✓" : "✗";
+  }
+  return "-";
+}
+
+function addProfileDetail(
+  doc: jsPDF,
+  y: number,
+  profile: ProfileWithStats
+): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  const contentWidth = pageWidth - margin * 2;
+  
+  // Si no cabe en la página, agregar nueva
+  if (y > pageHeight - 200) {
+    doc.addPage();
+    y = addProfilesHeader(doc);
+  }
+  
+  // Fondo del perfil
+  doc.setFillColor(249, 250, 251); // gray-50
+  doc.rect(margin, y, contentWidth, 180, "F");
+  doc.setDrawColor(229, 231, 235); // gray-200
+  doc.rect(margin, y, contentWidth, 180, "S");
+  
+  let currentY = y + 15;
+  
+  // RFC y Nombre
+  doc.setTextColor(...COLORS.black);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text(`[${profile.rfc}] - ${profile.nombre}`, margin + 10, currentY);
+  currentY += 20;
+  
+  // Tipo de Persona y Régimen Fiscal
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...COLORS.textGray);
+  const tipoPersona = profile.tipo_persona === "FISICA" ? "Persona Física" : "Persona Moral";
+  doc.text(`Tipo: ${tipoPersona}`, margin + 10, currentY);
+  
+  if (profile.regimen_fiscal) {
+    doc.text(`Régimen Fiscal: ${profile.regimen_fiscal}`, margin + 200, currentY);
+  }
+  currentY += 15;
+  
+  // Fechas
+  const fechaCreacion = formatDateShort(profile.created_at);
+  const fechaActualizacion = formatDateShort(profile.updated_at);
+  doc.text(`Creado: ${fechaCreacion}`, margin + 10, currentY);
+  doc.text(`Actualizado: ${fechaActualizacion}`, margin + 200, currentY);
+  currentY += 25;
+  
+  // Estadísticas
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...COLORS.black);
+  doc.text("Estadísticas:", margin + 10, currentY);
+  currentY += 15;
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(...COLORS.textGray);
+  
+  const stats = profile.stats;
+  doc.text(`• Total Facturas: ${stats.totalInvoices}`, margin + 10, currentY);
+  doc.text(`• Total Gastos: ${stats.totalExpenses}`, margin + 200, currentY);
+  currentY += 12;
+  
+  if (stats.totalInvoiced > 0) {
+    doc.text(`• Total Facturado: ${formatCurrency(stats.totalInvoiced)}`, margin + 10, currentY);
+  }
+  if (stats.totalSpent > 0) {
+    doc.text(`• Total en Gastos: ${formatCurrency(stats.totalSpent)}`, margin + 200, currentY);
+  }
+  currentY += 12;
+  
+  if (stats.firstInvoiceDate || stats.firstExpenseDate) {
+    const firstDate = stats.firstInvoiceDate || stats.firstExpenseDate;
+    const lastDate = stats.lastInvoiceDate || stats.lastExpenseDate;
+    
+    if (firstDate) {
+      doc.text(`• Primer Registro: ${formatDateShort(firstDate)}`, margin + 10, currentY);
+    }
+    if (lastDate) {
+      doc.text(`• Último Registro: ${formatDateShort(lastDate)}`, margin + 200, currentY);
+    }
+    currentY += 12;
+  }
+  currentY += 10;
+  
+  // Validaciones Habilitadas
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...COLORS.black);
+  doc.text("Validaciones Habilitadas:", margin + 10, currentY);
+  currentY += 15;
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.textGray);
+  
+  const validaciones = profile.validaciones_habilitadas;
+  const validationKeys = [
+    { key: "validarRFCIngresos", label: "Validar RFC Ingresos" },
+    { key: "validarRFCGastos", label: "Validar RFC Gastos" },
+    { key: "validarRegimenFiscal", label: "Validar Régimen Fiscal" },
+    { key: "validarUUIDDuplicado", label: "Validar UUID Duplicado" },
+  ];
+  
+  let validationY = currentY;
+  for (const validation of validationKeys) {
+    const status = formatValidationStatus(validaciones, validation.key);
+    doc.text(`${status} ${validation.label}`, margin + 10, validationY);
+    validationY += 10;
+  }
+  
+  return y + 180 + 20;
+}
+
+/**
+ * Exporta perfiles a PDF con estadísticas
+ * @param options - Opciones de exportación
+ */
+export async function exportProfilesToPDF(
+  options: ExportProfilesOptions
+): Promise<void> {
+  const { profiles, profilesStats } = options;
+  
+  // Crear documento
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "a4",
+  });
+  
+  // Combinar perfiles con estadísticas
+  const profilesWithStats: ProfileWithStats[] = profiles.map((profile) => {
+    const stats = profilesStats.find((s) => s.profileId === profile.id);
+    return {
+      ...profile,
+      stats: stats || {
+        profileId: profile.id,
+        totalInvoices: 0,
+        totalExpenses: 0,
+        totalInvoiced: 0,
+        totalSpent: 0,
+        firstInvoiceDate: null,
+        lastInvoiceDate: null,
+        firstExpenseDate: null,
+        lastExpenseDate: null,
+      },
+    };
+  });
+  
+  // Agregar header
+  let y = addProfilesHeader(doc);
+  
+  // Agregar resumen
+  y = addProfilesResumen(doc, y, profiles);
+  
+  // Agregar detalle por perfil
+  for (const profile of profilesWithStats) {
+    y = addProfileDetail(doc, y, profile);
+  }
+  
+  // Agregar footer
+  addFooter(doc);
+  
+  // Generar nombre de archivo
+  const now = new Date();
+  const fecha = now.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).replace(/\//g, "-");
+  const fileName = `contaflow-perfiles-${fecha}.pdf`;
   
   // Descargar
   doc.save(fileName);

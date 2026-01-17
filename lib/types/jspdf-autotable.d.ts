@@ -77,6 +77,7 @@ declare module "jspdf-autotable" {
   }
 
   export interface Row {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     raw: any;
     index: number;
     section: "head" | "body" | "foot";

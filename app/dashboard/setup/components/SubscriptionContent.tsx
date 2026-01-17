@@ -1,7 +1,18 @@
+import dynamic from "next/dynamic";
 import { CurrentPlanCard } from "./subscription/CurrentPlanCard";
 import { ConsumptionCard } from "./subscription/ConsumptionCard";
-import { AvailablePlans } from "./subscription/AvailablePlans";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import type { Subscription } from "@/lib/types/subscription";
+
+// Lazy load AvailablePlans (componente grande con Stripe)
+const AvailablePlans = dynamic(() => import("./subscription/AvailablePlans").then((mod) => ({ default: mod.AvailablePlans })), {
+  loading: () => (
+    <div className="h-96 w-full animate-pulse rounded-lg bg-muted flex items-center justify-center">
+      <LoadingSpinner message="Cargando planes..." />
+    </div>
+  ),
+  ssr: true, // Se puede renderizar en servidor, pero lazy load para reducir bundle inicial
+});
 
 interface SubscriptionContentProps {
   subscription: Subscription | null;

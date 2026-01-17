@@ -1,3 +1,5 @@
+import { logger } from "@/lib/utils/logger";
+
 interface ApiClientOptions extends RequestInit {
   requireAuth?: boolean;
   skipAuthRetry?: boolean; // Para evitar loops infinitos en el refresh
@@ -37,7 +39,7 @@ async function getAccessToken(): Promise<string | null> {
     const data = await response.json();
     return data.accessToken || null;
   } catch (error) {
-    console.error("Error al obtener token:", error);
+    logger.error("Error al obtener token", error);
     return null;
   }
 }
@@ -76,7 +78,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
       return data.accessToken || null;
     } catch (error) {
-      console.error("Error al refrescar token:", error);
+      logger.error("Error al refrescar token", error);
       if (typeof window !== "undefined") {
         window.location.href = "/auth/login";
       }

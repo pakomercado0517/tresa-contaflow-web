@@ -45,7 +45,6 @@ export function UploadInvoicesContent({ profiles }: UploadInvoicesContentProps) 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
-  const [dialogType, setDialogType] = useState<"success" | "error" | "warning">("success");
 
   const handleFilesSelected = (files: File[]) => {
     const newFiles: QueuedFile[] = files.map((file) => {
@@ -75,12 +74,10 @@ export function UploadInvoicesContent({ profiles }: UploadInvoicesContentProps) 
 
   const showDialog = (
     title: string,
-    message: string,
-    type: "success" | "error" | "warning" = "success"
+    message: string
   ) => {
     setDialogTitle(title);
     setDialogMessage(message);
-    setDialogType(type);
     setIsDialogOpen(true);
   };
 
@@ -88,8 +85,7 @@ export function UploadInvoicesContent({ profiles }: UploadInvoicesContentProps) 
     if (!selectedProfileId) {
       showDialog(
         "Empresa no seleccionada",
-        "Por favor selecciona una empresa antes de procesar los archivos.",
-        "warning"
+        "Por favor selecciona una empresa antes de procesar los archivos."
       );
       return;
     }
@@ -98,8 +94,7 @@ export function UploadInvoicesContent({ profiles }: UploadInvoicesContentProps) 
     if (validFiles.length === 0) {
       showDialog(
         "Sin archivos válidos",
-        "No hay archivos válidos para procesar. Por favor, agrega archivos XML válidos.",
-        "warning"
+        "No hay archivos válidos para procesar. Por favor, agrega archivos XML válidos."
       );
       return;
     }
@@ -174,14 +169,12 @@ export function UploadInvoicesContent({ profiles }: UploadInvoicesContentProps) 
     if (errorCount === 0) {
       showDialog(
         "¡Procesamiento exitoso!",
-        `Se procesaron ${successCount} archivo(s) correctamente.`,
-        "success"
+        `Se procesaron ${successCount} archivo(s) correctamente.`
       );
     } else {
       showDialog(
         "Procesamiento completado",
-        `✓ ${successCount} archivo(s) exitoso(s)\n✗ ${errorCount} archivo(s) con error(es)\n\nRevisa los detalles de cada archivo en la lista.`,
-        errorCount === validFiles.length ? "error" : "warning"
+        `✓ ${successCount} archivo(s) exitoso(s)\n✗ ${errorCount} archivo(s) con error(es)\n\nRevisa los detalles de cada archivo en la lista.`
       );
     }
   };

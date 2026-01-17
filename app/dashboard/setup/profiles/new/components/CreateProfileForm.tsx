@@ -60,7 +60,7 @@ export function CreateProfileForm({
 
       // Redirigir a la configuración después de crear
       router.push("/dashboard/setup");
-    } catch (err) {
+    } catch {
       setError("Error al crear el perfil. Intenta nuevamente.");
       setIsLoading(false);
     }

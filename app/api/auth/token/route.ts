@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/utils/logger";
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
 
     return NextResponse.json({ accessToken });
   } catch (error) {
-    console.error("Error en token route:", error);
+    logger.error("Error en token route", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

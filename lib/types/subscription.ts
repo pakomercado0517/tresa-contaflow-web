@@ -19,7 +19,7 @@ export interface Subscription {
   stripeSubscriptionId?: string | null;
 }
 
-export interface GetSubscriptionResponse extends Subscription {}
+export type GetSubscriptionResponse = Subscription;
 
 export interface CreateCheckoutRequest {
   plan: "BASIC" | "PRO";

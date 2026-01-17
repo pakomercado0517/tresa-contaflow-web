@@ -17,7 +17,6 @@ import type {
   ResendVerificationEmailResponse,
   UpdateProfileRequest,
   UpdateProfileResponse,
-  ErrorResponse,
 } from "@/lib/types/auth";
 
 export async function registerUser(

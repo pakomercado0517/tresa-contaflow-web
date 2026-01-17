@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/utils/logger";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -53,7 +54,7 @@ export async function POST() {
 
     return NextResponse.json({ accessToken: data.accessToken });
   } catch (error) {
-    console.error("Error en refresh route:", error);
+    logger.error("Error en refresh route", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

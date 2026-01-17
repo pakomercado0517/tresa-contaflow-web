@@ -10,7 +10,6 @@ import {
   getProfileLimitMessage,
 } from "@/lib/utils/subscription";
 import { ProfilesTable } from "./ProfilesTable";
-import type { Plan } from "@/lib/types/subscription";
 
 export async function ProfilesSection() {
   // No usar .catch() aquí porque captura los errores de redirect()

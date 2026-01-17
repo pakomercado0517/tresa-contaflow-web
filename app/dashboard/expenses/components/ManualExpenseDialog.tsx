@@ -58,14 +58,9 @@ export function ManualExpenseDialog({
   const [iva, setIva] = useState("");
   const [concepto, setConcepto] = useState("");
   const [categoria, setCategoria] = useState("");
-  const [calculationMode, setCalculationMode] = useState<"total" | "subtotal">(
-    "total"
-  );
-
   // Cálculo automático de IVA cuando cambia el total
   const handleTotalChange = (value: string) => {
     setTotal(value);
-    setCalculationMode("total");
     if (value && !isNaN(parseFloat(value))) {
       const totalNum = parseFloat(value);
       const subtotalNum = totalNum / 1.16;
@@ -81,7 +76,6 @@ export function ManualExpenseDialog({
   // Cálculo automático de IVA cuando cambia el subtotal
   const handleSubtotalChange = (value: string) => {
     setSubtotal(value);
-    setCalculationMode("subtotal");
     if (value && !isNaN(parseFloat(value))) {
       const subtotalNum = parseFloat(value);
       const ivaNum = subtotalNum * 0.16;

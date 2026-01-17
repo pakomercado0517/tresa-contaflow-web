@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * Componente que refresca el access token automáticamente cada 12 minutos
@@ -31,17 +32,17 @@ export function TokenRefresher() {
         });
 
         if (response.ok) {
-          console.log("✅ Token refrescado automáticamente");
+          logger.info("Token refrescado automáticamente");
         } else {
           const data = await response.json();
           // Si el refresh token expiró, redirigir a login
           if (response.status === 401 || data.redirect) {
-            console.log("❌ Refresh token expirado, redirigiendo a login...");
+            logger.warn("Refresh token expirado, redirigiendo a login");
             window.location.href = "/auth/login";
           }
         }
       } catch (error) {
-        console.error("Error al refrescar token:", error);
+        logger.error("Error al refrescar token", error);
       }
     };
 

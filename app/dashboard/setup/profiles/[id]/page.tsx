@@ -26,28 +26,30 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
     notFound();
   }
 
+  let profile;
+
   try {
     const response = await getProfile(profileId);
-    const profile = response.data;
-
-    return (
-      <main className="flex-1 p-4 md:p-6 lg:p-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Editar Perfil</h1>
-            <p className="text-muted-foreground mt-2">
-              Actualiza la información fiscal del perfil RFC.
-            </p>
-          </div>
-          <EditProfileForm profile={profile} />
-        </div>
-      </main>
-    );
-  } catch (error) {
-    if (error instanceof ServerApiError && error.status === 404) {
+    profile = response.data;
+  } catch (err) {
+    if (err instanceof ServerApiError && err.status === 404) {
       notFound();
     }
 
-    throw error;
+    throw err;
   }
+
+  return (
+    <main className="flex-1 p-4 md:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Editar Perfil</h1>
+          <p className="text-muted-foreground mt-2">
+            Actualiza la información fiscal del perfil RFC.
+          </p>
+        </div>
+        <EditProfileForm profile={profile} />
+      </div>
+    </main>
+  );
 }

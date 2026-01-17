@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Building2, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export function AddNewCompanyCard() {
   return (

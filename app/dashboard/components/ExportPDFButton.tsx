@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { exportToPDF } from "@/lib/utils/pdf-export";
 import { apiClient } from "@/lib/api/client";
@@ -65,7 +66,7 @@ export function ExportPDFButton({
         metrics,
       });
     } catch (error) {
-      console.error("Error al exportar PDF:", error);
+      logger.error("Error al exportar PDF", error);
       alert("Error al generar el PDF. Por favor intenta nuevamente.");
     } finally {
       setIsLoading(false);

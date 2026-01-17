@@ -53,7 +53,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
       }
 
       router.push("/dashboard/setup/profiles");
-    } catch (err) {
+    } catch {
       setError("Error al actualizar el perfil. Intenta nuevamente.");
       setIsLoading(false);
     }

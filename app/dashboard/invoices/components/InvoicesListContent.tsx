@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Eye, Download, AlertTriangle, X } from "lucide-react";
+import { Plus, Search, Eye, Download, AlertTriangle, X, FileX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { SummaryCards } from "./SummaryCards";
 import { ProfileSelector } from "./ProfileSelector";
+import { EmptyState } from "@/components/common/EmptyState";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Profile } from "@/lib/types/profiles";
 import { exportToPDF } from "@/lib/utils/pdf-export";
@@ -432,19 +433,24 @@ export function InvoicesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <p className="text-base font-medium">
-                          {search
+                    <TableCell colSpan={8} className="py-8">
+                      <EmptyState
+                        icon={FileX}
+                        title={
+                          search
                             ? `No se encontraron facturas que coincidan con "${search}"`
-                            : "No se encontraron facturas"}
-                        </p>
-                        {search && (
-                          <p className="text-sm">
-                            Intenta con otros términos de búsqueda o ajusta los filtros
-                          </p>
-                        )}
-                      </div>
+                            : "No se encontraron facturas"
+                        }
+                        description={
+                          search
+                            ? "Intenta con otros términos de búsqueda o ajusta los filtros"
+                            : "Comienza subiendo archivos XML de facturas"
+                        }
+                        actionLabel={search ? undefined : "Subir Facturas"}
+                        actionHref={search ? undefined : "/dashboard/invoices/upload"}
+                        variant="search"
+                        compact
+                      />
                     </TableCell>
                   </TableRow>
                 )}

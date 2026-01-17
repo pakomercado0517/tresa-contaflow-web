@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { logger } from "@/lib/utils/logger";
 import { getSubscriptionClient } from "@/lib/api/subscription.client";
 import type { Subscription } from "@/lib/types/subscription";
 
@@ -27,7 +28,7 @@ export function useSubscription(): UseSubscriptionReturn {
       const data = await getSubscriptionClient();
       setSubscription(data);
     } catch (err) {
-      console.error("Error fetching subscription:", err);
+      logger.error("Error fetching subscription", err);
       setError(
         err instanceof Error ? err.message : "Error al obtener suscripción"
       );

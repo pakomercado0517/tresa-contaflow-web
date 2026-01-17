@@ -1,14 +1,29 @@
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardGreeting } from "./DashboardGreeting";
 import { MetricsCards } from "./MetricsCards";
-import { FlowTrendChart } from "./FlowTrendChart";
 import { RecentInvoicesTable } from "./RecentInvoicesTable";
 import { RecentExpensesTable } from "./RecentExpensesTable";
-import { ExportPDFButton } from "./ExportPDFButton";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { getMetrics, getInvoices, getTrendData } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 import { getCurrentUser } from "@/lib/api/auth.server";
+
+// Lazy load componentes pesados (jsPDF y Recharts)
+// Nota: Estos componentes ya son Client Components, el lazy loading reduce el bundle inicial
+const ExportPDFButton = dynamic(() => import("./ExportPDFButton").then((mod) => ({ default: mod.ExportPDFButton })), {
+  loading: () => <div className="h-10 w-32 animate-pulse rounded-md bg-muted" />,
+});
+
+const FlowTrendChart = dynamic(() => import("./FlowTrendChart").then((mod) => ({ default: mod.FlowTrendChart })), {
+  loading: () => (
+    <div className="h-96 w-full animate-pulse rounded-lg bg-muted flex items-center justify-center">
+      <LoadingSpinner message="Cargando gráfico..." />
+    </div>
+  ),
+});
 
 interface DashboardContentProps {
   searchParams?: Promise<{
@@ -83,7 +98,13 @@ export async function DashboardContent({
           />
         </div>
         <MetricsCards metrics={metrics.metrics} />
-        <FlowTrendChart data={trendData} />
+        <Suspense fallback={
+          <div className="h-96 w-full animate-pulse rounded-lg bg-muted flex items-center justify-center">
+            <LoadingSpinner message="Cargando gráfico..." />
+          </div>
+        }>
+          <FlowTrendChart data={trendData} />
+        </Suspense>
         <div className="grid gap-6 md:grid-cols-2">
           <RecentInvoicesTable invoices={invoices.data} />
           <RecentExpensesTable expenses={expenses.data} />

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,7 +78,7 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error("Error al crear portal session:", error);
+      logger.error("Error al crear portal session", error);
       alert(
         error instanceof Error
           ? error.message

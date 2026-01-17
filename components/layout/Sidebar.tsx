@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { logger } from "@/lib/utils/logger";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -72,7 +73,7 @@ export function Sidebar({ user }: SidebarProps) {
         credentials: "include",
       });
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      logger.error("Error al cerrar sesión", error);
     } finally {
       // Redirigir al login
       router.push("/auth/login");

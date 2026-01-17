@@ -7,7 +7,6 @@ import { User, Building2, ArrowRight, HelpCircle, AlertCircle, Sparkles } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createProfileAction } from "../actions";
 import {
@@ -58,7 +57,7 @@ export function SetupForm({ currentProfileCount, plan }: SetupFormProps) {
 
       // Redirigir al dashboard después de crear el perfil
       router.push("/dashboard");
-    } catch (err) {
+    } catch {
       setError("Error al crear el perfil. Intenta nuevamente.");
       setIsLoading(false);
     }
