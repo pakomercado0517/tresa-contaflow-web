@@ -70,6 +70,8 @@ export async function DashboardContent({
   const totalCompras = metrics.metrics.totalCompras || 0;
   const pendientePorPagar = totalFacturado - totalPagado;
   const diferencia = totalFacturado - totalCompras;
+  // Nota: totalPagadoMenosCompras está disponible desde la API en metrics.metrics.totalPagadoMenosCompras
+  // para evitar cálculos manuales de totalPagado - totalCompras
 
   return (
     <>
@@ -107,7 +109,11 @@ export async function DashboardContent({
             <LoadingSpinner message="Cargando gráfico..." />
           </div>
         }>
-          <FlowTrendChart data={trendData} />
+          <FlowTrendChart
+            initialData={trendData}
+            profileId={profileId}
+            año={año}
+          />
         </Suspense>
         <div className="grid gap-6 md:grid-cols-2">
           <RecentInvoicesTable invoices={invoices.data} />
