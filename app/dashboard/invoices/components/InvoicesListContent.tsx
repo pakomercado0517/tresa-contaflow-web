@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Eye, Download, AlertTriangle, X, FileX } from "lucide-react";
+import { Plus, Search, X, FileX, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,9 +25,20 @@ import {
 import { SummaryCards } from "./SummaryCards";
 import { ProfileSelector } from "./ProfileSelector";
 import { EmptyState } from "@/components/common/EmptyState";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Profile } from "@/lib/types/profiles";
 import { exportToPDF } from "@/lib/utils/pdf-export";
+import { deleteInvoice } from "@/lib/api/invoices.client";
+import { ApiError } from "@/lib/api/client";
 
 interface InvoicesListContentProps {
   invoices: Invoice[];
@@ -92,6 +103,10 @@ export function InvoicesListContent({
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
   const [selectedTipo, setSelectedTipo] = useState(initialTipo || "all");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -183,6 +198,56 @@ export function InvoicesListContent({
       minute: "2-digit",
     });
   };
+
+  const handleDeleteClick = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+    setDeleteError(null);
+    setDeleteConfirmation("");
+  };
+
+  const handleCloseDeleteDialog = (open: boolean) => {
+    if (!open && !isDeleting) {
+      setInvoiceToDelete(null);
+      setDeleteError(null);
+      setDeleteConfirmation("");
+    }
+  };
+
+  const getDeleteErrorMessage = (error: unknown): string => {
+    if (error instanceof ApiError) {
+      if (error.status === 403) {
+        return "No tienes permisos para eliminar esta factura.";
+      }
+      if (error.status === 404) {
+        return "La factura ya no existe o fue eliminada.";
+      }
+      if (error.status === 400) {
+        return error.message || "No se puede eliminar esta factura.";
+      }
+      return error.message || "Error al eliminar la factura.";
+    }
+    return "Error inesperado al eliminar la factura. Por favor intenta nuevamente.";
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!invoiceToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteInvoice(invoiceToDelete.id);
+      setInvoiceToDelete(null);
+      router.refresh();
+    } catch (error) {
+      setDeleteError(getDeleteErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const deleteKeyword = "ELIMINAR";
+  const isDeleteBlocked =
+    isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
   const handleExportPDF = async () => {
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
@@ -421,11 +486,14 @@ export function InvoicesListContent({
                       <TableCell>{getStatusBadge(invoice)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon" title="Ver detalles">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Descargar">
-                            <Download className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Eliminar factura"
+                            onClick={() => handleDeleteClick(invoice)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -522,6 +590,73 @@ export function InvoicesListContent({
           </div>
         </div>
       )}
+
+      {/* Delete Invoice Dialog */}
+      <Dialog open={!!invoiceToDelete} onOpenChange={handleCloseDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar factura</DialogTitle>
+            <DialogDescription>
+              Esta acción eliminará la factura seleccionada y no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          {invoiceToDelete && (
+            <div className="rounded-lg border p-4 text-sm">
+              <p className="font-medium">
+                {invoiceToDelete.nombre_emisor}
+              </p>
+              <p className="text-muted-foreground">
+                {invoiceToDelete.concepto || "Sin concepto"}
+              </p>
+              <p className="text-muted-foreground mt-1">
+                Total: {formatCurrency(invoiceToDelete.total)}
+              </p>
+              <p className="text-muted-foreground font-mono text-xs mt-1">
+                UUID: {invoiceToDelete.uuid}
+              </p>
+            </div>
+          )}
+          {invoiceToDelete && (
+            <div className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Para confirmar, escribe{" "}
+                <span className="font-mono font-medium text-foreground">
+                  {deleteKeyword}
+                </span>
+                .
+              </p>
+              <Input
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={deleteKeyword}
+                autoComplete="off"
+              />
+            </div>
+          )}
+          {deleteError && (
+            <Alert variant="destructive">
+              <AlertTitle>No se pudo eliminar</AlertTitle>
+              <AlertDescription>{deleteError}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleCloseDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleteBlocked}
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

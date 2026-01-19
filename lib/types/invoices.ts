@@ -103,3 +103,7 @@ export interface UploadInvoiceResponse {
   validacion: ValidationState;
   tipo: 'factura' | 'gasto';
 }
+
+export interface DeleteInvoiceResponse {
+  message: string;
+}

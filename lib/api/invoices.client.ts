@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { UploadInvoiceResponse } from "@/lib/types/invoices";
+import type { UploadInvoiceResponse, DeleteInvoiceResponse } from "@/lib/types/invoices";
 
 /**
  * Sube un archivo XML de factura al backend (Client Component only)
@@ -16,6 +16,18 @@ export async function uploadInvoice(
   return apiClient<UploadInvoiceResponse>("/api/invoices/upload", {
     method: "POST",
     body: formData,
+    requireAuth: true,
+  });
+}
+
+/**
+ * Elimina una factura por ID (Client Component only)
+ */
+export async function deleteInvoice(
+  invoiceId: string
+): Promise<DeleteInvoiceResponse> {
+  return apiClient<DeleteInvoiceResponse>(`/api/invoices/${invoiceId}`, {
+    method: "DELETE",
     requireAuth: true,
   });
 }
