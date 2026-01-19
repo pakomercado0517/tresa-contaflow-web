@@ -85,7 +85,7 @@ export function DashboardHeader({
       <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold">Resumen General</h1>
-          <div className="flex items-center gap-2">
+          <div data-tour="date-filters" className="flex items-center gap-2">
             <Select
               value={currentMonth.toString()}
               onValueChange={(value) => handleMonthChange(Number(value))}
@@ -121,18 +121,24 @@ export function DashboardHeader({
 
         <div className="flex items-center gap-3">
           {profiles.length > 0 && (
-            <ProfileSelector
-              profiles={profiles}
-              selectedProfileId={selectedProfileId}
-            />
+            <div data-tour="profile-selector">
+              <ProfileSelector
+                profiles={profiles}
+                selectedProfileId={selectedProfileId}
+              />
+            </div>
           )}
           {companyName && (
             <span className="hidden lg:block text-sm text-muted-foreground">
               {companyName}
             </span>
           )}
-          <Button asChild className="bg-primary hover:bg-primary/90 gap-2">
-            <Link href="/upload">
+          <Button
+            asChild
+            data-tour="new-invoice-button"
+            className="bg-primary hover:bg-primary/90 gap-2"
+          >
+            <Link href="/dashboard/invoices/upload">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Nueva Factura</span>
             </Link>
