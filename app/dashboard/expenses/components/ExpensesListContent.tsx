@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, FileText, Eye, Download, X, FileX } from "lucide-react";
+import { Plus, Search, FileText, X, FileX, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,10 +34,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Expense } from "@/lib/types/expenses";
 import type { Profile } from "@/lib/types/profiles";
 import type { Subscription } from "@/lib/types/subscription";
 import { exportToPDF } from "@/lib/utils/pdf-export";
+import { deleteExpense } from "@/lib/api/expenses.client";
+import { ApiError } from "@/lib/api/client";
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -138,6 +141,10 @@ export function ExpensesListContent({
   const [isManualExpenseDialogOpen, setIsManualExpenseDialogOpen] = useState(false);
   const [showProfileWarning, setShowProfileWarning] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -250,6 +257,56 @@ export function ExpensesListContent({
       year: "numeric",
     });
   };
+
+  const handleDeleteClick = (expense: Expense) => {
+    setExpenseToDelete(expense);
+    setDeleteError(null);
+    setDeleteConfirmation("");
+  };
+
+  const handleCloseDeleteDialog = (open: boolean) => {
+    if (!open && !isDeleting) {
+      setExpenseToDelete(null);
+      setDeleteError(null);
+      setDeleteConfirmation("");
+    }
+  };
+
+  const getDeleteErrorMessage = (error: unknown): string => {
+    if (error instanceof ApiError) {
+      if (error.status === 403) {
+        return "No tienes permisos para eliminar este gasto.";
+      }
+      if (error.status === 404) {
+        return "El gasto ya no existe o fue eliminado.";
+      }
+      if (error.status === 400) {
+        return error.message || "No se puede eliminar este gasto.";
+      }
+      return error.message || "Error al eliminar el gasto.";
+    }
+    return "Error inesperado al eliminar el gasto. Por favor intenta nuevamente.";
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!expenseToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteExpense(expenseToDelete.id);
+      setExpenseToDelete(null);
+      router.refresh();
+    } catch (error) {
+      setDeleteError(getDeleteErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const deleteKeyword = "ELIMINAR";
+  const isDeleteBlocked =
+    isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
   // Calcular métricas desde los gastos filtrados
   const xmlExpenses = expenses.filter((e) => e.tipo_origen === "XML");
@@ -430,11 +487,14 @@ export function ExpensesListContent({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon" title="Ver detalles">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Descargar">
-                            <Download className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Eliminar gasto"
+                            onClick={() => handleDeleteClick(expense)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -555,6 +615,75 @@ export function ExpensesListContent({
           <DialogFooter>
             <Button onClick={() => setShowProfileWarning(false)}>
               Entendido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Expense Dialog */}
+      <Dialog open={!!expenseToDelete} onOpenChange={handleCloseDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar gasto</DialogTitle>
+            <DialogDescription>
+              Esta acción eliminará el gasto seleccionado y no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          {expenseToDelete && (
+            <div className="rounded-lg border p-4 text-sm">
+              <p className="font-medium">
+                {expenseToDelete.nombre_emisor || "Sin emisor"}
+              </p>
+              <p className="text-muted-foreground">
+                {expenseToDelete.concepto || "Sin concepto"}
+              </p>
+              <p className="text-muted-foreground mt-1">
+                Total: {formatCurrency(expenseToDelete.total)}
+              </p>
+              {expenseToDelete.uuid && (
+                <p className="text-muted-foreground font-mono text-xs mt-1">
+                  UUID: {expenseToDelete.uuid}
+                </p>
+              )}
+            </div>
+          )}
+          {expenseToDelete && (
+            <div className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Para confirmar, escribe{" "}
+                <span className="font-mono font-medium text-foreground">
+                  {deleteKeyword}
+                </span>
+                .
+              </p>
+              <Input
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={deleteKeyword}
+                autoComplete="off"
+              />
+            </div>
+          )}
+          {deleteError && (
+            <Alert variant="destructive">
+              <AlertTitle>No se pudo eliminar</AlertTitle>
+              <AlertDescription>{deleteError}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleCloseDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleteBlocked}
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar"}
             </Button>
           </DialogFooter>
         </DialogContent>

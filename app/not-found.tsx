@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FileQuestion, Home, ArrowLeft } from "lucide-react";
@@ -8,11 +9,13 @@ export default function NotFound() {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-primary/5 flex flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
       <Link href="/" className="absolute top-6 left-6 flex items-center gap-2">
-        <div className="flex gap-1">
-          <div className="h-4 w-1 bg-primary rounded-full"></div>
-          <div className="h-6 w-1 bg-primary rounded-full"></div>
-          <div className="h-8 w-1 bg-primary rounded-full"></div>
-        </div>
+        <Image
+          src="/logotipo-contaFlow.svg"
+          alt="Conta Flow"
+          width={32}
+          height={32}
+          className="h-8 w-8"
+        />
         <span className="text-xl font-semibold">Conta Flow</span>
       </Link>
 
@@ -42,7 +45,7 @@ export default function NotFound() {
             >
               <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
-                Ir al inicio
+                Volver al inicio
               </Link>
             </Button>
             <Button

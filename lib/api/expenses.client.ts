@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { UploadExpenseResponse, CreateExpenseRequest, CreateExpenseResponse } from "@/lib/types/expenses";
+import type { UploadExpenseResponse, CreateExpenseRequest, CreateExpenseResponse, DeleteExpenseResponse } from "@/lib/types/expenses";
 
 /**
  * Sube un archivo XML de gasto al backend (Client Component only)
@@ -30,6 +30,18 @@ export async function createManualExpense(
   return apiClient<CreateExpenseResponse>("/api/expenses", {
     method: "POST",
     body: JSON.stringify(data),
+    requireAuth: true,
+  });
+}
+
+/**
+ * Elimina un gasto por ID (Client Component only)
+ */
+export async function deleteExpense(
+  expenseId: string
+): Promise<DeleteExpenseResponse> {
+  return apiClient<DeleteExpenseResponse>(`/api/expenses/${expenseId}`, {
+    method: "DELETE",
     requireAuth: true,
   });
 }

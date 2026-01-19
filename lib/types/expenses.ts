@@ -98,3 +98,7 @@ export interface CreateExpenseResponse {
   message: string;
   data: Expense;
 }
+
+export interface DeleteExpenseResponse {
+  message: string;
+}

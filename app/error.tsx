@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { logger } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,11 +23,13 @@ export default function Error({ error, reset }: ErrorProps) {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-primary/5 flex flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
       <Link href="/" className="absolute top-6 left-6 flex items-center gap-2">
-        <div className="flex gap-1">
-          <div className="h-4 w-1 bg-primary rounded-full"></div>
-          <div className="h-6 w-1 bg-primary rounded-full"></div>
-          <div className="h-8 w-1 bg-primary rounded-full"></div>
-        </div>
+        <Image
+          src="/logotipo-contaFlow.svg"
+          alt="Conta Flow"
+          width={32}
+          height={32}
+          className="h-8 w-8"
+        />
         <span className="text-xl font-semibold">Conta Flow</span>
       </Link>
 
@@ -54,7 +57,7 @@ export default function Error({ error, reset }: ErrorProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <div className="flex flex-col gap-3 w-full">
             <Button
               onClick={reset}
               className="w-full bg-primary hover:bg-primary/90"
@@ -69,25 +72,23 @@ export default function Error({ error, reset }: ErrorProps) {
               className="w-full"
               size="lg"
             >
-              <Link href="/dashboard">
+              <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
-                Ir al dashboard
+                Volver al inicio
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="w-full"
+            >
+              <Link href="/dashboard">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver al dashboard
               </Link>
             </Button>
           </div>
-
-          {/* Secondary Action */}
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="w-full"
-          >
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver al inicio
-            </Link>
-          </Button>
 
           {/* Help Text */}
           <div className="pt-4 border-t border-border w-full">
