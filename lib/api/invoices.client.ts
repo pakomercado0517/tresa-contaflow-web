@@ -1,5 +1,146 @@
 import { apiClient } from "./client";
-import type { UploadInvoiceResponse, DeleteInvoiceResponse } from "@/lib/types/invoices";
+import type { UploadInvoiceResponse, DeleteInvoiceResponse, MetricsResponse } from "@/lib/types/invoices";
+import type { TrendPeriodView } from "./invoices";
+
+export type TrendDataPoint = {
+  mes: number;
+  año: number;
+  ingresos: number;
+  gastos: number;
+};
+
+/**
+ * Obtiene las métricas del usuario (Client Component only)
+ */
+export async function getMetricsClient(
+  profileId?: string,
+  mes?: number,
+  año?: number
+): Promise<MetricsResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (profileId) queryParams.append("profileId", profileId);
+  if (mes) queryParams.append("mes", mes.toString());
+  if (año) queryParams.append("año", año.toString());
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/invoices/metrics${queryString ? `?${queryString}` : ""}`;
+
+  return apiClient<MetricsResponse>(endpoint, {
+    requireAuth: true,
+  });
+}
+
+/**
+ * Obtiene datos de tendencia mensual (Client Component only)
+ * Permite diferentes modos de visualización
+ */
+export async function getTrendDataClient(
+  profileId?: string,
+  año?: number,
+  periodView: TrendPeriodView = "año-actual"
+): Promise<TrendDataPoint[]> {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
+  const year = año || currentYear;
+
+  let monthsToFetch = 12;
+  let shouldIncludePrevYearTail = false;
+  let shouldFetchLast12Months = false;
+
+  switch (periodView) {
+    case "año-actual":
+      // Solo el año seleccionado hasta el mes actual
+      monthsToFetch = year < currentYear ? 12 : currentMonth;
+      break;
+    case "últimos-12-meses":
+      // Rolling window de últimos 12 meses
+      shouldFetchLast12Months = true;
+      break;
+    case "año-completo":
+      // Todos los 12 meses del año seleccionado
+      monthsToFetch = 12;
+      break;
+    case "comparar-anterior":
+      // Año actual + últimos 3 meses del año anterior (solo si es el año actual)
+      if (year === currentYear) {
+        monthsToFetch = currentMonth;
+        shouldIncludePrevYearTail = true;
+      } else {
+        monthsToFetch = 12;
+      }
+      break;
+  }
+
+  const previousYear = year - 1;
+
+  // Si necesitamos los últimos 12 meses, calcular qué meses/años necesitamos
+  if (shouldFetchLast12Months) {
+    const months: Array<{ mes: number; año: number }> = [];
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentYear, currentMonth - 1 - i, 1);
+      months.push({
+        mes: date.getMonth() + 1,
+        año: date.getFullYear(),
+      });
+    }
+
+    const promises = months.map(({ mes, año }) => getMetricsClient(profileId, mes, año));
+    const results = await Promise.all(promises);
+
+    return months.map(({ mes, año }, index) => ({
+      mes,
+      año,
+      ingresos: results[index]?.metrics.totalFacturado || 0,
+      gastos: results[index]?.metrics.totalCompras || 0,
+    }));
+  }
+
+  // Para los otros modos
+  const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
+    getMetricsClient(profileId, i + 1, year)
+  );
+
+  const previousYearMonths = [10, 11, 12];
+  const previousYearPromises = shouldIncludePrevYearTail
+    ? previousYearMonths.map((mes) => getMetricsClient(profileId, mes, previousYear))
+    : [];
+
+  const [currentYearResults, previousYearResults] = await Promise.all([
+    Promise.all(currentYearPromises),
+    Promise.all(previousYearPromises),
+  ]);
+
+  const previousYearData = shouldIncludePrevYearTail
+    ? previousYearMonths.map((mes, index) => ({
+        mes,
+        año: previousYear,
+        ingresos: previousYearResults[index]?.metrics.totalFacturado || 0,
+        gastos: previousYearResults[index]?.metrics.totalCompras || 0,
+      }))
+    : [];
+
+  const currentYearData = Array.from({ length: 12 }, (_, i) => {
+    const mes = i + 1;
+    if (mes <= monthsToFetch && currentYearResults[i]) {
+      return {
+        mes,
+        año: year,
+        ingresos: currentYearResults[i].metrics.totalFacturado,
+        gastos: currentYearResults[i].metrics.totalCompras,
+      };
+    }
+    return {
+      mes,
+      año: year,
+      ingresos: 0,
+      gastos: 0,
+    };
+  });
+
+  return [...previousYearData, ...currentYearData];
+}
 
 /**
  * Sube un archivo XML de factura al backend (Client Component only)

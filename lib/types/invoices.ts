@@ -78,6 +78,7 @@ export interface MetricsResponse {
     totalFacturado: number;
     totalPagado: number;
     totalCompras: number;
+    totalPagadoMenosCompras: number;
     pendientePagar: number;
     totalFacturas: number;
     totalGastos: number;

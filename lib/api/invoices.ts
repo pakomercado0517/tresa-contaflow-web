@@ -65,25 +65,81 @@ export async function getMetrics(
 }
 
 /**
+ * Modos de visualización para la tendencia
+ */
+export type TrendPeriodView =
+  | "año-actual" // Solo el año seleccionado hasta el mes actual (por defecto)
+  | "últimos-12-meses" // Rolling window de últimos 12 meses
+  | "año-completo" // Todos los 12 meses del año seleccionado
+  | "comparar-anterior"; // Año actual + últimos 3 meses del año anterior
+
+/**
  * Obtiene datos de tendencia mensual (Server Component only)
- * Solo hace peticiones hasta el mes actual del año para optimizar
- * Si el año es pasado, obtiene todos los 12 meses
+ * Por defecto muestra solo el año seleccionado sin meses del año anterior
  */
 export async function getTrendData(
   profileId?: string,
-  año?: number
+  año?: number,
+  periodView: TrendPeriodView = "año-actual"
 ): Promise<Array<{ mes: number; año: number; ingresos: number; gastos: number }>> {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
   const year = año || currentYear;
-  
-  // Si es el año actual, incluir últimos 3 meses del año anterior
-  // Si es un año pasado, obtener todos los 12 meses
-  const monthsToFetch = year < currentYear ? 12 : currentMonth;
-  const shouldIncludePrevYearTail = year === currentYear;
+
+  let monthsToFetch = 12;
+  let shouldIncludePrevYearTail = false;
+  let shouldFetchLast12Months = false;
+
+  switch (periodView) {
+    case "año-actual":
+      // Solo el año seleccionado hasta el mes actual
+      monthsToFetch = year < currentYear ? 12 : currentMonth;
+      break;
+    case "últimos-12-meses":
+      // Rolling window de últimos 12 meses
+      shouldFetchLast12Months = true;
+      break;
+    case "año-completo":
+      // Todos los 12 meses del año seleccionado
+      monthsToFetch = 12;
+      break;
+    case "comparar-anterior":
+      // Año actual + últimos 3 meses del año anterior (solo si es el año actual)
+      if (year === currentYear) {
+        monthsToFetch = currentMonth;
+        shouldIncludePrevYearTail = true;
+      } else {
+        monthsToFetch = 12;
+      }
+      break;
+  }
+
   const previousYear = year - 1;
 
+  // Si necesitamos los últimos 12 meses, calcular qué meses/años necesitamos
+  if (shouldFetchLast12Months) {
+    const months: Array<{ mes: number; año: number }> = [];
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentYear, currentMonth - 1 - i, 1);
+      months.push({
+        mes: date.getMonth() + 1,
+        año: date.getFullYear(),
+      });
+    }
+
+    const promises = months.map(({ mes, año }) => getMetrics(profileId, mes, año));
+    const results = await Promise.all(promises);
+
+    return months.map(({ mes, año }, index) => ({
+      mes,
+      año,
+      ingresos: results[index]?.metrics.totalFacturado || 0,
+      gastos: results[index]?.metrics.totalCompras || 0,
+    }));
+  }
+
+  // Para los otros modos
   const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
     getMetrics(profileId, i + 1, year)
   );
