@@ -61,6 +61,10 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 
 # URLs del Frontend
 NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+
+# Ruta Administrativa (Opcional - Solo para referencia personal)
+# Si no se configura, usa: internal/discount-management
+ADMIN_DISCOUNT_ROUTE=internal/discount-management
 ```
 
 4. **Inicia el servidor de desarrollo**
