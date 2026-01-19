@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { logger } from "@/lib/utils/logger";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -84,11 +85,13 @@ export function Sidebar({ user }: SidebarProps) {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border">
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex items-center gap-2 h-16 px-6 border-b border-border">
-          <div className="flex gap-1">
-            <div className="h-4 w-1 bg-primary rounded-full"></div>
-            <div className="h-6 w-1 bg-primary rounded-full"></div>
-            <div className="h-8 w-1 bg-primary rounded-full"></div>
-          </div>
+          <Image
+            src="/logotipo-contaFlow.svg"
+            alt="Conta Flow"
+            width={140}
+            height={32}
+            className="h-8 w-auto"
+          />
           <span className="text-xl font-semibold">Conta Flow</span>
         </div>
 
