@@ -151,7 +151,7 @@ export function FlowTrendChart({
   };
 
   return (
-    <Card className="p-6 bg-card border-border">
+    <Card data-tour="trend-chart" className="p-6 bg-card border-border">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h3 className="text-lg font-semibold">Tendencia de Flujo</h3>

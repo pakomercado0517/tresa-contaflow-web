@@ -82,7 +82,10 @@ export function Sidebar({ user }: SidebarProps) {
   };
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border">
+    <aside
+      data-tour="sidebar"
+      className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border"
+    >
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex items-center gap-2 h-16 px-6 border-b border-border">
           <Image
@@ -144,6 +147,7 @@ export function Sidebar({ user }: SidebarProps) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger
+              data-tour="settings-button"
               className={cn(
                 "p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 pathname?.includes("/dashboard/setup") && "text-primary"

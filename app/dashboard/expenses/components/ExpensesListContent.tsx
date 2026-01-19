@@ -330,11 +330,13 @@ export function ExpensesListContent({
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <ProfileSelector
-            profiles={profiles}
-            selectedProfileId={selectedProfileId}
-            onProfileChange={handleProfileChange}
-          />
+          <div data-tour="expenses-profile-selector">
+            <ProfileSelector
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onProfileChange={handleProfileChange}
+            />
+          </div>
           <Button
             onClick={handleExportPDF}
             variant="outline"
@@ -344,6 +346,7 @@ export function ExpensesListContent({
             Exportar PDF
           </Button>
           <Button
+            data-tour="expenses-manual-button"
             variant="outline"
             className="border-primary/20 hover:bg-primary/10"
             onClick={() => {
@@ -358,7 +361,7 @@ export function ExpensesListContent({
             Gasto Manual
           </Button>
           <Link href="/dashboard/expenses/upload">
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button data-tour="expenses-upload-button" className="bg-primary hover:bg-primary/90">
               <FileText className="mr-2 h-4 w-4" />
               Cargar Gastos XML
             </Button>
@@ -441,7 +444,7 @@ export function ExpensesListContent({
       </div>
 
       {/* Expenses Table */}
-      <div className="border rounded-lg overflow-hidden bg-card">
+      <div data-tour="expenses-table" className="border rounded-lg overflow-hidden bg-card">
         <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
             <Table>

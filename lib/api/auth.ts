@@ -17,6 +17,8 @@ import type {
   ResendVerificationEmailResponse,
   UpdateProfileRequest,
   UpdateProfileResponse,
+  CompleteTourRequest,
+  CompleteTourResponse,
 } from "@/lib/types/auth";
 
 export async function registerUser(
@@ -94,6 +96,16 @@ export async function updateProfile(
   data: UpdateProfileRequest
 ): Promise<UpdateProfileResponse> {
   return apiClient<UpdateProfileResponse>("/api/auth/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    requireAuth: true,
+  });
+}
+
+export async function completeTour(
+  data: CompleteTourRequest
+): Promise<CompleteTourResponse> {
+  return apiClient<CompleteTourResponse>("/api/auth/tour-complete", {
     method: "PATCH",
     body: JSON.stringify(data),
     requireAuth: true,

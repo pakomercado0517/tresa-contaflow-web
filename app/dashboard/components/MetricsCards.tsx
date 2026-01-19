@@ -24,7 +24,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div data-tour="metrics-cards" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <Card className="p-6 bg-card border-border">
         <div className="flex items-center justify-between">
           <div className="space-y-1">

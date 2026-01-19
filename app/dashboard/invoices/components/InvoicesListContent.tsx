@@ -340,11 +340,13 @@ export function InvoicesListContent({
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <ProfileSelector
-            profiles={profiles}
-            selectedProfileId={selectedProfileId}
-            onProfileChange={handleProfileChange}
-          />
+          <div data-tour="invoices-profile-selector">
+            <ProfileSelector
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onProfileChange={handleProfileChange}
+            />
+          </div>
           <Button
             onClick={handleExportPDF}
             variant="outline"
@@ -354,7 +356,7 @@ export function InvoicesListContent({
             Exportar PDF
           </Button>
           <Link href="/dashboard/invoices/upload">
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button data-tour="invoices-upload-button" className="bg-primary hover:bg-primary/90">
               <Plus className="mr-2 h-4 w-4" />
               Subir Facturas
             </Button>
@@ -435,7 +437,7 @@ export function InvoicesListContent({
       </div>
 
       {/* Invoices Table */}
-      <div className="border rounded-lg overflow-hidden bg-card">
+      <div data-tour="invoices-table" className="border rounded-lg overflow-hidden bg-card">
         <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
             <Table>

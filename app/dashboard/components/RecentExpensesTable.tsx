@@ -43,7 +43,7 @@ export function RecentExpensesTable({
   };
 
   return (
-    <Card className="p-6 bg-card border-border">
+    <Card data-tour="recent-expenses" className="p-6 bg-card border-border">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Últimos Gastos</h3>
         <Link
