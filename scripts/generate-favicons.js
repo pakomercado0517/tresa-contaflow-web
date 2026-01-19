@@ -1,6 +1,5 @@
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+import sharp from "sharp"
+import path from "path"
 
 const inputSvg = path.join(__dirname, '../public/logotipo-contaFlow.svg');
 const outputDir = path.join(__dirname, '../public');
