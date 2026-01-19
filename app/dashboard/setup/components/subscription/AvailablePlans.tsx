@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Loader2, AlertCircle } from "lucide-react";
 import { logger } from "@/lib/utils/logger";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PLANS, formatPrice } from "@/lib/utils/plans";
-import { createCheckoutSession } from "@/lib/api/subscription.client";
+import { formatPrice, getPlanDetailsFromAvailable } from "@/lib/utils/plans";
+import { createCheckoutSession, getAvailablePlansClient } from "@/lib/api/subscription.client";
 import { PromotionCodeInput } from "./PromotionCodeInput";
 import {
   Leaf,
@@ -24,7 +24,7 @@ import {
   Building2,
   LucideIcon,
 } from "lucide-react";
-import type { Plan } from "@/lib/types/subscription";
+import type { Plan, AvailablePlan } from "@/lib/types/subscription";
 
 interface AvailablePlansProps {
   currentPlan: Plan;
@@ -44,6 +44,31 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [promotionCode, setPromotionCode] = useState<string>("");
+  const [availablePlans, setAvailablePlans] = useState<AvailablePlan[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+
+  // Cargar planes disponibles del backend cuando cambie el billing cycle
+  useEffect(() => {
+    const loadPlans = async () => {
+      setIsLoadingPlans(true);
+      try {
+        const response = await getAvailablePlansClient(billingCycle);
+        setAvailablePlans(response.plans);
+        setError(null);
+      } catch (err) {
+        logger.error("Error fetching available plans", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Error al cargar los planes disponibles"
+        );
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+
+    loadPlans();
+  }, [billingCycle]);
 
   const handleUpgrade = async (planId: Plan) => {
     // Validaciones
@@ -171,31 +196,50 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Anual (-20%)
+            Anual (-15%)
           </button>
         </div>
       </div>
 
       {/* Plan Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {PLANS.map((plan) => {
-          const Icon = iconMap[plan.icon];
-          const price =
-            billingCycle === "monthly"
-              ? plan.price.monthly
-              : plan.price.annual;
-          const isCurrentPlan = plan.id === currentPlan;
+      {isLoadingPlans ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-muted rounded w-1/2 mb-4"></div>
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="h-4 bg-muted rounded"></div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {availablePlans.map((plan) => {
+            const planDetails = getPlanDetailsFromAvailable(plan);
+            const Icon = iconMap[planDetails.icon];
+            const price = plan.price;
+            const originalPrice = plan.originalPrice;
+            const isCurrentPlan = plan.id === currentPlan;
 
           return (
             <Card
               key={plan.id}
               className={`relative ${
-                plan.isPopular
+                planDetails.isPopular
                   ? "border-primary border-2"
                   : "border-border"
               }`}
             >
-              {plan.isPopular && (
+              {planDetails.isPopular && (
                 <Badge className="absolute -top-2 right-4 bg-primary text-primary-foreground">
                   POPULAR
                 </Badge>
@@ -204,28 +248,42 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
                   {Icon && <Icon className="h-6 w-6 text-primary" />}
-                  <h4 className="text-xl font-semibold">{plan.name}</h4>
+                  <h4 className="text-xl font-semibold">{planDetails.name}</h4>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {plan.description}
+                  {planDetails.description}
                 </p>
               </CardHeader>
 
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-3xl font-bold">{formatPrice(price)}</p>
-                  <p className="text-sm text-muted-foreground">/ mes</p>
-                  {billingCycle === "annual" && (
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold">{formatPrice(price)}</p>
+                    {originalPrice && originalPrice > price && (
+                      <p className="text-lg text-muted-foreground line-through">
+                        {formatPrice(originalPrice)}
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {billingCycle === "annual" ? "/ año" : "/ mes"}
+                  </p>
+                  {billingCycle === "annual" && originalPrice && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Facturación anual
+                      Facturación anual (15% descuento)
+                    </p>
+                  )}
+                  {plan.trialDays && (
+                    <p className="text-xs text-primary font-medium mt-1">
+                      {plan.trialDays} días de prueba gratuita
                     </p>
                   )}
                 </div>
 
                 <ul className="space-y-2">
-                  {plan.features.map((feature, index) => (
+                  {planDetails.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <span className="text-sm">
                         {typeof feature.value === "number"
                           ? `${feature.value} ${feature.label}`
@@ -260,7 +318,8 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
             </Card>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Contact Sales CTA */}
       <div className="text-center pt-6">

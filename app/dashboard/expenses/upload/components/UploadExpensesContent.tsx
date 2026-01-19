@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import Link from "next/link";
 import { UploadZone } from "./UploadZone";
 import { FilesQueue } from "./FilesQueue";
 import { UploadSummary } from "./UploadSummary";
@@ -17,11 +18,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { AlertCircle, Sparkles } from "lucide-react";
 import type { Profile } from "@/lib/types/profiles";
 import type { ValidationState } from "@/lib/types/expenses";
+import type { Subscription } from "@/lib/types/subscription";
+import {
+  canUploadExpenses,
+  getRemainingExpenses,
+  getExpensesLimit,
+  getRecommendedUpgradePlan,
+} from "@/lib/utils/subscription";
 
 interface UploadExpensesContentProps {
   profiles: Profile[];
+  subscription: Subscription | null;
+  expensesUsed: number;
 }
 
 export interface QueuedFile {
@@ -34,23 +47,78 @@ export interface QueuedFile {
   validacion?: ValidationState; // Guardar validación de la API
 }
 
-export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) {
+export function UploadExpensesContent({
+  profiles,
+  subscription,
+  expensesUsed,
+}: UploadExpensesContentProps) {
   const [selectedProfileId, setSelectedProfileId] = useState<string>(
     profiles[0]?.id || ""
   );
   const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // Estados para el dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
 
+  // Calcular límites y uso
+  const plan = subscription?.plan || "FREE";
+  const expensesLimit = getExpensesLimit(plan, subscription);
+  const canUpload = canUploadExpenses(expensesUsed, plan, subscription);
+  const remaining = getRemainingExpenses(expensesUsed, plan, subscription);
+  const recommendedPlan = getRecommendedUpgradePlan(plan);
+
+  // Calcular porcentaje de uso
+  const usagePercentage = useMemo(() => {
+    if (expensesLimit === null) return 0; // Ilimitado
+    return Math.min(100, (expensesUsed / expensesLimit) * 100);
+  }, [expensesUsed, expensesLimit]);
+
+  // Determinar nivel de advertencia
+  const warningLevel = useMemo(() => {
+    if (expensesLimit === null) return null; // Ilimitado
+    const percentage = usagePercentage;
+    if (percentage >= 100) return "error"; // Límite alcanzado
+    if (percentage >= 90) return "warning"; // Cerca del límite
+    if (percentage >= 75) return "info"; // Advertencia temprana
+    return null;
+  }, [usagePercentage, expensesLimit]);
+
   const handleFilesSelected = (files: File[]) => {
+    // Verificar límite antes de agregar archivos
+    if (!canUpload) {
+      showDialog(
+        "Límite alcanzado",
+        `Has alcanzado el límite de ${expensesLimit} gastos por mes de tu plan actual. ${
+          recommendedPlan
+            ? "Actualiza tu plan para subir más gastos."
+            : "Contacta con soporte para aumentar tu límite."
+        }`
+      );
+      return;
+    }
+
+    // Validar que no exceda el límite con los nuevos archivos
+    const newFilesCount = files.length;
+    if (expensesLimit !== null && expensesUsed + newFilesCount > expensesLimit) {
+      const availableSlots = remaining !== null ? remaining : 0;
+      showDialog(
+        "Límite excedido",
+        `Solo puedes subir ${availableSlots} gasto${availableSlots !== 1 ? "s" : ""} más este mes. ${
+          recommendedPlan
+            ? "Actualiza tu plan para aumentar tu límite."
+            : "Contacta con soporte para aumentar tu límite."
+        }`
+      );
+      return;
+    }
+
     const newFiles: QueuedFile[] = files.map((file) => {
       const id = `${Date.now()}-${Math.random()}`;
       const validation = validateFile(file);
-      
+
       return {
         id,
         file,
@@ -90,11 +158,41 @@ export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) 
       return;
     }
 
+    // Verificar límite antes de procesar
+    if (!canUpload) {
+      showDialog(
+        "Límite alcanzado",
+        `Has alcanzado el límite de ${expensesLimit} gastos por mes de tu plan actual. ${
+          recommendedPlan
+            ? "Actualiza tu plan para subir más gastos."
+            : "Contacta con soporte para aumentar tu límite."
+        }`
+      );
+      return;
+    }
+
     const validFiles = queuedFiles.filter((f) => f.status === "valid");
     if (validFiles.length === 0) {
       showDialog(
         "Sin archivos válidos",
         "No hay archivos válidos para procesar. Por favor, agrega archivos XML válidos."
+      );
+      return;
+    }
+
+    // Verificar que no exceda el límite con los archivos a procesar
+    if (
+      expensesLimit !== null &&
+      expensesUsed + validFiles.length > expensesLimit
+    ) {
+      const availableSlots = remaining !== null ? remaining : 0;
+      showDialog(
+        "Límite excedido",
+        `Solo puedes subir ${availableSlots} gasto${availableSlots !== 1 ? "s" : ""} más este mes. ${
+          recommendedPlan
+            ? "Actualiza tu plan para aumentar tu límite."
+            : "Contacta con soporte para aumentar tu límite."
+        }`
       );
       return;
     }
@@ -200,6 +298,78 @@ export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) 
         />
       </div>
 
+      {/* Banner de límite de uso */}
+      {expensesLimit !== null && (
+        <Alert
+          className={
+            warningLevel === "error"
+              ? "border-red-500 bg-red-50 dark:bg-red-950/20"
+              : warningLevel === "warning"
+                ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+                : warningLevel === "info"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                  : "border-border"
+          }
+        >
+          <AlertCircle
+            className={`h-4 w-4 ${
+              warningLevel === "error"
+                ? "text-red-600"
+                : warningLevel === "warning"
+                  ? "text-orange-600"
+                  : warningLevel === "info"
+                    ? "text-blue-600"
+                    : "text-muted-foreground"
+            }`}
+          />
+          <AlertTitle>Uso de Gastos del Mes</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span>
+                {expensesUsed} / {expensesLimit} gastos utilizados
+              </span>
+              <span className="font-medium">{Math.round(usagePercentage)}%</span>
+            </div>
+            <Progress value={usagePercentage} className="h-2" />
+            {warningLevel === "error" && (
+              <p className="text-sm font-medium">
+                Has alcanzado el límite de tu plan. {recommendedPlan && (
+                  <Link
+                    href="/dashboard/setup?tab=subscription"
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Actualiza a {recommendedPlan} <Sparkles className="h-4 w-4" />
+                  </Link>
+                )}
+              </p>
+            )}
+            {warningLevel === "warning" && remaining !== null && remaining > 0 && (
+              <p className="text-sm">
+                Te quedan {remaining} gasto{remaining !== 1 ? "s" : ""} disponibles este mes.
+                {recommendedPlan && (
+                  <Link
+                    href="/dashboard/setup?tab=subscription"
+                    className="text-primary hover:underline ml-1 inline-flex items-center gap-1"
+                  >
+                    Considera actualizar tu plan <Sparkles className="h-4 w-4" />
+                  </Link>
+                )}
+              </p>
+            )}
+            {warningLevel === "info" && remaining !== null && (
+              <p className="text-sm text-muted-foreground">
+                Te quedan {remaining} gastos disponibles este mes.
+              </p>
+            )}
+            {!warningLevel && remaining !== null && remaining > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Te quedan {remaining} gastos disponibles este mes.
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left: Upload Zone */}
@@ -215,7 +385,13 @@ export function UploadExpensesContent({ profiles }: UploadExpensesContentProps) 
             errorCount={errorCount}
             onProcess={handleProcess}
             isProcessing={isProcessing}
-            disabled={queuedFiles.length === 0 || validCount === 0}
+            disabled={
+              queuedFiles.length === 0 ||
+              validCount === 0 ||
+              !canUpload ||
+              (expensesLimit !== null &&
+                expensesUsed + validCount > expensesLimit)
+            }
           />
         </div>
       </div>

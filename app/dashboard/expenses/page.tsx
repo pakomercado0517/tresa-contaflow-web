@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
+import { getSubscription } from "@/lib/api/subscription";
+import { getMetrics } from "@/lib/api/invoices";
 import { ExpensesListContent } from "./components/ExpensesListContent";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -28,6 +30,8 @@ async function ExpensesContent({ searchParams }: ExpensesPageProps) {
 
   let expenses;
   let profiles;
+  let subscription;
+  let metrics;
   let error: ServerApiError | null = null;
 
   try {
@@ -42,10 +46,14 @@ async function ExpensesContent({ searchParams }: ExpensesPageProps) {
         search,
       }),
       getProfiles(),
+      getSubscription().catch(() => null),
+      getMetrics(profileId, mes, año),
     ]);
     
     expenses = results[0];
     profiles = results[1];
+    subscription = results[2];
+    metrics = results[3];
   } catch (err) {
     const apiError = err as ServerApiError;
     
@@ -70,11 +78,16 @@ async function ExpensesContent({ searchParams }: ExpensesPageProps) {
     );
   }
 
+  // Calcular uso actual de gastos del mes
+  const expensesUsed = metrics?.metrics?.totalGastos || 0;
+
   return (
     <ExpensesListContent
       expenses={expenses!.data}
       pagination={expenses!.pagination}
       profiles={profiles!.data}
+      subscription={subscription}
+      expensesUsed={expensesUsed}
       initialProfileId={profileId}
       initialMes={mes}
       initialAño={año}

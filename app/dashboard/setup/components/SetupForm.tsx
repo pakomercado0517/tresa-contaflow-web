@@ -16,14 +16,19 @@ import {
   getRecommendedUpgradePlan,
   getProfileLimit,
 } from "@/lib/utils/subscription";
-import type { Plan } from "@/lib/types/subscription";
+import type { Plan, Subscription } from "@/lib/types/subscription";
 
 interface SetupFormProps {
   currentProfileCount: number;
   plan: Plan;
+  subscription?: Subscription | null;
 }
 
-export function SetupForm({ currentProfileCount, plan }: SetupFormProps) {
+export function SetupForm({
+  currentProfileCount,
+  plan,
+  subscription,
+}: SetupFormProps) {
   const router = useRouter();
   const [tipoPersona, setTipoPersona] = useState<"FISICA" | "MORAL">("FISICA");
   const [nombre, setNombre] = useState("");
@@ -31,9 +36,17 @@ export function SetupForm({ currentProfileCount, plan }: SetupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canCreate = canCreateProfile(currentProfileCount, plan);
-  const remainingProfiles = getRemainingProfiles(currentProfileCount, plan);
-  const limit = getProfileLimit(plan);
+  const canCreate = canCreateProfile(
+    currentProfileCount,
+    plan,
+    subscription
+  );
+  const remainingProfiles = getRemainingProfiles(
+    currentProfileCount,
+    plan,
+    subscription
+  );
+  const limit = getProfileLimit(plan, subscription);
   const recommendedPlan = getRecommendedUpgradePlan(plan);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,7 +93,7 @@ export function SetupForm({ currentProfileCount, plan }: SetupFormProps) {
         {/* Información del plan y límites */}
         <div className="flex items-center gap-2 mb-4">
           <Badge variant="outline" className="text-xs">
-            {getProfileLimitMessage(plan)}
+            {getProfileLimitMessage(plan, subscription)}
           </Badge>
           {limit !== Infinity && (
             <span className="text-xs text-muted-foreground">

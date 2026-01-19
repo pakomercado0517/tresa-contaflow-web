@@ -9,6 +9,7 @@ import type {
   CreateCheckoutResponse,
   CreatePortalSessionResponse,
   CreateCheckoutRequest,
+  GetAvailablePlansResponse,
 } from "@/lib/types/subscription";
 
 /**
@@ -57,6 +58,24 @@ export async function createPortalSessionClient(): Promise<CreatePortalSessionRe
     "/api/subscription/create-portal-session",
     {
       method: "POST",
+      requireAuth: true,
+    }
+  );
+}
+
+/**
+ * Obtiene todos los planes disponibles (Client Component)
+ * @param billing - Tipo de facturación: "monthly" o "annual" (default: "monthly")
+ */
+export async function getAvailablePlansClient(
+  billing: "monthly" | "annual" = "monthly"
+): Promise<GetAvailablePlansResponse> {
+  const queryParams = new URLSearchParams();
+  queryParams.append("billing", billing);
+
+  return apiClient<GetAvailablePlansResponse>(
+    `/api/subscription/plans?${queryParams.toString()}`,
+    {
       requireAuth: true,
     }
   );

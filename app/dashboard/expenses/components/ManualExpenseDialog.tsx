@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -23,11 +25,19 @@ import {
 } from "@/components/ui/select";
 import { createManualExpense } from "@/lib/api/expenses.client";
 import { ApiError } from "@/lib/api/client";
+import type { Subscription } from "@/lib/types/subscription";
+import {
+  canUploadExpenses,
+  getExpensesLimit,
+  getRecommendedUpgradePlan,
+} from "@/lib/utils/subscription";
 
 interface ManualExpenseDialogProps {
   isOpen: boolean;
   onClose: () => void;
   profileId: string;
+  subscription?: Subscription | null;
+  expensesUsed?: number;
 }
 
 const CATEGORIES = [
@@ -43,10 +53,18 @@ export function ManualExpenseDialog({
   isOpen,
   onClose,
   profileId,
+  subscription,
+  expensesUsed = 0,
 }: ManualExpenseDialogProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Calcular límites
+  const plan = subscription?.plan || "FREE";
+  const expensesLimit = getExpensesLimit(plan, subscription);
+  const canUpload = canUploadExpenses(expensesUsed, plan, subscription);
+  const recommendedPlan = getRecommendedUpgradePlan(plan);
 
   // Form fields
   const [fecha, setFecha] = useState(() => {
@@ -91,6 +109,18 @@ export function ManualExpenseDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Validar límite antes de crear gasto manual
+    if (!canUpload) {
+      setError(
+        `Has alcanzado el límite de ${expensesLimit} gastos por mes de tu plan actual. ${
+          recommendedPlan
+            ? "Actualiza tu plan para crear más gastos."
+            : "Contacta con soporte para aumentar tu límite."
+        }`
+      );
+      return;
+    }
 
     // Validaciones
     if (!fecha) {
@@ -173,6 +203,27 @@ export function ManualExpenseDialog({
               Registra un gasto que no proviene de un CFDI XML.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Mostrar advertencia si está cerca del límite o lo alcanzó */}
+          {expensesLimit !== null && !canUpload && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Has alcanzado el límite de {expensesLimit} gastos por mes de tu plan actual.
+                {recommendedPlan && (
+                  <>
+                    {" "}
+                    <Link
+                      href="/dashboard/setup?tab=subscription"
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      Actualiza a {recommendedPlan} <Sparkles className="h-4 w-4" />
+                    </Link>
+                  </>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid gap-4 py-4">
             {/* Fecha */}
@@ -303,7 +354,7 @@ export function ManualExpenseDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !canUpload}>
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

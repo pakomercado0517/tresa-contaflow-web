@@ -74,6 +74,7 @@ export function getTrialDaysRemaining(
 
 /**
  * Verifica si el usuario tiene acceso a una característica premium
+ * Prioriza los límites dinámicos del backend si están disponibles
  */
 export function hasFeatureAccess(
   subscription: Subscription | null,
@@ -81,14 +82,31 @@ export function hasFeatureAccess(
 ): boolean {
   if (!subscription) return false;
 
+  // Verificar si la suscripción está activa
+  const isActive = ["ACTIVE", "TRIALING"].includes(subscription.status);
+  if (!isActive) return false;
+
+  // Priorizar límites dinámicos del backend si están disponibles
+  if (subscription.limits) {
+    switch (feature) {
+      case "pdf_export":
+        return subscription.limits.exportPDF;
+      case "excel_export":
+        return subscription.limits.exportExcel;
+      case "api_access":
+        return subscription.limits.apiAccess;
+      case "priority_support":
+        return subscription.limits.support === "priority";
+      default:
+        return false;
+    }
+  }
+
+  // Fallback a lógica basada en plan si no hay límites dinámicos
   const plan = subscription.plan;
 
   // FREE no tiene acceso a características premium
   if (plan === "FREE") return false;
-
-  // Verificar si la suscripción está activa
-  const isActive = ["ACTIVE", "TRIALING"].includes(subscription.status);
-  if (!isActive) return false;
 
   switch (feature) {
     case "pdf_export":

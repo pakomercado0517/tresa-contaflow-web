@@ -6,6 +6,7 @@ import { MetricsCards } from "./MetricsCards";
 import { RecentInvoicesTable } from "./RecentInvoicesTable";
 import { RecentExpensesTable } from "./RecentExpensesTable";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { TrialBannerWrapper } from "./TrialBannerWrapper";
 import { getMetrics, getInvoices, getTrendData } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
@@ -80,8 +81,11 @@ export async function DashboardContent({
         companyName={selectedCompanyName}
       />
       <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
+        {/* Trial Banner - Solo se muestra si el usuario está en trial */}
+        <TrialBannerWrapper />
+        
         <div className="flex items-center justify-between">
-          <DashboardGreeting userName={userName} companyName={activeProfile?.nombre} />
+          <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
           <ExportPDFButton
             profileId={profileId}
             profileName={activeProfile?.nombre}

@@ -57,8 +57,8 @@ export async function createProfileAction(
     const currentProfileCount = profiles?.count || 0;
     const plan = subscription?.plan || "FREE";
 
-    if (!canCreateProfile(currentProfileCount, plan)) {
-      const limit = getProfileLimit(plan);
+    if (!canCreateProfile(currentProfileCount, plan, subscription)) {
+      const limit = getProfileLimit(plan, subscription);
       const limitMessage =
         limit === Infinity
           ? "Has alcanzado el límite de tu plan actual."

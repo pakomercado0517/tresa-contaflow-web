@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import type { Expense } from "@/lib/types/expenses";
 import type { Profile } from "@/lib/types/profiles";
+import type { Subscription } from "@/lib/types/subscription";
 import { exportToPDF } from "@/lib/utils/pdf-export";
 
 interface ExpensesListContentProps {
@@ -47,6 +48,8 @@ interface ExpensesListContentProps {
     totalPages: number;
   };
   profiles: Profile[];
+  subscription?: Subscription | null;
+  expensesUsed?: number;
   initialProfileId?: string;
   initialMes?: number;
   initialAño?: number;
@@ -117,6 +120,8 @@ export function ExpensesListContent({
   expenses,
   pagination,
   profiles,
+  subscription,
+  expensesUsed = 0,
   initialProfileId,
   initialMes,
   initialAño,
@@ -532,6 +537,8 @@ export function ExpensesListContent({
         <ManualExpenseDialog
           isOpen={isManualExpenseDialogOpen}
           onClose={() => setIsManualExpenseDialogOpen(false)}
+          subscription={subscription}
+          expensesUsed={expensesUsed}
           profileId={selectedProfileId}
         />
       )}

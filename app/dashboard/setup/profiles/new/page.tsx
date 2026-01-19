@@ -23,6 +23,7 @@ export default async function NewProfilePage() {
         <CreateProfileForm
           currentProfileCount={currentProfileCount}
           plan={plan}
+          subscription={subscription}
         />
       </div>
     </main>

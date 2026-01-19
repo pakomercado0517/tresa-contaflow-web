@@ -18,13 +18,29 @@ export function SubscriptionCard({ subscription, cfdiUsed }: SubscriptionCardPro
   const planDetails = getPlanDetails(plan);
   const price = subscription?.planPrice || planDetails.price.monthly;
 
-  // Obtener límite de CFDI del plan
-  const cfdiLimit = planDetails.xmlLimit === "unlimited" ? Infinity : planDetails.xmlLimit;
+  // Usar límites dinámicos del backend si están disponibles
+  // Fallback a límites hardcodeados si no hay suscripción o límites dinámicos
+  const invoicesLimit = subscription?.limits?.invoicesPerMonth ?? null;
+  const expensesLimit = subscription?.limits?.expensesPerMonth ?? null;
   
-  // Si no se proporciona cfdiUsed, usar 0 (o se podría obtener de la API)
+  // Calcular límite total de CFDI (facturas + gastos)
+  const getTotalCfdiLimit = (): number | null => {
+    if (invoicesLimit === null && expensesLimit === null) {
+      return null; // Ambos ilimitados = ilimitado total
+    }
+    if (invoicesLimit === null || expensesLimit === null) {
+      return null; // Uno ilimitado = ilimitado total
+    }
+    return invoicesLimit + expensesLimit; // Sumar límites si ambos tienen límite
+  };
+
+  const cfdiLimit = getTotalCfdiLimit();
+  const cfdiLimitValue = cfdiLimit === null ? Infinity : cfdiLimit;
+  
+  // Si no se proporciona cfdiUsed, usar 0
   const cfdiUsedValue = cfdiUsed ?? 0;
   
-  const usagePercentage = cfdiLimit === Infinity ? 0 : (cfdiUsedValue / cfdiLimit) * 100;
+  const usagePercentage = cfdiLimitValue === Infinity ? 0 : (cfdiUsedValue / cfdiLimitValue) * 100;
 
   const nextRenewal = subscription?.currentPeriodEnd
     ? new Date(subscription.currentPeriodEnd).toLocaleDateString("es-MX", {
@@ -64,7 +80,7 @@ export function SubscriptionCard({ subscription, cfdiUsed }: SubscriptionCardPro
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Uso de Folios CFDI</span>
             <span className="font-medium">
-              {cfdiUsedValue} / {cfdiLimit === Infinity ? "∞" : cfdiLimit}
+              {cfdiUsedValue} / {cfdiLimitValue === Infinity ? "∞" : cfdiLimitValue}
             </span>
           </div>
           <Progress value={usagePercentage} className="h-2" />

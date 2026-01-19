@@ -1,7 +1,6 @@
 import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getPlanDetails } from "@/lib/utils/plans";
 import type { Subscription } from "@/lib/types/subscription";
 
 interface ConsumptionCardProps {
@@ -10,27 +9,50 @@ interface ConsumptionCardProps {
   xmlUsed: number;
 }
 
+/**
+ * Calcula el límite total de XML (facturas + gastos) basado en los límites del plan
+ */
+function getTotalXmlLimit(
+  invoicesLimit: number | null,
+  expensesLimit: number | null
+): number | null {
+  // Si ambos son null, el límite total es ilimitado
+  if (invoicesLimit === null && expensesLimit === null) {
+    return null;
+  }
+
+  // Si uno es null (ilimitado) y el otro no, el total es ilimitado
+  if (invoicesLimit === null || expensesLimit === null) {
+    return null;
+  }
+
+  // Si ambos tienen límites, sumarlos
+  return invoicesLimit + expensesLimit;
+}
+
 export function ConsumptionCard({
   subscription,
   currentProfilesCount,
   xmlUsed,
 }: ConsumptionCardProps) {
-  const plan = subscription?.plan || "FREE";
-  const planDetails = getPlanDetails(plan);
+  // Usar límites dinámicos del backend si están disponibles
+  // Si no hay suscripción, usar valores por defecto (plan FREE)
+  const profilesLimit = subscription?.limits?.profiles ?? 1;
+  const invoicesLimit = subscription?.limits?.invoicesPerMonth ?? 25;
+  const expensesLimit = subscription?.limits?.expensesPerMonth ?? 25;
+  const totalXmlLimit = getTotalXmlLimit(invoicesLimit, expensesLimit);
 
-  const xmlLimit =
-    planDetails.xmlLimit === "unlimited" ? Infinity : planDetails.xmlLimit;
+  // Calcular porcentajes
+  const xmlLimitValue =
+    totalXmlLimit === null ? Infinity : totalXmlLimit;
   const xmlPercentage =
-    xmlLimit === Infinity ? 0 : (xmlUsed / xmlLimit) * 100;
+    xmlLimitValue === Infinity ? 0 : (xmlUsed / xmlLimitValue) * 100;
 
-  const profilesLimit =
-    planDetails.profilesLimit === "unlimited"
-      ? Infinity
-      : planDetails.profilesLimit;
+  const profilesLimitValue = profilesLimit === null ? Infinity : profilesLimit;
   const profilesPercentage =
-    profilesLimit === Infinity
+    profilesLimitValue === Infinity
       ? 0
-      : (currentProfilesCount / profilesLimit) * 100;
+      : (currentProfilesCount / profilesLimitValue) * 100;
 
   return (
     <Card>
@@ -49,7 +71,7 @@ export function ConsumptionCard({
             </span>
             <span className="font-medium">
               {xmlUsed} /{" "}
-              {xmlLimit === Infinity ? "∞" : xmlLimit}
+              {xmlLimitValue === Infinity ? "∞" : xmlLimitValue}
             </span>
           </div>
           <Progress
@@ -66,7 +88,7 @@ export function ConsumptionCard({
             </span>
             <span className="font-medium">
               {currentProfilesCount} /{" "}
-              {profilesLimit === Infinity ? "∞" : profilesLimit}
+              {profilesLimitValue === Infinity ? "∞" : profilesLimitValue}
             </span>
           </div>
           <Progress value={profilesPercentage} className="h-2" />

@@ -22,8 +22,8 @@ export async function ProfilesSection() {
   const currentCount = profiles?.count || 0;
   const plan = subscription?.plan || "FREE";
   const profilesData = profiles?.data || [];
-  const canCreate = canCreateProfile(currentCount, plan);
-  const remaining = getRemainingProfiles(currentCount, plan);
+  const canCreate = canCreateProfile(currentCount, plan, subscription);
+  const remaining = getRemainingProfiles(currentCount, plan, subscription);
 
   return (
     <div className="space-y-6">
@@ -47,7 +47,7 @@ export async function ProfilesSection() {
       <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
         <div className="flex items-center gap-4">
           <Badge variant="outline">
-            {getProfileLimitMessage(plan)}
+            {getProfileLimitMessage(plan, subscription)}
           </Badge>
           <p className="text-sm text-muted-foreground">
             {currentCount} de {plan === "ENTERPRISE" ? "∞" : remaining + currentCount} perfiles utilizados
