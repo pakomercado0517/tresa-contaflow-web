@@ -40,7 +40,7 @@ async function InvoicesContent({ searchParams }: InvoicesPageProps) {
         año,
         tipo,
         page,
-        limit: 20,
+        limit: 10,
         search,
       }),
       getProfiles(),

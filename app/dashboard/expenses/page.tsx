@@ -42,7 +42,7 @@ async function ExpensesContent({ searchParams }: ExpensesPageProps) {
         año,
         categoria,
         page,
-        limit: 20,
+        limit: 10,
         search,
       }),
       getProfiles(),
