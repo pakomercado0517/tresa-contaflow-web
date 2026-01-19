@@ -21,7 +21,7 @@ export function AccountContent({ subscription, user }: AccountContentProps) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Personal Information */}
         <div className="lg:col-span-2 space-y-6">
-          <PersonalInformationCard />
+          <PersonalInformationCard user={user} />
         </div>
 
         {/* Right Column - Subscription and Preferences */}

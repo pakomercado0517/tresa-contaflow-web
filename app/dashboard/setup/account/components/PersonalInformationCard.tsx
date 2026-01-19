@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Phone, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,18 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
     email: user?.email || "",
     telefono: user?.telefono || "",
   });
+
+  // Actualizar el estado cuando cambie el prop user
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        nombre: user.nombre || "",
+        apellido: user.apellido || "",
+        email: user.email || "",
+        telefono: user.telefono || "",
+      });
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +159,7 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
               type="email"
               value={formData.email}
               disabled
-              className="bg-muted cursor-not-allowed"
+              className="bg-muted cursor-not-allowed text-foreground"
             />
             <p className="text-xs text-muted-foreground">
               El correo electrónico no se puede modificar
