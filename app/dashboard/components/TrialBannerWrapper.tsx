@@ -2,7 +2,6 @@
 
 import { TrialBanner } from "@/components/subscription/TrialBanner";
 import { useSubscription } from "@/lib/hooks/useSubscription";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 /**
  * Wrapper component que obtiene la suscripción y muestra el TrialBanner

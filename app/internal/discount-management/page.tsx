@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getDiscountCodes } from "@/lib/api/discounts";
 import { ServerApiError } from "@/lib/api/server-client";
 import { DiscountManagementContent } from "./components/DiscountManagementContent";
-import { getAdminDiscountRoute } from "@/lib/utils/admin-route";
 
 /**
  * Ruta administrativa oculta para gestionar códigos de descuento

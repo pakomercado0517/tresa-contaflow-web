@@ -320,7 +320,7 @@ export function InvoicesListContent({
     }
     return (
       <Badge variant="destructive" className="flex items-center gap-1">
-        <AlertTriangle className="h-3 w-3" />
+        <AlertTitle className="h-3 w-3" />
         ERROR
       </Badge>
     );
