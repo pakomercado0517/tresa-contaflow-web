@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { TrendingDown, DollarSign, FileText, ArrowLeftRight } from "lucide-react";
+import { TrendingDown, DollarSign, FileText } from "lucide-react";
 import type { MetricsResponse } from "@/lib/types/invoices";
 
 interface MetricsCardsProps {
@@ -9,8 +9,8 @@ interface MetricsCardsProps {
 export function MetricsCards({ metrics }: MetricsCardsProps) {
   const totalIngresos = metrics?.totalFacturado || 0;
   const totalGastos = metrics?.totalCompras || 0;
-  const utilidadNeta = totalIngresos - totalGastos;
-  const diferenciaIngresosGastos = totalIngresos - totalGastos;
+  // Utilidad neta viene del backend (totalPagadoMenosCompras contiene el cálculo de ingresos vs gastos)
+  const utilidadNeta = metrics?.totalPagadoMenosCompras ?? (totalIngresos - totalGastos);
   const margen = totalIngresos > 0 ? (utilidadNeta / totalIngresos) * 100 : 0;
   const totalFacturas = metrics?.totalFacturas || 0;
 
@@ -24,7 +24,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
   };
 
   return (
-    <div data-tour="metrics-cards" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div data-tour="metrics-cards" className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card className="p-6 bg-card border-border">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -60,20 +60,6 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
           </div>
           <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
             <DollarSign className="h-6 w-6 text-primary" />
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6 bg-card border-border">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Diferencia Ingresos - Gastos</p>
-            <p className="text-3xl font-bold">
-              {formatCurrency(diferenciaIngresosGastos)}
-            </p>
-          </div>
-          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <ArrowLeftRight className="h-6 w-6 text-primary" />
           </div>
         </div>
       </Card>
