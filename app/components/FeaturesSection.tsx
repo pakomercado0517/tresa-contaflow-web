@@ -13,54 +13,54 @@ interface Feature {
 const empresarioFeatures: Feature[] = [
   {
     icon: <BarChart3 className="h-6 w-6" />,
-    title: "Dashboard en Tiempo Real",
+    title: "Visibilidad financiera en tiempo real",
     description:
-      "Visualiza todas tus métricas financieras en un solo lugar. Control total de tus ingresos y gastos.",
+      "Entiende cómo va tu negocio hoy. Visualiza ingresos, gastos y flujo de efectivo sin depender de hojas de Excel.",
   },
   {
     icon: <Download className="h-6 w-6" />,
-    title: "Descarga Masiva SAT",
+    title: "Facturas siempre sincronizadas con el SAT",
     description:
-      "Importa todas tus facturas del SAT de forma automática. Sin procesos manuales complicados.",
+      "Descarga automáticamente tus CFDI directamente del SAT y evita omisiones o información incompleta.",
   },
   {
     icon: <CheckCircle2 className="h-6 w-6" />,
-    title: "Validación Automática",
+    title: "Detección temprana de errores fiscales",
     description:
-      "Sistema de validación CFDI 4.0 integrado. Detecta errores y problemas fiscales antes que sea tarde.",
+      "Identifica facturas incorrectas, inconsistencias y riesgos fiscales antes de que se conviertan en problemas.",
   },
   {
     icon: <Users className="h-6 w-6" />,
-    title: "Gestión Multi-RFC",
+    title: "Todos tus RFCs en un solo lugar",
     description:
-      "Administra múltiples empresas desde una sola cuenta. Ideal para emprendedores con varios negocios.",
+      "Administra varios negocios desde una sola cuenta, con información separada, clara y organizada.",
   },
 ];
 
 const contadorFeatures: Feature[] = [
   {
     icon: <Users className="h-6 w-6" />,
-    title: "Gestión Multi-Cliente",
+    title: "Control total de todos tus clientes",
     description:
-      "Administra todos tus clientes desde una sola plataforma. Cambia entre RFCs de forma instantánea.",
+      "Gestiona múltiples RFCs desde una sola plataforma y cambia entre clientes sin fricción ni duplicar trabajo.",
   },
   {
     icon: <BarChart3 className="h-6 w-6" />,
-    title: "Reportes Consolidados",
+    title: "Reportes profesionales listos para entregar",
     description:
-      "Genera reportes profesionales combinando datos de múltiples clientes. Exporta a PDF y Excel.",
+      "Genera reportes claros y consolidados por cliente o periodo. Exporta a PDF y Excel en segundos.",
   },
   {
     icon: <CheckCircle2 className="h-6 w-6" />,
-    title: "Validaciones Fiscales",
+    title: "Validación fiscal automatizada",
     description:
-      "Sistema avanzado de validación CFDI 4.0. Detecta discrepancias y problemas fiscales automáticamente.",
+      "Detecta discrepancias, errores CFDI 4.0 y posibles riesgos fiscales sin revisar XML uno por uno.",
   },
   {
     icon: <Download className="h-6 w-6" />,
-    title: "Integración SAT",
+    title: "Descarga masiva directa desde el SAT",
     description:
-      "Conecta con el SAT para descargar facturas de todos tus clientes de forma masiva y automática.",
+      "Centraliza las facturas de todos tus clientes con integración directa al SAT, sin procesos manuales.",
   },
 ];
 
@@ -73,11 +73,14 @@ export function FeaturesSection() {
     selectedRole === "empresario" ? empresarioFeatures : contadorFeatures;
 
   return (
-    <section id="beneficios" className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8">
+    <section
+      id="beneficios"
+      className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8"
+    >
       <div className="flex flex-col gap-12">
         <div className="text-center space-y-4">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Herramientas diseñadas para tu rol
+            Beneficios claros según cómo trabajas
           </h2>
         </div>
 
@@ -123,4 +126,3 @@ export function FeaturesSection() {
     </section>
   );
 }
-

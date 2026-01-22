@@ -4,13 +4,17 @@ export function DashboardPreview() {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="flex-1 space-y-6">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Control total desde una sola vista
+            Todo tu control financiero, claro y ordenado
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl">
-            Nuestro dashboard intuitivo te permite tener visibilidad completa de
-            todas tus operaciones financieras. Visualiza métricas clave, genera
-            reportes profesionales y mantén todo organizado sin esfuerzo.
+            Visualiza ingresos, gastos y facturas en un solo lugar. 
+            Sin hojas de cálculo, sin buscar XML uno por uno y sin depender de terceros 
+            para entender cómo va tu negocio o el de tus clientes.
           </p>
+          <p className="text-sm text-muted-foreground italic">
+            <span className="font-bold">Menos tiempo administrando facturas. Más tiempo tomando decisiones.</span>
+          </p>
+
         </div>
 
         <div className="flex-1">
@@ -43,4 +47,3 @@ export function DashboardPreview() {
     </section>
   );
 }
-

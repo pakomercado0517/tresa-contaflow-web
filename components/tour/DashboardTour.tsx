@@ -22,7 +22,7 @@ const tourSteps: Tour[] = [
         icon: "🧭",
         title: "Navegación Principal",
         content:
-          "Desde aquí puedes acceder a todas las secciones: Dashboard, Facturas (Ingresos) y Gastos (Egresos).",
+          "Desde aquí puedes acceder a todas las secciones: Dashboard, Facturas (Ingresos), Gastos (Egresos) y Obtener CSF (guía para obtener tu Constancia de Situación Fiscal del SAT).",
         selector: "[data-tour='sidebar']",
         side: "right",
         showControls: true,
@@ -130,6 +130,47 @@ const tourSteps: Tour[] = [
     ],
   },
   {
+    tour: "certificationTour",
+    steps: [
+      {
+        icon: "🏢",
+        title: "Constancia de Situación Fiscal",
+        content:
+          "Esta guía te ayudará a obtener tu Constancia de Situación Fiscal (CSF) del SAT. Es un trámite importante para muchas empresas.",
+        selector: "[data-tour='certification-hero']",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: "📋",
+        title: "Pasos para obtener tu CSF",
+        content:
+          "Sigue estos 3 pasos para navegar el portal del SAT: prepara tus credenciales (RFC y e.firma), navega a Trámites, y genera tu PDF.",
+        selector: "[data-tour='certification-steps']",
+        side: "top",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: "🔗",
+        title: "Acceso al portal del SAT",
+        content:
+          "Haz clic en el botón 'Ir al portal del SAT' para dirigirte directamente a la plataforma oficial donde podrás completar el trámite.",
+        selector: "[data-tour='certification-cta']",
+        side: "top",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+    ],
+  },
+  {
     tour: "invoicesTour",
     steps: [
       {
@@ -221,6 +262,7 @@ const tourSteps: Tour[] = [
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
+        nextRoute: "/dashboard/certification",
       },
     ],
   },
@@ -402,8 +444,8 @@ function TourController({ user }: { user?: User }) {
       hasStartedRef.current &&
       !navigationInProgressRef.current
     ) {
-      // Si es el último tour (expenses), marcar todo como completado en la API
-      if (tourStartedRef.current === TOUR_IDS.expenses) {
+      // Si es el último tour (certification), marcar todo como completado en la API
+      if (tourStartedRef.current === TOUR_IDS.certification) {
         // markTourCompleted ya llama a completeTour cuando se completan todos los tours
         markTourCompleted(tourStartedRef.current).catch((error) => {
           console.error("Error al marcar tour como completado:", error);
@@ -458,6 +500,24 @@ function TourController({ user }: { user?: User }) {
       timerRef.current = setTimeout(() => {
         startTour();
         startNextStep(TOUR_IDS.expenses);
+      }, 1000);
+    }
+
+    // Si estamos en certification y no hay tour activo y no se ha completado, iniciar el tour
+    if (
+      pathname === "/dashboard/certification" &&
+      !isNextStepVisible &&
+      currentTour === null &&
+      !hasStartedRef.current &&
+      tourStartedRef.current !== TOUR_IDS.certification &&
+      !isTourCompleted(TOUR_IDS.certification) &&
+      !navigationInProgressRef.current
+    ) {
+      hasStartedRef.current = true;
+      tourStartedRef.current = TOUR_IDS.certification;
+      timerRef.current = setTimeout(() => {
+        startTour();
+        startNextStep(TOUR_IDS.certification);
       }, 1000);
     }
   }, [pathname, isNextStepVisible, currentTour, startTour, startNextStep, isTourCompleted]);

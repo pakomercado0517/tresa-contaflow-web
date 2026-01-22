@@ -3,7 +3,7 @@ export function TrustSection() {
     <section className="mx-auto w-full max-w-7xl px-4 py-12 lg:px-8">
       <div className="flex flex-col items-center gap-8">
         <p className="text-sm text-muted-foreground uppercase tracking-wider">
-          CONFÍAN EN NOSOTROS MÁS DE 500 EQUIPOS CONTABLES
+          UTILIZADO POR NEGOCIOS Y CONTADORES EN MÉXICO
         </p>
         <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
           {[1, 2, 3, 4].map((item) => (
@@ -19,4 +19,3 @@ export function TrustSection() {
     </section>
   );
 }
-
