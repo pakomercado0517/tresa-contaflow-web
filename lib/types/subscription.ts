@@ -21,6 +21,19 @@ export interface PlanLimits {
   reports: "basic" | "complete" | "advanced"; // Nivel de reportes
   support: "none" | "email" | "priority"; // Tipo de soporte
   apiAccess: boolean; // Acceso a la API
+
+  /** Buscador SAT: búsquedas básicas/mes (null = ilimitadas) */
+  satBasicSearchesPerMonth?: number | null;
+  /** Buscador SAT: búsquedas con IA/mes (null = ilimitadas) */
+  satAISearchesPerMonth?: number | null;
+  /** Buscador SAT: máx. resultados por búsqueda (null = sin límite) */
+  satMaxResults?: number | null;
+  satHasAIExplanations?: boolean;
+  satHasHistory?: boolean;
+  satHasFavorites?: boolean;
+  satHasAlerts?: boolean;
+  satHasLearning?: boolean;
+  satHasAdvancedRanking?: boolean;
 }
 
 export interface Subscription {

@@ -1,4 +1,8 @@
-import type { Plan, PlanLimits, AvailablePlan } from "@/lib/types/subscription";
+import type {
+  Plan,
+  PlanLimits,
+  AvailablePlan,
+} from "@/lib/types/subscription";
 
 export interface PlanFeature {
   label: string;
@@ -112,8 +116,10 @@ export function formatPrice(price: number): string {
 
 /**
  * Genera las features de un plan dinámicamente basándose en los límites del backend
+ * @param limits - Límites del plan desde el backend
+ * @param planId - ID del plan para usar valores por defecto si el backend no envía límites SAT
  */
-export function generatePlanFeatures(limits: PlanLimits): PlanFeature[] {
+export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFeature[] {
   const features: PlanFeature[] = [];
 
   // RFCs Emisores (Profiles)
@@ -177,6 +183,203 @@ export function generatePlanFeatures(limits: PlanLimits): PlanFeature[] {
     features.push({ label: "Acceso a API", value: "Sí" });
   }
 
+  // Buscador SAT - Valores por defecto según plan (si el backend no envía los campos)
+  const satDefaults: Record<
+    Plan,
+    {
+      satBasicSearchesPerMonth: number | null;
+      satAISearchesPerMonth: number | null;
+      satMaxResults: number | null;
+      satHasAIExplanations: boolean;
+      satHasHistory: boolean;
+      satHasFavorites: boolean;
+      satHasAlerts: boolean;
+      satHasLearning: boolean;
+      satHasAdvancedRanking: boolean;
+    }
+  > = {
+    FREE: {
+      satBasicSearchesPerMonth: null, // Ilimitadas
+      satAISearchesPerMonth: 5,
+      satMaxResults: 2,
+      satHasAIExplanations: false,
+      satHasHistory: false,
+      satHasFavorites: false,
+      satHasAlerts: false,
+      satHasLearning: false,
+      satHasAdvancedRanking: false,
+    },
+    BASIC: {
+      satBasicSearchesPerMonth: null, // Ilimitadas
+      satAISearchesPerMonth: 100,
+      satMaxResults: 5,
+      satHasAIExplanations: true,
+      satHasHistory: true,
+      satHasFavorites: false,
+      satHasAlerts: false,
+      satHasLearning: false,
+      satHasAdvancedRanking: false,
+    },
+    PRO: {
+      satBasicSearchesPerMonth: null, // Ilimitadas
+      satAISearchesPerMonth: null, // Ilimitadas
+      satMaxResults: null, // Ilimitados
+      satHasAIExplanations: true,
+      satHasHistory: true,
+      satHasFavorites: true,
+      satHasAlerts: true,
+      satHasLearning: true,
+      satHasAdvancedRanking: true,
+    },
+    ENTERPRISE: {
+      satBasicSearchesPerMonth: null, // Ilimitadas
+      satAISearchesPerMonth: null, // Ilimitadas
+      satMaxResults: null, // Ilimitados
+      satHasAIExplanations: true,
+      satHasHistory: true,
+      satHasFavorites: true,
+      satHasAlerts: true,
+      satHasLearning: true,
+      satHasAdvancedRanking: true,
+    },
+  };
+
+  // Usar valores del backend si están disponibles, sino usar defaults según plan
+  const satBasicSearches =
+    limits.satBasicSearchesPerMonth !== undefined
+      ? limits.satBasicSearchesPerMonth
+      : planId
+        ? satDefaults[planId].satBasicSearchesPerMonth
+        : undefined;
+
+  const satAISearches =
+    limits.satAISearchesPerMonth !== undefined
+      ? limits.satAISearchesPerMonth
+      : planId
+        ? satDefaults[planId].satAISearchesPerMonth
+        : undefined;
+
+  const satMaxResults =
+    limits.satMaxResults !== undefined
+      ? limits.satMaxResults
+      : planId
+        ? satDefaults[planId].satMaxResults
+        : undefined;
+
+  const satHasAIExplanations =
+    limits.satHasAIExplanations !== undefined
+      ? limits.satHasAIExplanations
+      : planId
+        ? satDefaults[planId].satHasAIExplanations
+        : false;
+
+  const satHasHistory =
+    limits.satHasHistory !== undefined
+      ? limits.satHasHistory
+      : planId
+        ? satDefaults[planId].satHasHistory
+        : false;
+
+  const satHasFavorites =
+    limits.satHasFavorites !== undefined
+      ? limits.satHasFavorites
+      : planId
+        ? satDefaults[planId].satHasFavorites
+        : false;
+
+  const satHasAlerts =
+    limits.satHasAlerts !== undefined
+      ? limits.satHasAlerts
+      : planId
+        ? satDefaults[planId].satHasAlerts
+        : false;
+
+  const satHasLearning =
+    limits.satHasLearning !== undefined
+      ? limits.satHasLearning
+      : planId
+        ? satDefaults[planId].satHasLearning
+        : false;
+
+  const satHasAdvancedRanking =
+    limits.satHasAdvancedRanking !== undefined
+      ? limits.satHasAdvancedRanking
+      : planId
+        ? satDefaults[planId].satHasAdvancedRanking
+        : false;
+
+  // Buscador SAT - Búsquedas básicas
+  if (satBasicSearches !== undefined) {
+    if (satBasicSearches === null) {
+      features.push({ label: "Búsquedas SAT básicas", value: "Ilimitadas" });
+    } else {
+      features.push({
+        label: "Búsquedas SAT básicas / mes",
+        value: satBasicSearches,
+      });
+    }
+  }
+
+  // Buscador SAT - Búsquedas con IA
+  if (satAISearches !== undefined) {
+    if (satAISearches === null) {
+      features.push({ label: "Búsquedas SAT con IA", value: "Ilimitadas" });
+    } else {
+      features.push({
+        label: "Búsquedas SAT con IA / mes",
+        value: satAISearches,
+      });
+    }
+  }
+
+  // Buscador SAT - Máximo de resultados
+  if (satMaxResults !== undefined) {
+    if (satMaxResults === null) {
+      features.push({
+        label: "Resultados SAT por búsqueda",
+        value: "Ilimitados",
+      });
+    } else {
+      features.push({
+        label: "Resultados SAT por búsqueda",
+        value: `Hasta ${satMaxResults}`,
+      });
+    }
+  }
+
+  // Buscador SAT - Explicaciones IA
+  if (satHasAIExplanations) {
+    features.push({
+      label: "Explicaciones de sugerencias IA",
+      value: "Sí",
+    });
+  }
+
+  // Buscador SAT - Historial
+  if (satHasHistory) {
+    features.push({ label: "Historial de búsquedas SAT", value: "Sí" });
+  }
+
+  // Buscador SAT - Favoritos
+  if (satHasFavorites) {
+    features.push({ label: "Favoritos SAT", value: "Sí" });
+  }
+
+  // Buscador SAT - Alertas
+  if (satHasAlerts) {
+    features.push({ label: "Alertas fiscales SAT", value: "Sí" });
+  }
+
+  // Buscador SAT - Aprendizaje
+  if (satHasLearning) {
+    features.push({ label: "Aprendizaje por RFC", value: "Sí" });
+  }
+
+  // Buscador SAT - Ranking avanzado
+  if (satHasAdvancedRanking) {
+    features.push({ label: "Ranking avanzado SAT", value: "Sí" });
+  }
+
   return features;
 }
 
@@ -186,7 +389,7 @@ export function generatePlanFeatures(limits: PlanLimits): PlanFeature[] {
 export function getPlanDetailsFromAvailable(
   plan: AvailablePlan
 ): PlanDetails {
-  const features = generatePlanFeatures(plan.limits);
+  const features = generatePlanFeatures(plan.limits, plan.id);
 
   // Mapear el nombre del plan a un formato más legible
   const planNames: Record<Plan, string> = {

@@ -3,6 +3,7 @@ import { CurrentPlanCard } from "./subscription/CurrentPlanCard";
 import { ConsumptionCard } from "./subscription/ConsumptionCard";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import type { Subscription } from "@/lib/types/subscription";
+import type { SATPlanInfo } from "@/lib/types/sat";
 
 // Lazy load AvailablePlans (componente grande con Stripe)
 const AvailablePlans = dynamic(() => import("./subscription/AvailablePlans").then((mod) => ({ default: mod.AvailablePlans })), {
@@ -18,12 +19,14 @@ interface SubscriptionContentProps {
   subscription: Subscription | null;
   currentProfilesCount: number;
   xmlUsed: number;
+  satPlanInfo?: SATPlanInfo | null;
 }
 
 export function SubscriptionContent({
   subscription,
   currentProfilesCount,
   xmlUsed,
+  satPlanInfo,
 }: SubscriptionContentProps) {
   return (
     <div className="space-y-8">
@@ -43,6 +46,7 @@ export function SubscriptionContent({
           subscription={subscription}
           currentProfilesCount={currentProfilesCount}
           xmlUsed={xmlUsed}
+          satPlanInfo={satPlanInfo}
         />
       </div>
 

@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types/auth";
@@ -48,6 +49,11 @@ const navigationItems: NavItem[] = [
     title: "Gastos (Egresos)",
     href: "/dashboard/expenses",
     icon: <Receipt className="h-5 w-5" />,
+  },
+  {
+    title: "Buscador SAT",
+    href: "/dashboard/sat-search",
+    icon: <Search className="h-5 w-5" />,
   },
   {
     title: "Obtener CSF",

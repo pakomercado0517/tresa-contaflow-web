@@ -2,11 +2,13 @@ import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { Subscription } from "@/lib/types/subscription";
+import type { SATPlanInfo } from "@/lib/types/sat";
 
 interface ConsumptionCardProps {
   subscription: Subscription | null;
   currentProfilesCount: number;
   xmlUsed: number;
+  satPlanInfo?: SATPlanInfo | null;
 }
 
 /**
@@ -34,6 +36,7 @@ export function ConsumptionCard({
   subscription,
   currentProfilesCount,
   xmlUsed,
+  satPlanInfo,
 }: ConsumptionCardProps) {
   // Usar límites dinámicos del backend si están disponibles
   // null significa ilimitado, solo usar valores por defecto si no hay suscripción
@@ -54,6 +57,16 @@ export function ConsumptionCard({
     profilesLimitValue === Infinity
       ? 0
       : (currentProfilesCount / profilesLimitValue) * 100;
+
+  // Búsquedas SAT con IA
+  const satAISearchesUsed = satPlanInfo?.aiSearchesUsed ?? 0;
+  const satAISearchesLimit = satPlanInfo?.aiSearchesLimit ?? null;
+  const satAISearchesLimitValue =
+    satAISearchesLimit === null ? Infinity : satAISearchesLimit;
+  const satAISearchesPercentage =
+    satAISearchesLimitValue === Infinity
+      ? 0
+      : (satAISearchesUsed / satAISearchesLimitValue) * 100;
 
   return (
     <Card>
@@ -94,6 +107,29 @@ export function ConsumptionCard({
           </div>
           <Progress value={profilesPercentage} className="h-2" />
         </div>
+
+        {/* Búsquedas SAT con IA */}
+        {satPlanInfo && satAISearchesLimit !== null && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                Búsquedas SAT con IA
+              </span>
+              <span className="font-medium">
+                {satAISearchesUsed} / {satAISearchesLimit}
+              </span>
+            </div>
+            <Progress
+              value={satAISearchesPercentage}
+              className="h-2"
+            />
+            {satPlanInfo.aiSearchesRemaining !== null && (
+              <p className="text-xs text-muted-foreground">
+                {satPlanInfo.aiSearchesRemaining} búsquedas restantes este mes
+              </p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
