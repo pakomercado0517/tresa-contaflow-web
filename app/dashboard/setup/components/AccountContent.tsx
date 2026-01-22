@@ -1,10 +1,11 @@
-import { UserProfileCard } from "../account/components/UserProfileCard";
-import { PersonalInformationCard } from "../account/components/PersonalInformationCard";
-import { SubscriptionCard } from "../account/components/SubscriptionCard";
-import { PreferencesCard } from "../account/components/PreferencesCard";
-import { AddNewCompanyCard } from "../account/components/AddNewCompanyCard";
-import type { Subscription } from "@/lib/types/subscription";
-import type { User } from "@/lib/types/auth";
+import { UserProfileCard } from '../account/components/UserProfileCard';
+import { PersonalInformationCard } from '../account/components/PersonalInformationCard';
+import { SubscriptionCard } from '../account/components/SubscriptionCard';
+import { PreferencesCard } from '../account/components/PreferencesCard';
+import { AddNewCompanyCard } from '../account/components/AddNewCompanyCard';
+import { SetupFooter } from './SetupFooter';
+import type { Subscription } from '@/lib/types/subscription';
+import type { User } from '@/lib/types/auth';
 
 interface AccountContentProps {
   subscription: Subscription | null;
@@ -20,7 +21,7 @@ export function AccountContent({ subscription, user }: AccountContentProps) {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Personal Information */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <PersonalInformationCard user={user} />
         </div>
 
@@ -31,7 +32,9 @@ export function AccountContent({ subscription, user }: AccountContentProps) {
           <AddNewCompanyCard />
         </div>
       </div>
+
+      {/* Footer with Logout Button */}
+      <SetupFooter />
     </div>
   );
 }
-
