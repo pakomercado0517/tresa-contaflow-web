@@ -14,19 +14,19 @@ export function HeroSection() {
         <div className="flex flex-1 flex-col gap-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 w-fit">
             <span className="text-sm font-medium text-primary">
-              NUEVO: VALIDACIÓN CFDI 4.0
+              Evita errores fiscales antes de que el SAT los detecte
             </span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-            Domina tus Facturas.{" "}
-            <span className="text-primary">Gestión Multi-RFC</span> sin caos.
+            Control fiscal sin estrés para{" "}
+            <span className="text-primary">negocios y contadores</span>
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-xl">
-            Sistema completo para el control y gestión de facturas CFDI. Gestiona
-            múltiples clientes y empresas (RFCs) desde una sola cuenta con
-            procesamiento automático, validaciones fiscales y reportes profesionales.
+            Centraliza tus CFDI, detecta errores fiscales automáticamente y genera
+            reportes claros para tomar mejores decisiones, sin Excel y sin caos.
+            Gestiona múltiples RFCs desde un solo sistema.
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -41,12 +41,12 @@ export function HeroSection() {
               />
             </div>
             <Button size="lg" className="bg-primary hover:bg-primary/90 whitespace-nowrap">
-              Prueba gratis
+              Empieza gratis
             </Button>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Prueba de 14 días. Sin tarjeta de crédito.
+            30 días gratis. Sin tarjeta. Sin compromisos.
           </p>
         </div>
 
@@ -57,10 +57,13 @@ export function HeroSection() {
               <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
               <div className="h-3 w-3 rounded-full bg-green-500"></div>
             </div>
+
             <div className="space-y-4">
               <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary mb-2">305.30%</div>
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    305.30%
+                  </div>
                   <div className="h-32 w-full bg-primary/20 rounded flex items-end justify-center gap-2 p-4">
                     <div className="h-16 w-8 bg-primary rounded"></div>
                     <div className="h-24 w-8 bg-primary rounded"></div>
@@ -69,14 +72,17 @@ export function HeroSection() {
                   </div>
                 </div>
               </div>
+
               <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
                 <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
                   <span className="text-primary-foreground text-sm">✓</span>
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium">Validación Exitosa</div>
+                  <div className="font-medium">
+                    Validación fiscal completada
+                  </div>
                   <div className="text-sm text-muted-foreground">
-                    342 Facturas procesadas hoy
+                    342 CFDI revisados automáticamente hoy
                   </div>
                 </div>
                 <div className="text-primary font-semibold">+12.5%</div>
@@ -88,4 +94,3 @@ export function HeroSection() {
     </section>
   );
 }
-

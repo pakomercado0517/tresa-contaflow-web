@@ -18,6 +18,7 @@ import {
   Receipt,
   Settings,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types/auth";
@@ -47,6 +48,11 @@ const navigationItems: NavItem[] = [
     title: "Gastos (Egresos)",
     href: "/dashboard/expenses",
     icon: <Receipt className="h-5 w-5" />,
+  },
+  {
+    title: "Obtener CSF",
+    href: "/dashboard/certification",
+    icon: <ShieldCheck className="h-5 w-5" />,
   },
 ];
 

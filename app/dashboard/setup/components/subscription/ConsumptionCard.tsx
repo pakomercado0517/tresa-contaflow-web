@@ -36,10 +36,11 @@ export function ConsumptionCard({
   xmlUsed,
 }: ConsumptionCardProps) {
   // Usar límites dinámicos del backend si están disponibles
-  // Si no hay suscripción, usar valores por defecto (plan FREE)
+  // null significa ilimitado, solo usar valores por defecto si no hay suscripción
   const profilesLimit = subscription?.limits?.profiles ?? 1;
-  const invoicesLimit = subscription?.limits?.invoicesPerMonth ?? 25;
-  const expensesLimit = subscription?.limits?.expensesPerMonth ?? 25;
+  // Para XML: null = ilimitado, solo usar valores por defecto si no hay suscripción
+  const invoicesLimit = subscription?.limits?.invoicesPerMonth ?? (subscription ? null : 25);
+  const expensesLimit = subscription?.limits?.expensesPerMonth ?? (subscription ? null : 25);
   const totalXmlLimit = getTotalXmlLimit(invoicesLimit, expensesLimit);
 
   // Calcular porcentajes
