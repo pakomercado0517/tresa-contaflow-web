@@ -1,0 +1,626 @@
+# Reglas del Proyecto - Sistema de Control Financiero CFDI
+
+## 📋 Índice
+
+1. [TypeScript y Tipado](#1-typescript-y-tipado)
+2. [Modularización y Estructura](#2-modularización-y-estructura-1)
+3. [Documentación](#3-documentación-1)
+4. [Gestión de Paquetes](#4-gestión-de-paquetes-1)
+5. [Principios de Código](#5-principios-de-código-1)
+6. [Paradigmas y Patrones](#6-paradigmas-y-patrones-1)
+7. [Nomenclatura](#7-nomenclatura-1)
+8. [UI y Estilos](#8-ui-y-estilos-1)
+9. [React y Next.js](#9-react-y-nextjs-1)
+10. [Fetching de Datos y API](#10-fetching-de-datos-y-api-1)
+11. [Performance y Optimización](#11-performance-y-optimización-1)
+
+---
+
+## 1. TypeScript y Tipado
+
+### Reglas Estrictas
+
+- ✅ **NO usar `any`** en ningún caso
+- ✅ **NO usar tipos genéricos** cuando no sea estrictamente necesario
+- ✅ Mantener tipado robusto y explícito en todo el código
+- ✅ Priorizar **interfaces** sobre `type` para definir estructuras de datos
+- ✅ Usar `type` solo para uniones, intersecciones o alias simples
+- ✅ Habilitar TypeScript strict mode en `tsconfig.json`
+
+### Ejemplos
+
+```typescript
+// ✅ CORRECTO - Usar interfaces
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+// ✅ CORRECTO - Type para uniones
+type Status = 'pending' | 'active' | 'inactive';
+
+// ❌ INCORRECTO - No usar any
+function processData(data: any) {}
+
+// ✅ CORRECTO - Tipado explícito
+function processData(data: User) {}
+```
+
+---
+
+## 2. Modularización y Estructura
+
+### Estructura de Carpetas
+
+Cada ruta debe seguir esta estructura:
+
+```
+app/
+  dashboard/
+    page.tsx          # Solo guionista, lógica mínima
+    components/       # Todos los subcomponentes de esta página
+      DashboardHeader.tsx
+      MetricsCard.tsx
+      InvoiceTable.tsx
+    ...
+  upload/
+    page.tsx
+    components/
+      InvoiceUploader.tsx
+      FileDropzone.tsx
+      UploadPreview.tsx
+  ...
+  components/         # Componentes globales reutilizables
+    ui/              # Componentes de Shadcn/ui
+    layout/
+      Header.tsx
+      Sidebar.tsx
+    common/
+      LoadingSpinner.tsx
+      ErrorMessage.tsx
+```
+
+### Principios
+
+- **`page.tsx`** debe ser solo un guionista:
+  - Importar componentes
+  - Organizar el layout básico
+  - Mínima lógica (solo composición)
+- **Carpeta `components/`** por ruta:
+  - Todos los subcomponentes específicos de esa página
+  - Componentes privados de esa ruta
+- **Carpeta global `components/`**:
+  - Componentes reutilizables en múltiples rutas
+  - Componentes de layout
+  - Componentes UI base
+
+### Ejemplo
+
+```typescript
+// app/dashboard/page.tsx - SOLO GUIONISTA
+import { DashboardHeader } from "./components/DashboardHeader";
+import { MetricsCard } from "./components/MetricsCard";
+import { InvoiceTable } from "./components/InvoiceTable";
+
+export default function DashboardPage() {
+  return (
+    <div>
+      <DashboardHeader />
+      <MetricsCard />
+      <InvoiceTable />
+    </div>
+  );
+}
+
+// app/dashboard/components/DashboardHeader.tsx - LÓGICA AQUÍ
+// ... implementación completa del componente
+```
+
+---
+
+## 3. Documentación
+
+### Reglas de Documentación
+
+- ✅ **Solo documentar cosas importantes**:
+  - Funciones/componentes complejos
+  - Lógica de negocio crítica
+  - APIs o integraciones externas
+  - Decisiones técnicas importantes
+- ✅ **Guardar documentación en `/docs`**:
+  - Todos los archivos `.md` deben estar en `docs/`
+  - Usar nombres descriptivos: `API_INTEGRATION.md`, `ARCHITECTURE.md`
+- ⚠️ **Preguntar antes de documentar**:
+  - Si hay duda sobre si documentar algo, preguntar al equipo
+  - Evitar documentación excesiva que no aporte valor
+
+### Estructura de Documentación
+
+```
+docs/
+  PROJECT_RULES.md          # Este archivo
+  PRD_MICROSAAS.md          # Product Requirements Document
+  API_INTEGRATION.md        # Documentación de APIs
+  ARCHITECTURE.md           # Decisiones arquitectónicas
+  ...
+```
+
+---
+
+## 4. Gestión de Paquetes
+
+### Regla Absoluta
+
+- ✅ **SIEMPRE usar `pnpm`**
+- ❌ **NUNCA usar `npm` o `yarn`**
+- ✅ Todos los comandos deben usar `pnpm`
+
+### Comandos
+
+```bash
+# ✅ CORRECTO
+pnpm install
+pnpm add package-name
+pnpm remove package-name
+pnpm run dev
+
+# ❌ INCORRECTO
+npm install
+yarn add package-name
+```
+
+---
+
+## 5. Principios de Código
+
+### Simplicidad
+
+- ✅ **Código simple y eficaz**
+- ✅ Evitar sobreingeniería
+- ✅ No ser redundante
+- ✅ Verificar duplicación de código antes de agregar nuevo código
+
+### Revisión de Código
+
+Antes de crear nueva funcionalidad:
+
+1. ¿Ya existe algo similar?
+2. ¿Puede reutilizarse un componente existente?
+3. ¿La solución es la más simple posible?
+4. ¿El código es fácil de entender?
+
+### Ejemplo
+
+```typescript
+// ❌ SOBREINGENIERÍA - Demasiado complejo
+class InvoiceProcessorFactory {
+  createProcessor(type: string) {
+    return new InvoiceProcessorBuilder().withType(type).withValidator(new Validator()).build();
+  }
+}
+
+// ✅ SIMPLE Y EFICAZ
+function processInvoice(invoice: Invoice): ProcessedInvoice {
+  validateInvoice(invoice);
+  return transformInvoice(invoice);
+}
+```
+
+---
+
+## 6. Paradigmas y Patrones
+
+### Programación Funcional
+
+- ✅ Priorizar programación funcional
+- ✅ Usar funciones puras cuando sea posible
+- ✅ Preferir `map`, `filter`, `reduce` sobre bucles `for`
+- ❌ **NO usar clases** - Solo funciones y componentes
+
+### Declarativa sobre Imperativa
+
+```typescript
+// ❌ IMPERATIVA
+const activeUsers = [];
+for (let i = 0; i < users.length; i++) {
+  if (users[i].status === 'active') {
+    activeUsers.push(users[i]);
+  }
+}
+
+// ✅ DECLARATIVA
+const activeUsers = users.filter((user) => user.status === 'active');
+```
+
+### Componentes Funcionales
+
+```typescript
+// ✅ CORRECTO - Función
+export function UserCard({ user }: { user: User }) {
+  return <div>{user.name}</div>;
+}
+
+// ❌ INCORRECTO - Clase
+export class UserCard extends React.Component {
+  // NO usar clases
+}
+```
+
+---
+
+## 7. Nomenclatura
+
+### Variables y Funciones
+
+- ✅ Usar nombres descriptivos con verbos auxiliares
+- ✅ Prefijos booleanos: `is`, `has`, `should`, `can`, `will`
+
+### Convenciones
+
+```typescript
+// ✅ CORRECTO
+const isLoading = true;
+const hasError = false;
+const shouldValidate = true;
+const canEdit = false;
+const willSubmit = false;
+
+// ✅ CORRECTO - Funciones con verbos
+function getUserById(id: string) {}
+function validateInvoice(invoice: Invoice) {}
+function calculateTotal(items: Item[]) {}
+
+// ❌ INCORRECTO
+const loading = true;
+const error = false;
+const data = {};
+```
+
+### Componentes
+
+```typescript
+// ✅ CORRECTO - PascalCase para componentes
+export function InvoiceTable() {}
+export function DashboardHeader() {}
+
+// ✅ CORRECTO - camelCase para funciones
+function formatDate(date: Date) {}
+function parseInvoice(xml: string) {}
+```
+
+---
+
+## 8. UI y Estilos
+
+### Stack UI
+
+- ✅ **Shadcn/ui** para componentes base
+- ✅ **Radix UI** (ya incluido en Shadcn/ui)
+- ✅ **Tailwind CSS** para estilos
+
+### Responsividad
+
+- ✅ **Diseño móvil primero** (mobile-first)
+- ✅ Usar breakpoints de Tailwind: `sm:`, `md:`, `lg:`, `xl:`, `2xl:`
+- ✅ Probar en dispositivos móviles primero
+
+### Ejemplo
+
+```tsx
+// ✅ MOBILE-FIRST
+<div className="flex flex-col p-4 md:flex-row md:p-8 lg:gap-4">
+  <div className="w-full md:w-1/2 lg:w-1/3">Content</div>
+</div>
+```
+
+### Componentes Shadcn/ui
+
+- Instalar componentes según necesidad: `pnpm dlx shadcn@latest add button`
+- No modificar componentes base directamente
+- Extender componentes cuando sea necesario
+
+---
+
+## 9. React y Next.js
+
+### Server Components (Prioridad)
+
+- ✅ **Priorizar Server Components**
+- ✅ Usar Server Components por defecto
+- ✅ Solo usar Client Components cuando sea estrictamente necesario
+
+### Minimizar Hooks del Cliente
+
+- ⚠️ Minimizar uso de `"use client"`
+- ⚠️ Minimizar `useEffect`
+- ⚠️ Minimizar `useState`
+
+### Cuándo Usar Client Components
+
+Solo usar `"use client"` para:
+
+1. Interactividad (onClick, onChange, etc.)
+2. Hooks de React (useState, useEffect, useContext)
+3. Event listeners del navegador
+4. APIs del navegador (localStorage, window, etc.)
+5. Librerías que requieren cliente (animaciones, gráficos interactivos)
+
+### Suspense y Loading
+
+- ✅ Usar `Suspense` con fallback para componentes de cliente
+- ✅ Crear componentes de loading específicos
+
+```typescript
+// ✅ CORRECTO
+import { Suspense } from "react";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ClientComponent />
+    </Suspense>
+  );
+}
+```
+
+### SSR y Server Components
+
+- ✅ Priorizar Server Components y SSR de Next.js
+- ✅ Usar `async/await` en Server Components
+- ✅ Fetch de datos directamente en Server Components
+
+```typescript
+// ✅ CORRECTO - Server Component
+export default async function DashboardPage() {
+  const data = await fetchData();
+  return <Dashboard data={data} />;
+}
+
+// ⚠️ Solo para APIs web en componentes pequeños
+("use client");
+function SearchBar() {
+  const [query, setQuery] = useState("");
+  // Lógica de búsqueda con API
+}
+```
+
+---
+
+## 10. Fetching de Datos y API
+
+### Estrategia Híbrida (Recomendada)
+
+El proyecto utiliza una estrategia híbrida que combina Server Components de Next.js con TanStack Query para optimizar el rendimiento y la experiencia de usuario.
+
+### Server Components (Prioridad)
+
+- ✅ **Usar para datos iniciales y páginas estáticas**
+- ✅ **Fetch nativo de Next.js** con `fetch()` o `cookies()`
+- ✅ Ideal para: Dashboard inicial, listas de facturas, datos que no cambian frecuentemente
+- ✅ Ventajas: SSR, SEO, menos JavaScript en el cliente
+
+```typescript
+// ✅ CORRECTO - Server Component con fetch
+import { cookies } from "next/headers";
+
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const invoices = await fetch(`${process.env.API_URL}/api/invoices`, {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+
+  const data = await invoices.json();
+  return <Dashboard data={data} />;
+}
+```
+
+### TanStack Query (React Query)
+
+- ✅ **Usar para datos interactivos y client components**
+- ✅ Ideal para: Tablas con filtros, datos que requieren refetching, polling, cache
+- ✅ Ventajas: Cache automático, estados de loading/error, refetch automático
+
+```typescript
+// ✅ CORRECTO - Client Component con React Query
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+
+function InvoiceTable() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: async () => {
+      const response = await fetch("/api/invoices");
+      if (!response.ok) throw new Error("Failed to fetch");
+      return response.json();
+    },
+  });
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} />;
+
+  return <Table data={data} />;
+}
+```
+
+### Autenticación (JWT con httpOnly Cookies)
+
+- ✅ **Usar httpOnly cookies** (recomendado en PRD, más seguro que localStorage)
+- ✅ Cookies se envían automáticamente con cada request
+- ✅ Protección contra XSS
+- ✅ Refresh tokens manejados automáticamente
+
+```typescript
+// ✅ CORRECTO - Cliente HTTP configurado
+// lib/api/client.ts
+async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+    ...options,
+    credentials: 'include', // Para cookies httpOnly
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+```
+
+### Estructura de Carpetas para API
+
+```
+lib/
+  api/
+    client.ts          # Cliente HTTP configurado (fetch wrapper)
+    auth.ts            # Funciones de autenticación
+    endpoints.ts       # Tipos y constantes de endpoints
+    invoices.ts        # Funciones para facturas
+    profiles.ts        # Funciones para perfiles
+    ...
+  hooks/
+    useAuth.ts         # Hook para auth (con React Query)
+    useApi.ts          # Hook genérico para peticiones
+    ...
+```
+
+### Métodos por Caso de Uso
+
+| Caso de Uso                   | Método Recomendado                     | Razón                                    |
+| ----------------------------- | -------------------------------------- | ---------------------------------------- |
+| Login/Register                | Server Actions o React Query mutations | Formularios, menos JS con Server Actions |
+| Estado del usuario            | React Query + Zustand                  | Cache y estado global                    |
+| Lista de facturas inicial     | Server Component + fetch               | SSR, datos iniciales                     |
+| Filtros/búsqueda interactivos | React Query                            | Interactividad, cache                    |
+| Upload XML                    | React Query mutation                   | Estados de progreso                      |
+| Dashboard metrics             | Server Component                       | SSR, SEO                                 |
+| Datos en tiempo real          | React Query con polling                | Refetch automático                       |
+
+### Server Actions (Next.js)
+
+- ✅ **Usar para formularios y mutaciones simples**
+- ✅ Ideal para: Login, Register, acciones que no requieren estados complejos
+- ✅ Ventajas: Menos código, integración nativa con Next.js
+
+```typescript
+// ✅ CORRECTO - Server Action para autenticación
+// app/auth/login/actions.ts
+'use server';
+
+export async function loginAction(formData: FormData) {
+  const email = formData.get('email');
+  const password = formData.get('password');
+
+  const response = await fetch(`${process.env.API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    return { error: 'Invalid credentials' };
+  }
+
+  const data = await response.json();
+  cookies().set('token', data.token, { httpOnly: true });
+  redirect('/dashboard');
+}
+```
+
+### Reglas de Uso
+
+1. **Priorizar Server Components**: Siempre evaluar si los datos pueden obtenerse en el servidor
+2. **React Query para interactividad**: Solo usar cuando se necesita interactividad del cliente
+3. **Tipos TypeScript**: Crear interfaces para todas las respuestas de API
+4. **Manejo de errores**: Centralizar el manejo de errores en el cliente HTTP
+5. **Loading states**: Usar Suspense para Server Components, React Query para client
+6. **No usar fetch directamente**: Siempre usar el cliente HTTP configurado (`apiClient`)
+
+### Ejemplos de Uso Incorrecto
+
+```typescript
+// ❌ INCORRECTO - Fetch directo en Server Component sin configuración
+export default async function Page() {
+  const data = await fetch("https://api.example.com/data");
+  return <Component data={await data.json()} />;
+}
+
+// ✅ CORRECTO - Usar cliente HTTP configurado
+import { apiClient } from "@/lib/api/client";
+
+export default async function Page() {
+  const data = await apiClient<Data>("/api/data");
+  return <Component data={data} />;
+}
+```
+
+---
+
+## 11. Performance y Optimización
+
+### Carga Dinámica
+
+- ✅ Usar `dynamic` import para componentes no críticos
+- ✅ Cargar componentes pesados de forma lazy
+
+```typescript
+// ✅ CORRECTO - Lazy loading
+import dynamic from "next/dynamic";
+
+const ChartComponent = dynamic(() => import("@/components/Chart"), {
+  loading: () => <LoadingSpinner />,
+  ssr: false, // Solo si requiere cliente
+});
+```
+
+### Componentes Críticos
+
+- ✅ Mantener componentes críticos importados normalmente
+- ✅ Lazy load solo para componentes pesados o no críticos
+
+### Optimizaciones
+
+- ✅ Usar `next/image` para imágenes
+- ✅ Usar `next/link` para navegación
+- ✅ Optimizar bundles (verificar imports)
+
+---
+
+## 📝 Checklist de Desarrollo
+
+Antes de hacer commit, verificar:
+
+- [ ] ¿El código usa TypeScript estricto sin `any`?
+- [ ] ¿Los componentes están modularizados correctamente?
+- [ ] ¿`page.tsx` es solo guionista?
+- [ ] ¿Se usó `pnpm` para instalar paquetes?
+- [ ] ¿El código es simple y no redundante?
+- [ ] ¿Se usaron funciones en lugar de clases?
+- [ ] ¿Los nombres de variables son descriptivos?
+- [ ] ¿Se priorizaron interfaces sobre types?
+- [ ] ¿El diseño es responsive (mobile-first)?
+- [ ] ¿Se minimizó el uso de `"use client"`?
+- [ ] ¿Se usaron Server Components cuando fue posible?
+- [ ] ¿Se implementó Suspense para componentes de cliente?
+- [ ] ¿Se usó la estrategia híbrida correcta (Server Components vs React Query)?
+- [ ] ¿Se usó el cliente HTTP configurado en lugar de fetch directo?
+
+---
+
+## 🔄 Actualización de Reglas
+
+Este documento debe actualizarse cuando:
+
+- Se agreguen nuevas convenciones del equipo
+- Se identifiquen patrones comunes que deban documentarse
+- Se tomen decisiones arquitectónicas importantes
+
+**Última actualización**: 2026

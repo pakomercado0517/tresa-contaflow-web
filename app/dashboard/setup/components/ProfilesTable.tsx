@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { logger } from "@/lib/utils/logger";
-import Link from "next/link";
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/utils/logger';
+import Link from 'next/link';
 import {
   Search,
   Filter,
@@ -16,11 +16,11 @@ import {
   ChevronRight,
   Plus,
   Loader2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -36,15 +36,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { ApiError } from "@/lib/api/client";
-import { apiClient } from "@/lib/api/client";
-import { deleteProfile } from "@/lib/api/profiles.client";
-import { exportProfilesToPDF, type ProfileStats } from "@/lib/utils/pdf-export";
-import type { Profile } from "@/lib/types/profiles";
-import type { Plan, SubscriptionStatus } from "@/lib/types/subscription";
-import type { Invoice } from "@/lib/types/invoices";
-import type { Expense } from "@/lib/types/expenses";
+} from '@/components/ui/table';
+import { ApiError } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
+import { deleteProfile } from '@/lib/api/profiles.client';
+import { exportProfilesToPDF, type ProfileStats } from '@/lib/utils/pdf-export';
+import type { Profile } from '@/lib/types/profiles';
+import type { Plan, SubscriptionStatus } from '@/lib/types/subscription';
+import type { Invoice } from '@/lib/types/invoices';
+import type { Expense } from '@/lib/types/expenses';
 
 interface ProfilesTableProps {
   profiles: Profile[];
@@ -63,20 +63,20 @@ interface SubscriptionStatusInfo {
 // Función para obtener la información del estatus de suscripción
 function getSubscriptionStatusInfo(status: SubscriptionStatus): SubscriptionStatusInfo {
   switch (status) {
-    case "ACTIVE":
-      return { label: "Vigente", color: "bg-green-500" };
-    case "TRIALING":
-      return { label: "En Prueba", color: "bg-blue-500" };
-    case "PAST_DUE":
-      return { label: "Pago Retrasado", color: "bg-yellow-500" };
-    case "CANCELLED":
-      return { label: "Cancelada", color: "bg-orange-500" };
-    case "EXPIRED":
-      return { label: "Expirada", color: "bg-red-500" };
-    case "UNPAID":
-      return { label: "Sin Pago", color: "bg-red-600" };
+    case 'ACTIVE':
+      return { label: 'Vigente', color: 'bg-green-500' };
+    case 'TRIALING':
+      return { label: 'En Prueba', color: 'bg-blue-500' };
+    case 'PAST_DUE':
+      return { label: 'Pago Retrasado', color: 'bg-yellow-500' };
+    case 'CANCELLED':
+      return { label: 'Cancelada', color: 'bg-orange-500' };
+    case 'EXPIRED':
+      return { label: 'Expirada', color: 'bg-red-500' };
+    case 'UNPAID':
+      return { label: 'Sin Pago', color: 'bg-red-600' };
     default:
-      return { label: "Desconocido", color: "bg-gray-500" };
+      return { label: 'Desconocido', color: 'bg-gray-500' };
   }
 }
 
@@ -94,34 +94,31 @@ function SubscriptionStatusBadge({ status }: { status: SubscriptionStatus }) {
 function getDeleteErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) {
-      return "No tienes permisos para eliminar este perfil.";
+      return 'No tienes permisos para eliminar este perfil.';
     }
     if (error.status === 404) {
-      return "El perfil ya no existe o fue eliminado.";
+      return 'El perfil ya no existe o fue eliminado.';
     }
     if (error.status === 409) {
-      return "No se puede eliminar el perfil porque tiene datos asociados.";
+      return 'No se puede eliminar el perfil porque tiene datos asociados.';
     }
-    return error.message || "No se pudo eliminar el perfil.";
+    return error.message || 'No se pudo eliminar el perfil.';
   }
 
   if (error instanceof Error) {
     return error.message;
   }
 
-  return "No se pudo eliminar el perfil. Intenta nuevamente.";
+  return 'No se pudo eliminar el perfil. Intenta nuevamente.';
 }
 
-export function ProfilesTable({
-  profiles,
-  subscriptionStatus,
-}: ProfilesTableProps) {
+export function ProfilesTable({ profiles, subscriptionStatus }: ProfilesTableProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 4;
 
@@ -132,8 +129,7 @@ export function ProfilesTable({
     const query = searchQuery.toLowerCase();
     return profiles.filter(
       (profile) =>
-        profile.nombre.toLowerCase().includes(query) ||
-        profile.rfc.toLowerCase().includes(query)
+        profile.nombre.toLowerCase().includes(query) || profile.rfc.toLowerCase().includes(query)
     );
   }, [profiles, searchQuery]);
 
@@ -154,12 +150,12 @@ export function ProfilesTable({
     const profileExpenses = expenses.filter((exp) => exp.profile_id === profileId);
 
     const totalInvoiced = profileInvoices.reduce((sum, inv) => {
-      const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total) || 0;
+      const total = typeof inv.total === 'number' ? inv.total : parseFloat(inv.total) || 0;
       return sum + total;
     }, 0);
 
     const totalSpent = profileExpenses.reduce((sum, exp) => {
-      const total = typeof exp.total === "number" ? exp.total : parseFloat(exp.total) || 0;
+      const total = typeof exp.total === 'number' ? exp.total : parseFloat(exp.total) || 0;
       return sum + total;
     }, 0);
 
@@ -167,7 +163,7 @@ export function ProfilesTable({
       .map((inv) => inv.fecha)
       .filter((fecha): fecha is string => Boolean(fecha))
       .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-    
+
     const expenseDates = profileExpenses
       .map((exp) => exp.fecha)
       .filter((fecha): fecha is string => Boolean(fecha))
@@ -191,10 +187,10 @@ export function ProfilesTable({
     try {
       // Obtener todas las facturas y gastos (sin límite)
       const [invoicesResponse, expensesResponse] = await Promise.all([
-        apiClient<{ data: Invoice[] }>("/api/invoices?limit=10000", {
+        apiClient<{ data: Invoice[] }>('/api/invoices?limit=10000', {
           requireAuth: true,
         }),
-        apiClient<{ data: Expense[] }>("/api/expenses?limit=10000", {
+        apiClient<{ data: Expense[] }>('/api/expenses?limit=10000', {
           requireAuth: true,
         }),
       ]);
@@ -213,11 +209,11 @@ export function ProfilesTable({
         profilesStats,
       });
     } catch (error) {
-      logger.error("Error al exportar perfiles", error);
+      logger.error('Error al exportar perfiles', error);
       if (error instanceof ApiError) {
         alert(`Error al generar el PDF: ${error.message}`);
       } else {
-        alert("Error al generar el PDF. Por favor intenta nuevamente.");
+        alert('Error al generar el PDF. Por favor intenta nuevamente.');
       }
     } finally {
       setIsExporting(false);
@@ -227,7 +223,7 @@ export function ProfilesTable({
   const handleDeleteClick = (profile: Profile) => {
     setProfileToDelete(profile);
     setDeleteError(null);
-    setDeleteConfirmation("");
+    setDeleteConfirmation('');
   };
 
   const handleEditClick = (profileId?: string) => {
@@ -239,7 +235,7 @@ export function ProfilesTable({
     if (!open && !isDeleting) {
       setProfileToDelete(null);
       setDeleteError(null);
-      setDeleteConfirmation("");
+      setDeleteConfirmation('');
     }
   };
 
@@ -259,21 +255,20 @@ export function ProfilesTable({
     }
   };
 
-  const deleteKeyword = profileToDelete ? `ELIMINAR ${profileToDelete.rfc}` : "";
-  const isDeleteBlocked =
-    isDeleting || deleteConfirmation.trim() !== deleteKeyword;
+  const deleteKeyword = profileToDelete ? `ELIMINAR ${profileToDelete.rfc}` : '';
+  const isDeleteBlocked = isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
   if (profiles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 border rounded-lg">
-        <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No tienes perfiles aún</h3>
-        <p className="text-muted-foreground text-center mb-4">
+      <div className="flex flex-col items-center justify-center rounded-lg border py-12">
+        <Building2 className="text-muted-foreground mb-4 h-12 w-12" />
+        <h3 className="mb-2 text-lg font-semibold">No tienes perfiles aún</h3>
+        <p className="text-muted-foreground mb-4 text-center">
           Crea tu primer perfil RFC para comenzar a gestionar tus facturas
         </p>
         <Link href="/dashboard/setup/profiles/new">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Crear Primer Perfil
           </Button>
         </Link>
@@ -284,9 +279,9 @@ export function ProfilesTable({
   return (
     <div className="space-y-4">
       {/* Search and Actions Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="relative max-w-md flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Buscar por Razón Social o RFC..."
             value={searchQuery}
@@ -299,23 +294,18 @@ export function ProfilesTable({
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="mr-2 h-4 w-4" />
             Filtros
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleExport}
-            disabled={isExporting}
-          >
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generando...
               </>
             ) : (
               <>
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
                 Exportar
               </>
             )}
@@ -324,7 +314,7 @@ export function ProfilesTable({
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -337,19 +327,24 @@ export function ProfilesTable({
           <TableBody>
             {paginatedProfiles.map((profile) => {
               return (
-                <TableRow key={profile.id}>
+                <TableRow key={profile.id} className={profile.frozen ? 'opacity-60' : ''}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {profile.tipo_persona === "FISICA" ? (
-                        <User className="h-5 w-5 text-muted-foreground" />
+                      {profile.tipo_persona === 'FISICA' ? (
+                        <User className="text-muted-foreground h-5 w-5" />
                       ) : (
-                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                        <Building2 className="text-muted-foreground h-5 w-5" />
                       )}
                       <div>
-                        <p className="font-medium">{profile.nombre}</p>
-                        <p className="text-sm text-muted-foreground font-mono">
-                          {profile.rfc}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{profile.nombre}</p>
+                          {profile.frozen && (
+                            <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                              🔒 Congelado
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-muted-foreground font-mono text-sm">{profile.rfc}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -357,14 +352,12 @@ export function ProfilesTable({
                     <Badge
                       variant="outline"
                       className={
-                        profile.tipo_persona === "FISICA"
-                          ? "border-purple-500/50 text-purple-600 dark:text-purple-400"
-                          : "border-purple-500/50 text-purple-600 dark:text-purple-400"
+                        profile.tipo_persona === 'FISICA'
+                          ? 'border-purple-500/50 text-purple-600 dark:text-purple-400'
+                          : 'border-purple-500/50 text-purple-600 dark:text-purple-400'
                       }
                     >
-                      {profile.tipo_persona === "FISICA"
-                        ? "Persona Física"
-                        : "Persona Moral"}
+                      {profile.tipo_persona === 'FISICA' ? 'Persona Física' : 'Persona Moral'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -376,7 +369,8 @@ export function ProfilesTable({
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEditClick(profile.id)}
-                        disabled={!profile.id}
+                        disabled={!profile.id || profile.frozen}
+                        title={profile.frozen ? 'No puedes editar un perfil congelado' : ''}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -384,7 +378,8 @@ export function ProfilesTable({
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteClick(profile)}
-                        disabled={isDeleting}
+                        disabled={isDeleting || profile.frozen}
+                        title={profile.frozen ? 'No puedes eliminar un perfil congelado' : ''}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -399,8 +394,8 @@ export function ProfilesTable({
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Mostrando {startIndex + 1} a {Math.min(endIndex, filteredProfiles.length)} de{" "}
+        <p className="text-muted-foreground text-sm">
+          Mostrando {startIndex + 1} a {Math.min(endIndex, filteredProfiles.length)} de{' '}
           {filteredProfiles.length} resultados
         </p>
         <div className="flex items-center gap-2">
@@ -427,10 +422,10 @@ export function ProfilesTable({
             return (
               <Button
                 key={pageNum}
-                variant={currentPage === pageNum ? "default" : "outline"}
+                variant={currentPage === pageNum ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setCurrentPage(pageNum)}
-                className={currentPage === pageNum ? "" : ""}
+                className={currentPage === pageNum ? '' : ''}
               >
                 {pageNum}
               </Button>
@@ -452,8 +447,8 @@ export function ProfilesTable({
           <DialogHeader>
             <DialogTitle>Eliminar perfil</DialogTitle>
             <DialogDescription>
-              Esta acción eliminará el perfil seleccionado y no se puede deshacer. También
-              se borrarán todas las facturas subidas relacionadas a este perfil o RFC.
+              Esta acción eliminará el perfil seleccionado y no se puede deshacer. También se
+              borrarán todas las facturas subidas relacionadas a este perfil o RFC.
             </DialogDescription>
           </DialogHeader>
           {profileToDelete && (
@@ -465,11 +460,8 @@ export function ProfilesTable({
           {profileToDelete && (
             <div className="space-y-2 text-sm">
               <p className="text-muted-foreground">
-                Para confirmar, escribe{" "}
-                <span className="font-mono font-medium text-foreground">
-                  {deleteKeyword}
-                </span>
-                .
+                Para confirmar, escribe{' '}
+                <span className="text-foreground font-mono font-medium">{deleteKeyword}</span>.
               </p>
               <Input
                 value={deleteConfirmation}
@@ -493,12 +485,8 @@ export function ProfilesTable({
             >
               Cancelar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isDeleteBlocked}
-            >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleteBlocked}>
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -506,4 +494,3 @@ export function ProfilesTable({
     </div>
   );
 }
-
