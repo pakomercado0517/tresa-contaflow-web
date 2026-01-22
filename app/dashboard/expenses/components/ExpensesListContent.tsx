@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, FileText, X, FileX, Trash2, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Plus, Search, FileText, X, FileX, Trash2, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -21,11 +21,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { ExpensesSummaryCards } from "./ExpensesSummaryCards";
-import { ProfileSelector } from "./ProfileSelector";
-import { ManualExpenseDialog } from "./ManualExpenseDialog";
-import { EmptyState } from "@/components/common/EmptyState";
+} from '@/components/ui/table';
+import { ExpensesSummaryCards } from './ExpensesSummaryCards';
+import { ProfileSelector } from './ProfileSelector';
+import { ManualExpenseDialog } from './ManualExpenseDialog';
+import { EmptyState } from '@/components/common/EmptyState';
 import {
   Dialog,
   DialogContent,
@@ -33,14 +33,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { Expense } from "@/lib/types/expenses";
-import type { Profile } from "@/lib/types/profiles";
-import type { Subscription } from "@/lib/types/subscription";
-import { exportToPDF } from "@/lib/utils/pdf-export";
-import { deleteExpense } from "@/lib/api/expenses.client";
-import { ApiError } from "@/lib/api/client";
+} from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { Expense } from '@/lib/types/expenses';
+import type { Profile } from '@/lib/types/profiles';
+import type { Subscription } from '@/lib/types/subscription';
+import { exportToPDF } from '@/lib/utils/pdf-export';
+import { deleteExpense } from '@/lib/api/expenses.client';
+import { ApiError } from '@/lib/api/client';
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -61,41 +61,41 @@ interface ExpensesListContentProps {
 }
 
 const MONTHS = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 const CATEGORIES = [
-  { value: "all", label: "Todas las categorías" },
-  { value: "Viáticos", label: "Viáticos" },
-  { value: "Oficina", label: "Oficina" },
-  { value: "Servicios", label: "Servicios" },
-  { value: "Transporte", label: "Transporte" },
-  { value: "Alimentación", label: "Alimentación" },
+  { value: 'all', label: 'Todas las categorías' },
+  { value: 'Viáticos', label: 'Viáticos' },
+  { value: 'Oficina', label: 'Oficina' },
+  { value: 'Servicios', label: 'Servicios' },
+  { value: 'Transporte', label: 'Transporte' },
+  { value: 'Alimentación', label: 'Alimentación' },
 ];
 
 const getCategoryBadge = (categoria: string | null) => {
   if (!categoria) return null;
-  
+
   const categoryColors: Record<string, string> = {
-    Viáticos: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    Oficina: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    Servicios: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    Transporte: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-    Alimentación: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    Viáticos: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    Oficina: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    Servicios: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    Transporte: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+    Alimentación: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   };
 
-  const colorClass = categoryColors[categoria] || "bg-gray-500/20 text-gray-400 border-gray-500/30";
+  const colorClass = categoryColors[categoria] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 
   return (
     <Badge variant="outline" className={colorClass}>
@@ -104,16 +104,12 @@ const getCategoryBadge = (categoria: string | null) => {
   );
 };
 
-const getOriginBadge = (tipoOrigen: "XML" | "MANUAL") => {
-  if (tipoOrigen === "XML") {
-    return (
-      <Badge className="bg-green-500 hover:bg-green-600 text-white">
-        XML
-      </Badge>
-    );
+const getOriginBadge = (tipoOrigen: 'XML' | 'MANUAL') => {
+  if (tipoOrigen === 'XML') {
+    return <Badge className="bg-green-500 text-white hover:bg-green-600">XML</Badge>;
   }
   return (
-    <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+    <Badge variant="secondary" className="border-orange-500/30 bg-orange-500/20 text-orange-400">
       Manual
     </Badge>
   );
@@ -133,27 +129,29 @@ export function ExpensesListContent({
 }: ExpensesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(initialSearch || "");
-  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "all");
+  const [search, setSearch] = useState(initialSearch || '');
+  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
-  const [selectedCategoria, setSelectedCategoria] = useState(initialCategoria || "all");
+  const [selectedCategoria, setSelectedCategoria] = useState(initialCategoria || 'all');
   const [isManualExpenseDialogOpen, setIsManualExpenseDialogOpen] = useState(false);
   const [showProfileWarning, setShowProfileWarning] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
-    if (selectedProfileId && selectedProfileId !== "all") params.set("profileId", selectedProfileId);
-    if (selectedMes) params.set("mes", selectedMes.toString());
-    if (selectedAño) params.set("año", selectedAño.toString());
-    if (selectedCategoria && selectedCategoria !== "all") params.set("categoria", selectedCategoria);
-    if (search) params.set("search", search);
-    params.set("page", "1");
+    if (selectedProfileId && selectedProfileId !== 'all')
+      params.set('profileId', selectedProfileId);
+    if (selectedMes) params.set('mes', selectedMes.toString());
+    if (selectedAño) params.set('año', selectedAño.toString());
+    if (selectedCategoria && selectedCategoria !== 'all')
+      params.set('categoria', selectedCategoria);
+    if (search) params.set('search', search);
+    params.set('page', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedCategoria, search, router]);
 
@@ -188,36 +186,37 @@ export function ExpensesListContent({
   }, [search]); // SOLO search como dependencia
 
   const handleClearFilters = () => {
-    setSearch("");
+    setSearch('');
     setSelectedMes(new Date().getMonth() + 1);
     setSelectedAño(new Date().getFullYear());
-    setSelectedCategoria("all");
+    setSelectedCategoria('all');
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
-    if (selectedProfileId && selectedProfileId !== "all") params.set("profileId", selectedProfileId);
-    params.set("mes", (new Date().getMonth() + 1).toString());
-    params.set("año", new Date().getFullYear().toString());
-    params.set("page", "1");
+    if (selectedProfileId && selectedProfileId !== 'all')
+      params.set('profileId', selectedProfileId);
+    params.set('mes', (new Date().getMonth() + 1).toString());
+    params.set('año', new Date().getFullYear().toString());
+    params.set('page', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", newPage.toString());
+    params.set('page', newPage.toString());
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
   const handleExportPDF = async () => {
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
-    
+
     // Calcular métricas para el resumen
     const totalGastos = expenses.reduce((sum, exp) => sum + exp.total, 0);
 
     await exportToPDF({
-      tipo: "gastos",
+      tipo: 'gastos',
       expenses,
-      profileName: selectedProfile?.nombre || "Todos los perfiles",
-      rfc: selectedProfile?.rfc || "",
+      profileName: selectedProfile?.nombre || 'Todos los perfiles',
+      rfc: selectedProfile?.rfc || '',
       mes: selectedMes,
       año: selectedAño,
       metrics: {
@@ -233,59 +232,59 @@ export function ExpensesListContent({
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     const params = new URLSearchParams(searchParams.toString());
-    if (profileId && profileId !== "all") {
-      params.set("profileId", profileId);
+    if (profileId && profileId !== 'all') {
+      params.set('profileId', profileId);
     } else {
-      params.delete("profileId");
+      params.delete('profileId');
     }
-    params.set("page", "1");
+    params.set('page', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
+    return date.toLocaleDateString('es-MX', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
     });
   };
 
   const handleDeleteClick = (expense: Expense) => {
     setExpenseToDelete(expense);
     setDeleteError(null);
-    setDeleteConfirmation("");
+    setDeleteConfirmation('');
   };
 
   const handleCloseDeleteDialog = (open: boolean) => {
     if (!open && !isDeleting) {
       setExpenseToDelete(null);
       setDeleteError(null);
-      setDeleteConfirmation("");
+      setDeleteConfirmation('');
     }
   };
 
   const getDeleteErrorMessage = (error: unknown): string => {
     if (error instanceof ApiError) {
       if (error.status === 403) {
-        return "No tienes permisos para eliminar este gasto.";
+        return 'No tienes permisos para eliminar este gasto.';
       }
       if (error.status === 404) {
-        return "El gasto ya no existe o fue eliminado.";
+        return 'El gasto ya no existe o fue eliminado.';
       }
       if (error.status === 400) {
-        return error.message || "No se puede eliminar este gasto.";
+        return error.message || 'No se puede eliminar este gasto.';
       }
-      return error.message || "Error al eliminar el gasto.";
+      return error.message || 'Error al eliminar el gasto.';
     }
-    return "Error inesperado al eliminar el gasto. Por favor intenta nuevamente.";
+    return 'Error inesperado al eliminar el gasto. Por favor intenta nuevamente.';
   };
 
   const handleConfirmDelete = async () => {
@@ -304,25 +303,25 @@ export function ExpensesListContent({
     }
   };
 
-  const deleteKeyword = "ELIMINAR";
-  const isDeleteBlocked =
-    isDeleting || deleteConfirmation.trim() !== deleteKeyword;
+  const deleteKeyword = 'ELIMINAR';
+  const isDeleteBlocked = isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
   // Calcular métricas desde los gastos filtrados
-  const xmlExpenses = expenses.filter((e) => e.tipo_origen === "XML");
-  const manualExpenses = expenses.filter((e) => e.tipo_origen === "MANUAL");
+  const xmlExpenses = expenses.filter((e) => e.tipo_origen === 'XML');
+  const manualExpenses = expenses.filter((e) => e.tipo_origen === 'MANUAL');
   const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
-  
+
   // Calcular el total sumando todos los gastos (en pesos)
   const totalExpensesAmount = expenses.reduce((sum, expense) => {
-    const total = typeof expense.total === "number" ? expense.total : parseFloat(expense.total) || 0;
+    const total =
+      typeof expense.total === 'number' ? expense.total : parseFloat(expense.total) || 0;
     return sum + total;
   }, 0);
 
   return (
     <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Gastos</h1>
           <p className="text-muted-foreground mt-2">
@@ -373,25 +372,27 @@ export function ExpensesListContent({
       <ExpensesSummaryCards
         totalExpenses={totalExpensesAmount}
         xmlProcessed={xmlExpenses.length}
-        validXmlPercentage={xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0}
+        validXmlPercentage={
+          xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0
+        }
         manualExpenses={manualExpenses.length}
         selectedMonth={selectedMes}
       />
 
       {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-card">
+      <div className="bg-card flex flex-col gap-4 rounded-lg border p-4 md:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Concepto, Emisor o UUID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-9"
+            className="pr-9 pl-9"
           />
           {search && (
             <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => setSearch('')}
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
             >
               <X className="h-4 w-4" />
             </button>
@@ -433,22 +434,18 @@ export function ExpensesListContent({
             ))}
           </SelectContent>
         </Select>
-        <Button 
-          onClick={handleClearFilters} 
-          variant="outline"
-          className="w-full md:w-auto"
-        >
+        <Button onClick={handleClearFilters} variant="outline" className="w-full md:w-auto">
           <X className="mr-2 h-4 w-4" />
           Limpiar
         </Button>
       </div>
 
       {/* Expenses Table */}
-      <div data-tour="expenses-table" className="border rounded-lg overflow-hidden bg-card">
+      <div data-tour="expenses-table" className="bg-card overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
+              <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                 <TableRow>
                   <TableHead className="min-w-[120px]">FECHA</TableHead>
                   <TableHead className="min-w-[250px]">EMISOR / CONCEPTO</TableHead>
@@ -468,21 +465,27 @@ export function ExpensesListContent({
                       </TableCell>
                       <TableCell>
                         <div className="max-w-[250px]">
-                          <p className="text-sm font-medium truncate" title={expense.nombre_emisor || "Sin emisor"}>
-                            {expense.nombre_emisor || "Sin emisor"}
+                          <p
+                            className="truncate text-sm font-medium"
+                            title={expense.nombre_emisor || 'Sin emisor'}
+                          >
+                            {expense.nombre_emisor || 'Sin emisor'}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate" title={expense.concepto || "Sin concepto"}>
-                            {expense.concepto || "Sin concepto"}
+                          <p
+                            className="text-muted-foreground truncate text-xs"
+                            title={expense.concepto || 'Sin concepto'}
+                          >
+                            {expense.concepto || 'Sin concepto'}
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {getCategoryBadge(expense.categoria)}
-                      </TableCell>
+                      <TableCell>{getCategoryBadge(expense.categoria)}</TableCell>
                       <TableCell>{getOriginBadge(expense.tipo_origen)}</TableCell>
                       <TableCell className="font-mono text-xs">
-                        <div className="max-w-[150px] truncate" title={expense.uuid || "--"}>
-                          {expense.uuid ? `${expense.uuid.slice(0, 8)}...${expense.uuid.slice(-4)}` : "--"}
+                        <div className="max-w-[150px] truncate" title={expense.uuid || '--'}>
+                          {expense.uuid
+                            ? `${expense.uuid.slice(0, 8)}...${expense.uuid.slice(-4)}`
+                            : '--'}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium whitespace-nowrap">
@@ -511,15 +514,15 @@ export function ExpensesListContent({
                         title={
                           search
                             ? `No se encontraron gastos que coincidan con "${search}"`
-                            : "No se encontraron gastos"
+                            : 'No se encontraron gastos'
                         }
                         description={
                           search
-                            ? "Intenta con otros términos de búsqueda o ajusta los filtros"
-                            : "Comienza subiendo archivos XML o creando gastos manuales"
+                            ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
+                            : 'Comienza subiendo archivos XML o creando gastos manuales'
                         }
-                        actionLabel={search ? undefined : "Subir Gastos XML"}
-                        actionHref={search ? undefined : "/dashboard/expenses/upload"}
+                        actionLabel={search ? undefined : 'Subir Gastos XML'}
+                        actionHref={search ? undefined : '/dashboard/expenses/upload'}
                         variant="search"
                         compact
                       />
@@ -535,10 +538,10 @@ export function ExpensesListContent({
       {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Mostrando {(pagination.page - 1) * pagination.limit + 1}-
-            {Math.min(pagination.page * pagination.limit, pagination.total)} de{" "}
-            {pagination.total} resultados
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}{' '}
+            resultados
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -563,7 +566,7 @@ export function ExpensesListContent({
               return (
                 <Button
                   key={pageNum}
-                  variant={pagination.page === pageNum ? "default" : "outline"}
+                  variant={pagination.page === pageNum ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handlePageChange(pageNum)}
                 >
@@ -572,7 +575,7 @@ export function ExpensesListContent({
               );
             })}
             {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
-              <span className="px-2 text-muted-foreground">...</span>
+              <span className="text-muted-foreground px-2">...</span>
             )}
             {pagination.totalPages > 5 && (
               <Button
@@ -603,6 +606,7 @@ export function ExpensesListContent({
           subscription={subscription}
           expensesUsed={expensesUsed}
           profileId={selectedProfileId}
+          profiles={profiles}
         />
       )}
 
@@ -616,9 +620,7 @@ export function ExpensesListContent({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setShowProfileWarning(false)}>
-              Entendido
-            </Button>
+            <Button onClick={() => setShowProfileWarning(false)}>Entendido</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -634,17 +636,13 @@ export function ExpensesListContent({
           </DialogHeader>
           {expenseToDelete && (
             <div className="rounded-lg border p-4 text-sm">
-              <p className="font-medium">
-                {expenseToDelete.nombre_emisor || "Sin emisor"}
-              </p>
-              <p className="text-muted-foreground">
-                {expenseToDelete.concepto || "Sin concepto"}
-              </p>
+              <p className="font-medium">{expenseToDelete.nombre_emisor || 'Sin emisor'}</p>
+              <p className="text-muted-foreground">{expenseToDelete.concepto || 'Sin concepto'}</p>
               <p className="text-muted-foreground mt-1">
                 Total: {formatCurrency(expenseToDelete.total)}
               </p>
               {expenseToDelete.uuid && (
-                <p className="text-muted-foreground font-mono text-xs mt-1">
+                <p className="text-muted-foreground mt-1 font-mono text-xs">
                   UUID: {expenseToDelete.uuid}
                 </p>
               )}
@@ -653,11 +651,8 @@ export function ExpensesListContent({
           {expenseToDelete && (
             <div className="space-y-2 text-sm">
               <p className="text-muted-foreground">
-                Para confirmar, escribe{" "}
-                <span className="font-mono font-medium text-foreground">
-                  {deleteKeyword}
-                </span>
-                .
+                Para confirmar, escribe{' '}
+                <span className="text-foreground font-mono font-medium">{deleteKeyword}</span>.
               </p>
               <Input
                 value={deleteConfirmation}
@@ -681,12 +676,8 @@ export function ExpensesListContent({
             >
               Cancelar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isDeleteBlocked}
-            >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleteBlocked}>
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -694,4 +685,3 @@ export function ExpensesListContent({
     </div>
   );
 }
-
