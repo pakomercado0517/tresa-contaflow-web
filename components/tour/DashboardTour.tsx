@@ -340,18 +340,24 @@ function CustomTourCard({
       // Si es el último paso y tiene nextRoute, marcar como completado y navegar
       if (currentTour) {
         try {
+          console.debug("[Tour] marking tour completed (card)", currentTour, { step, currentStep });
           await markTourCompleted(currentTour);
+          console.debug("[Tour] markTourCompleted OK (card)", currentTour);
         } catch (error) {
           console.error('Error al marcar tour como completado:', error);
           // Continuar con la navegación aunque falle la API
         }
       }
-      // Cerrar el tour primero
-      skipTour?.();
-      // Luego navegar después de un pequeño delay
-      setTimeout(() => {
+      // Navegar a la siguiente ruta; no forzar el cierre del overlay aquí
+      try {
+        console.debug("[Tour] navigating to nextRoute", step.nextRoute);
         router.push(step.nextRoute!);
-      }, 300);
+      } catch (e) {
+        console.error("[Tour] router.push error:", e);
+        // Fallback: cerrar overlay y navegar con delay
+        skipTour?.();
+        setTimeout(() => router.push(step.nextRoute!), 600);
+      }
     } else {
       // Comportamiento normal
       nextStep?.();
