@@ -3,21 +3,21 @@
  * These functions use the client-side API client with credentials
  */
 
-import { apiClient } from "./client";
+import { apiClient } from './client';
 import type {
   GetSubscriptionResponse,
   CreateCheckoutResponse,
   CreatePortalSessionResponse,
   CreateCheckoutRequest,
   GetAvailablePlansResponse,
-} from "@/lib/types/subscription";
+} from '@/lib/types/subscription';
 
 /**
  * Obtiene la suscripción del usuario (Client Component)
  * Usa el cliente HTTP con credentials para enviar cookies automáticamente
  */
 export async function getSubscriptionClient(): Promise<GetSubscriptionResponse> {
-  return apiClient<GetSubscriptionResponse>("/api/subscription", {
+  return apiClient<GetSubscriptionResponse>('/api/subscription', {
     requireAuth: true,
   });
 }
@@ -29,24 +29,22 @@ export async function getSubscriptionClient(): Promise<GetSubscriptionResponse> 
  * @param promotionCode - Código de descuento opcional (3-50 caracteres)
  */
 export async function createCheckoutSession(
-  plan: "BASIC" | "PRO",
-  promotionCode?: string
+  plan: 'BASIC' | 'PRO',
+  promotionCode?: string,
+  billing: 'monthly' | 'annual' = 'monthly'
 ): Promise<CreateCheckoutResponse> {
-  const body: CreateCheckoutRequest = { plan };
-  
+  const body: CreateCheckoutRequest = { plan, billing };
+
   // Solo agregar promotionCode si existe y no está vacío
   if (promotionCode && promotionCode.trim()) {
     body.promotionCode = promotionCode.trim().toUpperCase();
   }
 
-  return apiClient<CreateCheckoutResponse>(
-    "/api/subscription/create-checkout",
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-      requireAuth: true,
-    }
-  );
+  return apiClient<CreateCheckoutResponse>('/api/subscription/create-checkout', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    requireAuth: true,
+  });
 }
 
 /**
@@ -54,13 +52,10 @@ export async function createCheckoutSession(
  * Solo funciona para usuarios con suscripciones de pago (BASIC/PRO)
  */
 export async function createPortalSessionClient(): Promise<CreatePortalSessionResponse> {
-  return apiClient<CreatePortalSessionResponse>(
-    "/api/subscription/create-portal-session",
-    {
-      method: "POST",
-      requireAuth: true,
-    }
-  );
+  return apiClient<CreatePortalSessionResponse>('/api/subscription/create-portal-session', {
+    method: 'POST',
+    requireAuth: true,
+  });
 }
 
 /**
@@ -68,15 +63,12 @@ export async function createPortalSessionClient(): Promise<CreatePortalSessionRe
  * @param billing - Tipo de facturación: "monthly" o "annual" (default: "monthly")
  */
 export async function getAvailablePlansClient(
-  billing: "monthly" | "annual" = "monthly"
+  billing: 'monthly' | 'annual' = 'monthly'
 ): Promise<GetAvailablePlansResponse> {
   const queryParams = new URLSearchParams();
-  queryParams.append("billing", billing);
+  queryParams.append('billing', billing);
 
-  return apiClient<GetAvailablePlansResponse>(
-    `/api/subscription/plans?${queryParams.toString()}`,
-    {
-      requireAuth: true,
-    }
-  );
+  return apiClient<GetAvailablePlansResponse>(`/api/subscription/plans?${queryParams.toString()}`, {
+    requireAuth: true,
+  });
 }

@@ -1,12 +1,12 @@
-export type Plan = "FREE" | "BASIC" | "PRO" | "ENTERPRISE";
+export type Plan = 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
 
 export type SubscriptionStatus =
-  | "ACTIVE"
-  | "CANCELLED"
-  | "EXPIRED"
-  | "PAST_DUE"
-  | "UNPAID"
-  | "TRIALING";
+  | 'ACTIVE'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'PAST_DUE'
+  | 'UNPAID'
+  | 'TRIALING';
 
 /**
  * Límites del plan (vienen del backend)
@@ -18,8 +18,8 @@ export interface PlanLimits {
   expensesPerMonth: number | null; // Límite de gastos al mes (null = ilimitado)
   exportPDF: boolean; // Permite exportar PDF
   exportExcel: boolean; // Permite exportar Excel
-  reports: "basic" | "complete" | "advanced"; // Nivel de reportes
-  support: "none" | "email" | "priority"; // Tipo de soporte
+  reports: 'basic' | 'complete' | 'advanced'; // Nivel de reportes
+  support: 'none' | 'email' | 'priority'; // Tipo de soporte
   apiAccess: boolean; // Acceso a la API
 
   /** Buscador SAT: búsquedas básicas/mes (null = ilimitadas) */
@@ -51,8 +51,9 @@ export interface Subscription {
 export type GetSubscriptionResponse = Subscription;
 
 export interface CreateCheckoutRequest {
-  plan: "BASIC" | "PRO";
+  plan: 'BASIC' | 'PRO';
   promotionCode?: string;
+  billing?: 'monthly' | 'annual'; // billing period requested by the client
 }
 
 export interface CreateCheckoutResponse {
@@ -74,7 +75,7 @@ export interface AvailablePlan {
   name: Plan;
   price: number; // Precio según billing (mensual o anual)
   originalPrice: number | null; // Precio original anual (solo si billing=annual y plan no es FREE)
-  billing: "monthly" | "annual";
+  billing: 'monthly' | 'annual';
   limits: PlanLimits;
   trialDays: number | null; // Días de periodo de prueba (solo BASIC y PRO)
 }
@@ -84,6 +85,5 @@ export interface AvailablePlan {
  */
 export interface GetAvailablePlansResponse {
   plans: AvailablePlan[];
-  billing: "monthly" | "annual";
+  billing: 'monthly' | 'annual';
 }
-
