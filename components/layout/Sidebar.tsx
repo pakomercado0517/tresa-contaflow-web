@@ -1,17 +1,18 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { logger } from "@/lib/utils/logger";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { logger } from '@/lib/utils/logger';
+import { logoutUser } from '@/lib/api/auth';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   LayoutDashboard,
   FileText,
@@ -19,9 +20,10 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { User } from "@/lib/types/auth";
+  Search,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { User } from '@/lib/types/auth';
 
 interface NavItem {
   title: string;
@@ -35,23 +37,28 @@ interface SidebarProps {
 
 const navigationItems: NavItem[] = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
+    title: 'Dashboard',
+    href: '/dashboard',
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
-    title: "Facturas (Ingresos)",
-    href: "/dashboard/invoices",
+    title: 'Facturas (Ingresos)',
+    href: '/dashboard/invoices',
     icon: <FileText className="h-5 w-5" />,
   },
   {
-    title: "Gastos (Egresos)",
-    href: "/dashboard/expenses",
+    title: 'Gastos (Egresos)',
+    href: '/dashboard/expenses',
     icon: <Receipt className="h-5 w-5" />,
   },
   {
-    title: "Obtener CSF",
-    href: "/dashboard/certification",
+    title: 'Buscador SAT',
+    href: '/dashboard/sat-search',
+    icon: <Search className="h-5 w-5" />,
+  },
+  {
+    title: 'Obtener CSF',
+    href: '/dashboard/certification',
     icon: <ShieldCheck className="h-5 w-5" />,
   },
 ];
@@ -65,35 +72,36 @@ export function Sidebar({ user }: SidebarProps) {
     ? user.apellido
       ? `${user.nombre} ${user.apellido}`
       : user.nombre
-    : user.email.split("@")[0];
+    : user.email.split('@')[0];
 
   // Obtener iniciales para el avatar
   const initials = user.nombre
-    ? `${user.nombre[0]}${user.apellido?.[0] || ""}`.toUpperCase()
+    ? `${user.nombre[0]}${user.apellido?.[0] || ''}`.toUpperCase()
     : user.email[0].toUpperCase();
 
   const handleLogout = async () => {
     try {
-      // Llamar al endpoint de logout usando proxy de Next.js
-      await fetch("/backend/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      // Llamar a la API de logout con token de autenticación
+      await logoutUser();
     } catch (error) {
-      logger.error("Error al cerrar sesión", error);
+      logger.error('Error al cerrar sesión', error);
     } finally {
+      // Limpiar localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('tour:onboarding');
+      }
       // Redirigir al login
-      router.push("/auth/login");
+      router.push('/auth/login');
     }
   };
 
   return (
     <aside
       data-tour="sidebar"
-      className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border"
+      className="bg-card border-border hidden border-r md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col"
     >
-      <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex items-center gap-2 h-16 px-6 border-b border-border">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="border-border flex h-16 items-center gap-2 border-b px-6">
           <Image
             src="/logotipo-contaFlow.svg"
             alt="Conta Flow"
@@ -104,30 +112,30 @@ export function Sidebar({ user }: SidebarProps) {
           <span className="text-xl font-semibold">Conta Flow</span>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-6">
           {navigationItems.map((item) => {
             // Lógica mejorada para evitar múltiples elementos activos
             // Para Dashboard, solo activo si es exactamente /dashboard (sin subrutas)
             // Para otros items, activo si coincide exactamente o es una subruta
             let isActive = false;
-            
-            if (item.href === "/dashboard") {
+
+            if (item.href === '/dashboard') {
               // Dashboard solo activo en la ruta exacta
-              isActive = pathname === "/dashboard";
+              isActive = pathname === '/dashboard';
             } else {
               // Otros items: activo si coincide exactamente o es subruta
-              isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+              isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
             }
-            
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 {item.icon}
@@ -137,33 +145,29 @@ export function Sidebar({ user }: SidebarProps) {
           })}
         </nav>
 
-        <div className="flex items-center gap-3 p-4 border-t border-border">
+        <div className="border-border flex items-center gap-3 border-t p-4">
           <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-orange-500/20 text-orange-400 border border-orange-500/30">
+            <AvatarFallback className="border border-orange-500/30 bg-orange-500/20 text-orange-400">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {displayName}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {user.email}
-            </p>
+          <div className="min-w-0 flex-1">
+            <p className="text-foreground truncate text-sm font-medium">{displayName}</p>
+            <p className="text-muted-foreground truncate text-xs">{user.email}</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger
               data-tour="settings-button"
               className={cn(
-                "p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                pathname?.includes("/dashboard/setup") && "text-primary"
+                'text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md p-2 transition-colors outline-none focus-visible:ring-2',
+                pathname?.includes('/dashboard/setup') && 'text-primary'
               )}
             >
               <Settings className="h-5 w-5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/setup" className="flex items-center gap-2 cursor-pointer">
+                <Link href="/dashboard/setup" className="flex cursor-pointer items-center gap-2">
                   <Settings className="h-4 w-4" />
                   Configuración
                 </Link>
@@ -184,4 +188,3 @@ export function Sidebar({ user }: SidebarProps) {
     </aside>
   );
 }
-

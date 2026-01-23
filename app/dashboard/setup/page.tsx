@@ -6,6 +6,7 @@ import { getSubscription } from "@/lib/api/subscription";
 import { getProfiles } from "@/lib/api/profiles";
 import { getCurrentUser } from "@/lib/api/auth.server";
 import { getMetrics } from "@/lib/api/invoices";
+import { getSATStats } from "@/lib/api/sat";
 
 export default async function SetupPage() {
   // No usar .catch() aquí porque captura los errores de redirect()
@@ -13,11 +14,12 @@ export default async function SetupPage() {
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
 
-  const [subscription, profiles, currentUser, metrics] = await Promise.all([
+  const [subscription, profiles, currentUser, metrics, satStats] = await Promise.all([
     getSubscription(),
     getProfiles(),
     getCurrentUser(),
     getMetrics(undefined, currentMonth, currentYear),
+    getSATStats().catch(() => null), // Si falla, continuar sin datos SAT
   ]);
 
   // Calcular el uso de XML/CFDI del mes actual (facturas + gastos)
@@ -40,6 +42,7 @@ export default async function SetupPage() {
               subscription={subscription}
               currentProfilesCount={profiles.count || 0}
               xmlUsed={xmlUsed}
+              satPlanInfo={satStats?.planInfo}
             />
           }
         />

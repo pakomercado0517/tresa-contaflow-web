@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
+import { Lock } from 'lucide-react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import type { Profile } from "@/lib/types/profiles";
+} from '@/components/ui/select';
+import type { Profile } from '@/lib/types/profiles';
 
 interface ProfileSelectorProps {
   profiles: Profile[];
@@ -27,12 +28,21 @@ export function ProfileSelector({
       </SelectTrigger>
       <SelectContent>
         {profiles.map((profile) => (
-          <SelectItem key={profile.id} value={profile.id}>
-            {profile.nombre} ({profile.rfc})
+          <SelectItem
+            key={profile.id}
+            value={profile.id}
+            disabled={profile.frozen}
+            className={profile.frozen ? 'text-gray-400' : ''}
+          >
+            <div className="flex items-center gap-2">
+              <span>
+                {profile.nombre} ({profile.rfc})
+              </span>
+              {profile.frozen && <Lock className="h-4 w-4 text-orange-500" />}
+            </div>
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
 }
-

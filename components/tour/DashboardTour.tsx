@@ -1,268 +1,330 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { NextStepProvider, NextStepReact, useNextStep } from "nextstepjs";
-import { useTour } from "@/lib/hooks/useTour";
-import { TOUR_IDS } from "@/lib/constants/tour";
-import type { CardComponentProps, Tour } from "nextstepjs";
-import type { User } from "@/lib/types/auth";
+import { useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { NextStepProvider, NextStepReact, useNextStep } from 'nextstepjs';
+import { useTour } from '@/lib/hooks/useTour';
+import { TOUR_IDS } from '@/lib/constants/tour';
+import type { CardComponentProps, Tour, Step } from 'nextstepjs';
+import type { User } from '@/lib/types/auth';
 
 interface DashboardTourProps {
   children: React.ReactNode;
   user?: User;
 }
 
+interface CustomStep extends Step {
+  isLastTour?: boolean;
+}
 
-const tourSteps: Tour[] = [
+// Used to prevent re-starting the same tour between `skipTour()` and `router.push()`.
+// This is module-scoped on purpose so `CustomTourCard` and `TourController` can share it.
+const navigationPendingRef = { current: false };
+
+const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
   {
-    tour: "dashboardTour",
+    tour: 'dashboardTour',
     steps: [
       {
-        icon: "🧭",
-        title: "Navegación Principal",
+        icon: '🧭',
+        title: 'Navegación Principal',
         content:
-          "Desde aquí puedes acceder a todas las secciones: Dashboard, Facturas (Ingresos), Gastos (Egresos) y Obtener CSF (guía para obtener tu Constancia de Situación Fiscal del SAT).",
+          'Desde aquí puedes acceder a todas las secciones: Dashboard, Facturas (Ingresos), Gastos (Egresos) y Obtener CSF (guía para obtener tu Constancia de Situación Fiscal del SAT).',
         selector: "[data-tour='sidebar']",
-        side: "right",
+        side: 'right',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "⚙️",
-        title: "Configuración",
+        icon: '⚙️',
+        title: 'Configuración',
         content:
-          "Haz clic en el icono de configuración para acceder a la gestión de perfiles (RFCs), tu cuenta personal y suscripciones. Aquí puedes agregar nuevas empresas, editar información personal y administrar tu plan.",
+          'Haz clic en el icono de configuración para acceder a la gestión de perfiles (RFCs), tu cuenta personal y suscripciones. Aquí puedes agregar nuevas empresas, editar información personal y administrar tu plan.',
         selector: "[data-tour='settings-button']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📅",
-        title: "Filtros de Fecha",
+        icon: '📅',
+        title: 'Filtros de Fecha',
         content:
-          "Selecciona el mes y año para ver las métricas y datos de ese período específico. Los datos se actualizarán automáticamente.",
+          'Selecciona el mes y año para ver las métricas y datos de ese período específico. Los datos se actualizarán automáticamente.',
         selector: "[data-tour='date-filters']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "🏢",
-        title: "Selector de Empresa",
+        icon: '🏢',
+        title: 'Selector de Empresa',
         content:
-          "Si gestionas múltiples empresas (RFCs), aquí puedes seleccionar cuál ver. También puedes ver todas las empresas juntas.",
+          'Si gestionas múltiples empresas (RFCs), aquí puedes seleccionar cuál ver. También puedes ver todas las empresas juntas.',
         selector: "[data-tour='profile-selector']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "➕",
-        title: "Nueva Factura",
+        icon: '➕',
+        title: 'Nueva Factura',
         content:
-          "Haz clic aquí para subir una nueva factura XML. El sistema validará automáticamente el archivo antes de procesarlo.",
+          'Haz clic aquí para subir una nueva factura XML. El sistema validará automáticamente el archivo antes de procesarlo.',
         selector: "[data-tour='new-invoice-button']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📊",
-        title: "Métricas Financieras",
+        icon: '📊',
+        title: 'Métricas Financieras',
         content:
-          "Aquí puedes ver un resumen rápido de tus finanzas: ingresos totales, gastos, utilidad neta, diferencia y total de facturas.",
+          'Aquí puedes ver un resumen rápido de tus finanzas: ingresos totales, gastos, utilidad neta, diferencia y total de facturas.',
         selector: "[data-tour='metrics-cards']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📈",
-        title: "Gráfico de Tendencias",
+        icon: '📈',
+        title: 'Gráfico de Tendencias',
         content:
-          "Visualiza la tendencia de tus ingresos y gastos a lo largo del tiempo. Esto te ayuda a identificar patrones y tomar mejores decisiones.",
+          'Visualiza la tendencia de tus ingresos y gastos a lo largo del tiempo. Esto te ayuda a identificar patrones y tomar mejores decisiones.',
         selector: "[data-tour='trend-chart']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📄",
-        title: "Facturas Recientes",
+        icon: '📄',
+        title: 'Facturas Recientes',
         content:
           "Aquí puedes ver tus últimas facturas de ingresos. Haz clic en 'Ver todos' para acceder a la lista completa y gestionar todas tus facturas.",
         selector: "[data-tour='recent-invoices']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "💸",
-        title: "Gastos Recientes",
+        icon: '💸',
+        title: 'Gastos Recientes',
         content:
-          "Revisa tus últimos gastos registrados. El sistema valida automáticamente cada gasto y muestra su estado de validación.",
+          'Revisa tus últimos gastos registrados. El sistema valida automáticamente cada gasto y muestra su estado de validación.',
         selector: "[data-tour='recent-expenses']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
-        nextRoute: "/dashboard/invoices",
+        nextRoute: '/dashboard/invoices',
       },
     ],
   },
   {
-    tour: "certificationTour",
+    tour: 'certificationTour',
     steps: [
       {
-        icon: "🏢",
-        title: "Constancia de Situación Fiscal",
+        icon: '🏢',
+        title: 'Constancia de Situación Fiscal',
         content:
-          "Esta guía te ayudará a obtener tu Constancia de Situación Fiscal (CSF) del SAT. Es un trámite importante para muchas empresas.",
+          'Esta guía te ayudará a obtener tu Constancia de Situación Fiscal (CSF) del SAT. Es un trámite importante para muchas empresas.',
         selector: "[data-tour='certification-hero']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📋",
-        title: "Pasos para obtener tu CSF",
+        icon: '📋',
+        title: 'Pasos para obtener tu CSF',
         content:
-          "Sigue estos 3 pasos para navegar el portal del SAT: prepara tus credenciales (RFC y e.firma), navega a Trámites, y genera tu PDF.",
+          'Sigue estos 3 pasos para navegar el portal del SAT: prepara tus credenciales (RFC y e.firma), navega a Trámites, y genera tu PDF.',
         selector: "[data-tour='certification-steps']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "🔗",
-        title: "Acceso al portal del SAT",
+        icon: '🔗',
+        title: 'Acceso al portal del SAT',
         content:
           "Haz clic en el botón 'Ir al portal del SAT' para dirigirte directamente a la plataforma oficial donde podrás completar el trámite.",
         selector: "[data-tour='certification-cta']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
+        nextRoute: '/dashboard/sat-search',
       },
     ],
   },
   {
-    tour: "invoicesTour",
+    tour: 'invoicesTour',
     steps: [
       {
-        icon: "🏢",
-        title: "Selector de Perfiles (RFCs)",
+        icon: '🏢',
+        title: 'Selector de Perfiles (RFCs)',
         content:
           "Selecciona el perfil (RFC) de la empresa para ver las facturas de esa empresa específica. También puedes ver todas las empresas juntas seleccionando 'Todas las empresas'.",
         selector: "[data-tour='invoices-profile-selector']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📤",
-        title: "Cargar Facturas",
+        icon: '📤',
+        title: 'Cargar Facturas',
         content:
-          "Haz clic aquí para subir archivos XML de facturas. Puedes subir múltiples archivos a la vez y el sistema los validará automáticamente antes de procesarlos.",
+          'Haz clic aquí para subir archivos XML de facturas. Puedes subir múltiples archivos a la vez y el sistema los validará automáticamente antes de procesarlos.',
         selector: "[data-tour='invoices-upload-button']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📋",
-        title: "Tabla de Facturas",
+        icon: '📋',
+        title: 'Tabla de Facturas',
         content:
-          "Aquí puedes ver todas tus facturas con información detallada: UUID, fecha, emisor, receptor, total y tipo. Puedes filtrar, buscar y exportar los datos según tus necesidades.",
+          'Aquí puedes ver todas tus facturas con información detallada: UUID, fecha, emisor, receptor, total y tipo. Puedes filtrar, buscar y exportar los datos según tus necesidades.',
         selector: "[data-tour='invoices-table']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
-        nextRoute: "/dashboard/expenses",
+        nextRoute: '/dashboard/expenses',
       },
     ],
   },
   {
-    tour: "expensesTour",
+    tour: 'expensesTour',
     steps: [
       {
-        icon: "💸",
-        title: "Gestión de Gastos",
+        icon: '💸',
+        title: 'Gestión de Gastos',
         content:
-          "Esta sección es similar a Facturas (Ingresos), pero con una característica adicional: puedes agregar gastos manualmente además de cargar archivos XML. Esto es útil para registrar gastos que no tienen comprobante fiscal digital.",
+          'Esta sección es similar a Facturas (Ingresos), pero con una característica adicional: puedes agregar gastos manualmente además de cargar archivos XML. Esto es útil para registrar gastos que no tienen comprobante fiscal digital.',
         selector: "[data-tour='expenses-profile-selector']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "✍️",
-        title: "Gasto Manual",
+        icon: '✍️',
+        title: 'Gasto Manual',
         content:
-          "Haz clic aquí para agregar un gasto manualmente. Útil para registrar gastos sin comprobante XML, como viáticos, gastos menores o pagos en efectivo.",
+          'Haz clic aquí para agregar un gasto manualmente. Útil para registrar gastos sin comprobante XML, como viáticos, gastos menores o pagos en efectivo.',
         selector: "[data-tour='expenses-manual-button']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📤",
-        title: "Cargar Gastos XML",
+        icon: '📤',
+        title: 'Cargar Gastos XML',
         content:
-          "Similar a las facturas, puedes subir archivos XML de gastos para que el sistema los valide y procese automáticamente.",
+          'Similar a las facturas, puedes subir archivos XML de gastos para que el sistema los valide y procese automáticamente.',
         selector: "[data-tour='expenses-upload-button']",
-        side: "bottom",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
       },
       {
-        icon: "📋",
-        title: "Tabla de Gastos",
+        icon: '📋',
+        title: 'Tabla de Gastos',
         content:
-          "Aquí puedes ver todos tus gastos, tanto los cargados desde XML como los agregados manualmente. La tabla muestra el origen de cada gasto para que puedas identificarlos fácilmente.",
+          'Aquí puedes ver todos tus gastos, tanto los cargados desde XML como los agregados manualmente. La tabla muestra el origen de cada gasto para que puedas identificarlos fácilmente.',
         selector: "[data-tour='expenses-table']",
-        side: "top",
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
-        nextRoute: "/dashboard/certification",
+        nextRoute: '/dashboard/certification',
+      },
+    ],
+  },
+  {
+    tour: 'satSearchTour',
+    steps: [
+      {
+        icon: '🛰️',
+        title: 'Buscador SAT asistido',
+        content:
+          'La ruta /dashboard/sat-search combina IA y datos del catálogo SAT para que encuentres la clave correcta sin adivinar.',
+        selector: "[data-tour='sat-search-hero']",
+        side: 'bottom',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: '🔍',
+        title: 'Describe tu actividad',
+        content:
+          'La barra de búsqueda con IA procesa tu texto natural, limita los resultados según el plan y presenta las claves más relevantes.',
+        selector: "[data-tour='sat-search-bar']",
+        side: 'top',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: '⚖️',
+        title: 'Límites de tu plan',
+        content:
+          'Aquí ves tu plan activo, cuántas búsquedas inteligentes quedan y cuándo necesitas mejorar para seguir usando IA.',
+        selector: "[data-tour='sat-search-plan-limit']",
+        side: 'right',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: '💡',
+        title: 'Sugerencias rápidas',
+        content:
+          'Utiliza las sugerencias para probar búsquedas populares, acelerar el descubrimiento y experimentar con nuevas descripciones. ¡Felicidades! Has completado el tour completo de ContaFlow.',
+        selector: "[data-tour='sat-search-suggestions']",
+        side: 'top',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+        isLastTour: true, // Marcar como el último tour
       },
     ],
   },
@@ -275,58 +337,93 @@ function CustomTourCard({
   nextStep,
   prevStep,
   skipTour,
-}: CardComponentProps) {
+}: CardComponentProps & { step: CustomStep }) {
   const router = useRouter();
   const { markTourCompleted } = useTour();
   const { currentTour } = useNextStep();
 
   const handleNext = async () => {
     const isLastStep = currentStep === totalSteps - 1;
-    
-    if (isLastStep && step.nextRoute) {
-      // Si es el último paso y tiene nextRoute, marcar como completado y navegar
+
+    if (isLastStep) {
+      // Si es el último paso, marcar tour como completado
       if (currentTour) {
         try {
-          await markTourCompleted(currentTour);
+          console.debug('[Tour] 🎯 marking tour completed (card)', currentTour, {
+            step,
+            currentStep,
+            totalSteps,
+          });
+          markTourCompleted(currentTour);
+          console.debug('[Tour] ✅ markTourCompleted OK (card)', currentTour);
         } catch (error) {
-          console.error("Error al marcar tour como completado:", error);
+          console.error('[Tour] ❌ Error al marcar tour como completado:', error);
           // Continuar con la navegación aunque falle la API
         }
       }
-      // Cerrar el tour primero
-      skipTour?.();
-      // Luego navegar después de un pequeño delay
-      setTimeout(() => {
-        router.push(step.nextRoute!);
-      }, 300);
+
+      // Si es el último tour completo (satSearchTour), mostrar mensaje de felicitaciones
+      if (step.isLastTour) {
+        console.debug('[Tour] 🎉 Last tour completed! All tours should be finished now.');
+        // Cerrar el overlay después de un breve delay para que el usuario vea la finalización
+        setTimeout(() => {
+          skipTour?.();
+        }, 1000);
+        return;
+      }
+
+      // Si es el último paso y tiene nextRoute, navegar
+      if (step.nextRoute) {
+        try {
+          console.debug(
+            '[Tour] 📍 nextRoute detected, waiting for localStorage to sync...',
+            step.nextRoute
+          );
+          // ⚠️ IMPORTANTE: Esperar un poco más para asegurar que localStorage se guardó
+          // antes de cerrar el overlay y navegar
+          setTimeout(() => {
+            console.debug('[Tour] 🔄 Closing overlay and navigating...');
+            navigationPendingRef.current = true;
+            skipTour?.();
+            setTimeout(() => {
+              router.push(step.nextRoute!);
+            }, 300);
+          }, 200);
+        } catch (e) {
+          console.error('[Tour] router.push error:', e);
+          // Fallback: cerrar overlay y navegar con delay mayor
+          navigationPendingRef.current = true;
+          skipTour?.();
+          setTimeout(() => router.push(step.nextRoute!), 800);
+        }
+      } else {
+        // Si no hay nextRoute, cerrar el overlay
+        skipTour?.();
+      }
     } else {
-       // Comportamiento normal
-       nextStep?.();
+      // Comportamiento normal
+      nextStep?.();
     }
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg shadow-lg p-6 w-full max-w-sm">
-      <div className="flex items-start gap-4 mb-4">
+    <div className="bg-card border-border w-full max-w-sm rounded-lg border p-6 shadow-lg">
+      <div className="mb-4 flex items-start gap-4">
         <div className="text-3xl">{step.icon}</div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            {step.title}
-          </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {step.content}
-          </p>
+          <h3 className="text-foreground mb-2 text-lg font-semibold">{step.title}</h3>
+          <p className="text-muted-foreground text-sm leading-relaxed">{step.content}</p>
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-muted-foreground text-xs">
           Paso {currentStep + 1} de {totalSteps}
         </div>
         <div className="flex items-center gap-2">
           {step.showSkip && (
             <button
               onClick={skipTour}
-              className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground px-3 py-1.5 text-sm transition-colors"
             >
               Omitir
             </button>
@@ -334,16 +431,20 @@ function CustomTourCard({
           {currentStep > 0 && (
             <button
               onClick={prevStep}
-              className="px-4 py-1.5 text-sm bg-muted hover:bg-muted/80 text-foreground rounded-md transition-colors"
+              className="bg-muted hover:bg-muted/80 text-foreground rounded-md px-4 py-1.5 text-sm transition-colors"
             >
               Anterior
             </button>
           )}
           <button
             onClick={handleNext}
-            className="px-4 py-1.5 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-md transition-colors"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-1.5 text-sm transition-colors"
           >
-            {currentStep === totalSteps - 1 ? "Finalizar" : "Siguiente"}
+            {currentStep === totalSteps - 1
+              ? step.isLastTour
+                ? '¡Completar!'
+                : 'Finalizar'
+              : 'Siguiente'}
           </button>
         </div>
       </div>
@@ -366,8 +467,30 @@ function TourController({ user }: { user?: User }) {
   const hasStartedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const tourStartedRef = useRef<(typeof TOUR_IDS)[keyof typeof TOUR_IDS] | null>(null);
-  const navigationInProgressRef = useRef(false);
   const hasCheckedStatusRef = useRef(false);
+  const lastPathnameRef = useRef(pathname);
+
+  // Debug: mostrar estado de todos los tours cada 5 segundos
+  useEffect(() => {
+    const debugInterval = setInterval(() => {
+      const allTours = Object.values(TOUR_IDS);
+      const completedStatus = allTours.map((tour) => ({
+        tour,
+        completed: isTourCompleted(tour),
+      }));
+      console.debug('[Tour Debug] Current tour status:', {
+        currentPath: pathname,
+        currentTour,
+        isNextStepVisible,
+        completedStatus,
+        allCompleted: allTours.every((t) => isTourCompleted(t)),
+        isCompleted,
+        isRunning,
+      });
+    }, 5000);
+
+    return () => clearInterval(debugInterval);
+  }, [pathname, currentTour, isNextStepVisible, isTourCompleted, isCompleted, isRunning]);
 
   useEffect(() => {
     // Limpiar timer si el componente se desmonta
@@ -385,7 +508,6 @@ function TourController({ user }: { user?: User }) {
       hasCheckedStatusRef.current = true;
     }
   }, [user, checkTourStatus]);
-
   useEffect(() => {
     // Iniciar el tour automáticamente solo una vez si no se ha completado
     // Solo iniciar en el dashboard y después de verificar el estado
@@ -396,7 +518,7 @@ function TourController({ user }: { user?: User }) {
       !isNextStepVisible &&
       !hasStartedRef.current &&
       currentTour === null &&
-      pathname === "/dashboard" &&
+      pathname === '/dashboard' &&
       tourStartedRef.current !== TOUR_IDS.dashboard &&
       !isTourCompleted(TOUR_IDS.dashboard)
     ) {
@@ -411,8 +533,23 @@ function TourController({ user }: { user?: User }) {
 
       // Esperar un poco para que el DOM esté listo
       timerRef.current = setTimeout(() => {
+        // Verificar que los elementos necesarios estén en el DOM
+        const sidebarElement = document.querySelector("[data-tour='sidebar']");
+        if (!sidebarElement) {
+          console.warn('[Tour] Sidebar element not found, retrying...');
+          // Reintentar después de un breve delay
+          setTimeout(() => {
+            if (!isTourCompleted(TOUR_IDS.dashboard) && currentTour === null) {
+              startTour();
+              startNextStep(TOUR_IDS.dashboard);
+            }
+          }, 500);
+          return;
+        }
+
         // Verificar nuevamente antes de iniciar (por si acaso)
         if (!isTourCompleted(TOUR_IDS.dashboard) && currentTour === null) {
+          console.debug('[Tour] Starting dashboard tour with DOM ready');
           startTour();
           startNextStep(TOUR_IDS.dashboard);
         } else {
@@ -420,7 +557,7 @@ function TourController({ user }: { user?: User }) {
           hasStartedRef.current = false;
           tourStartedRef.current = null;
         }
-      }, 1000);
+      }, 1500);
     }
   }, [
     isLoading,
@@ -434,99 +571,129 @@ function TourController({ user }: { user?: User }) {
     isTourCompleted,
   ]);
 
+  // Detectar cuando el tour se completa (cuando se cierra y estaba corriendo)
+  // Nota: esto cubre casos donde el usuario cierra/omite el tour (no solo "Finalizar").
   useEffect(() => {
-    // Detectar cuando el tour se completa (cuando se cierra y estaba corriendo)
-    // Solo marcar como completado si no hay navegación en progreso
-    if (
-      isNextStepVisible === false &&
-      isRunning &&
-      currentTour === null &&
-      hasStartedRef.current &&
-      !navigationInProgressRef.current
-    ) {
-      // Si es el último tour (certification), marcar todo como completado en la API
-      if (tourStartedRef.current === TOUR_IDS.certification) {
-        // markTourCompleted ya llama a completeTour cuando se completan todos los tours
-        markTourCompleted(tourStartedRef.current).catch((error) => {
-          console.error("Error al marcar tour como completado:", error);
-        });
-      } else if (tourStartedRef.current) {
-        // Para otros tours, solo marcar el tour individual como completado
-        // (la navegación ya lo hizo en CustomTourCard cuando se hace clic en "Finalizar")
-        // Pero si se cierra de otra forma (skip), también marcarlo aquí
-        markTourCompleted(tourStartedRef.current).catch((error) => {
-          console.error("Error al marcar tour como completado:", error);
-        });
+    if (isNextStepVisible === false && isRunning && currentTour === null && hasStartedRef.current) {
+      if (tourStartedRef.current) {
+        console.debug(
+          '[TourController] detected tour closed, marking completed:',
+          tourStartedRef.current,
+          { pathname }
+        );
+        console.log(
+          '[TourController] Marcando tour como completado (cierre detectado):',
+          tourStartedRef.current
+        );
+
+        // Marcar el tour individual como completado
+        markTourCompleted(tourStartedRef.current);
       }
-      hasStartedRef.current = false;
-      tourStartedRef.current = null;
+
+      // Si estamos en medio de una navegación disparada por el tour (nextRoute),
+      // NO reseteamos todavía: eso podría re-iniciar el tour en la ruta actual.
+      if (!navigationPendingRef.current) {
+        hasStartedRef.current = false;
+        tourStartedRef.current = null;
+      }
     }
-  }, [isNextStepVisible, isRunning, currentTour, markTourCompleted]);
+  }, [isNextStepVisible, isRunning, currentTour, markTourCompleted, pathname]);
 
   // La navegación se maneja en CustomTourCard cuando se hace clic en "Finalizar"
 
   // Detectar cambios de ruta para iniciar tours específicos
   useEffect(() => {
+    // Si acabamos de cambiar de ruta por un nextRoute, ahora sí podemos resetear
+    // los flags para permitir el inicio del siguiente tour.
+    if (lastPathnameRef.current !== pathname) {
+      lastPathnameRef.current = pathname;
+      if (navigationPendingRef.current) {
+        navigationPendingRef.current = false;
+        hasStartedRef.current = false;
+        tourStartedRef.current = null;
+      }
+    }
+
     // Si estamos en invoices y no hay tour activo y no se ha completado, iniciar el tour
     if (
-      pathname === "/dashboard/invoices" &&
+      pathname === '/dashboard/invoices' &&
       !isNextStepVisible &&
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.invoices &&
-      !isTourCompleted(TOUR_IDS.invoices) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.invoices)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.invoices;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.invoices);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.invoices) && currentTour === null) {
+          console.debug('[Tour] Starting invoices tour');
+          startTour();
+          startNextStep(TOUR_IDS.invoices);
+        }
+      }, 1500);
     }
 
     // Si estamos en expenses y no hay tour activo y no se ha completado, iniciar el tour
     if (
-      pathname === "/dashboard/expenses" &&
+      pathname === '/dashboard/expenses' &&
       !isNextStepVisible &&
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.expenses &&
-      !isTourCompleted(TOUR_IDS.expenses) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.expenses)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.expenses;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.expenses);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.expenses) && currentTour === null) {
+          console.debug('[Tour] Starting expenses tour');
+          startTour();
+          startNextStep(TOUR_IDS.expenses);
+        }
+      }, 1500);
     }
 
     // Si estamos en certification y no hay tour activo y no se ha completado, iniciar el tour
     if (
-      pathname === "/dashboard/certification" &&
+      pathname === '/dashboard/certification' &&
       !isNextStepVisible &&
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.certification &&
-      !isTourCompleted(TOUR_IDS.certification) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.certification)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.certification;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.certification);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.certification) && currentTour === null) {
+          console.debug('[Tour] Starting certification tour');
+          startTour();
+          startNextStep(TOUR_IDS.certification);
+        }
+      }, 1500);
+    }
+
+    // Si llegamos al buscador SAT, iniciamos el tour que muestra la IA y límites de plan
+    if (
+      pathname === '/dashboard/sat-search' &&
+      !isNextStepVisible &&
+      currentTour === null &&
+      !hasStartedRef.current &&
+      tourStartedRef.current !== TOUR_IDS.satSearch &&
+      !isTourCompleted(TOUR_IDS.satSearch)
+    ) {
+      hasStartedRef.current = true;
+      tourStartedRef.current = TOUR_IDS.satSearch;
+      timerRef.current = setTimeout(() => {
+        if (!isTourCompleted(TOUR_IDS.satSearch) && currentTour === null) {
+          console.debug('[Tour] Starting SAT search tour');
+          startTour();
+          startNextStep(TOUR_IDS.satSearch);
+        }
+      }, 1500);
     }
   }, [pathname, isNextStepVisible, currentTour, startTour, startNextStep, isTourCompleted]);
-
-  useEffect(() => {
-    // Si la ruta cambia y hay un tour activo, es una navegacion controlada por el tour.
-    // Evita que el tour se "autocomplemente" y se reinicien flags al montar la nueva pagina.
-    navigationInProgressRef.current = currentTour !== null;
-  }, [currentTour]);
 
   return null;
 }
