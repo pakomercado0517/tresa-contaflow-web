@@ -1,19 +1,16 @@
-"use client";
+'use client';
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 
 interface SATSuggestionsProps {
   suggestions: string[];
   onSuggestionClick: (suggestion: string) => void;
 }
 
-export function SATSuggestions({
-  suggestions,
-  onSuggestionClick,
-}: SATSuggestionsProps) {
+export function SATSuggestions({ suggestions, onSuggestionClick }: SATSuggestionsProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+    <div data-tour="sat-search-suggestions" className="flex flex-col gap-3">
+      <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
         SUGERENCIAS
       </h2>
       <div className="flex flex-wrap gap-2">
@@ -21,7 +18,7 @@ export function SATSuggestions({
           <Badge
             key={index}
             variant="secondary"
-            className="cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+            className="hover:bg-primary hover:text-primary-foreground cursor-pointer px-4 py-2 text-sm transition-colors"
             onClick={() => onSuggestionClick(suggestion)}
           >
             {suggestion}

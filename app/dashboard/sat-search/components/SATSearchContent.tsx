@@ -1,41 +1,39 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { SATSearchBar } from "@/app/dashboard/sat-search/components/SATSearchBar";
-import { SATSuggestions } from "@/app/dashboard/sat-search/components/SATSuggestions";
-import { SATSearchResults } from "@/app/dashboard/sat-search/components/SATSearchResults";
-import { UpgradeModal } from "@/components/subscription/UpgradeModal";
-import { searchSATWithAI, type SearchSATSuccess } from "../actions";
-import { getSATStatsClient } from "@/lib/api/sat.client";
-import { useSubscription } from "@/lib/hooks/useSubscription";
-import type { SATProductServiceAttributes, SATPlanInfo } from "@/lib/types/sat";
-import type { Plan } from "@/lib/types/subscription";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { SATSearchBar } from '@/app/dashboard/sat-search/components/SATSearchBar';
+import { SATSuggestions } from '@/app/dashboard/sat-search/components/SATSuggestions';
+import { SATSearchResults } from '@/app/dashboard/sat-search/components/SATSearchResults';
+import { UpgradeModal } from '@/components/subscription/UpgradeModal';
+import { searchSATWithAI, type SearchSATSuccess } from '../actions';
+import { getSATStatsClient } from '@/lib/api/sat.client';
+import { useSubscription } from '@/lib/hooks/useSubscription';
+import type { SATProductServiceAttributes, SATPlanInfo } from '@/lib/types/sat';
+import type { Plan } from '@/lib/types/subscription';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const RESULTS_PER_PAGE = 5;
 
 const SUGGESTIONS = [
-  "Venta de calzado deportivo",
-  "Servicios de limpieza de oficinas",
-  "Diseño gráfico publicitario",
+  'Venta de calzado deportivo',
+  'Servicios de limpieza de oficinas',
+  'Diseño gráfico publicitario',
 ];
 
 const LIMIT_REACHED_MESSAGE =
-  "La sugerencia inteligente está limitada en tu plan, actualiza para obtener resultados más precisos";
+  'La sugerencia inteligente está limitada en tu plan, actualiza para obtener resultados más precisos';
 
 export function SATSearchContent() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SATProductServiceAttributes[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [aiExplanation, setAiExplanation] = useState<string | undefined>();
-  const [confidence, setConfidence] = useState<
-    "high" | "medium" | "low" | undefined
-  >();
+  const [confidence, setConfidence] = useState<'high' | 'medium' | 'low' | undefined>();
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [planInfo, setPlanInfo] = useState<SATPlanInfo | null>(null);
@@ -44,7 +42,7 @@ export function SATSearchContent() {
   const [upgradeModalMessage, setUpgradeModalMessage] = useState(LIMIT_REACHED_MESSAGE);
 
   const { subscription } = useSubscription();
-  const currentPlan: Plan = subscription?.plan ?? "FREE";
+  const currentPlan: Plan = subscription?.plan ?? 'FREE';
 
   useEffect(() => {
     getSATStatsClient()
@@ -79,7 +77,7 @@ export function SATSearchContent() {
     try {
       const data = await searchSATWithAI(query);
 
-      if ("error" in data && data.error === "limit_reached") {
+      if ('error' in data && data.error === 'limit_reached') {
         setLimitReached(true);
         setUpgradeModalMessage(data.message);
         setShowUpgradeModal(true);
@@ -95,7 +93,7 @@ export function SATSearchContent() {
       setConfidence(success.confidence);
       if (success.planInfo) setPlanInfo(success.planInfo);
     } catch (error) {
-      console.error("Error en búsqueda con IA:", error);
+      console.error('Error en búsqueda con IA:', error);
       setResults([]);
     } finally {
       setIsSearching(false);
@@ -107,10 +105,7 @@ export function SATSearchContent() {
     handleSearch(suggestion);
   };
 
-  const resultsPerPage = Math.min(
-    RESULTS_PER_PAGE,
-    planInfo?.maxResults ?? RESULTS_PER_PAGE
-  );
+  const resultsPerPage = Math.min(RESULTS_PER_PAGE, planInfo?.maxResults ?? RESULTS_PER_PAGE);
   const totalPages = Math.ceil(results.length / resultsPerPage) || 1;
   const startIndex = (currentPage - 1) * resultsPerPage;
   const endIndex = startIndex + resultsPerPage;
@@ -119,18 +114,16 @@ export function SATSearchContent() {
   const hasAIExplanations = planInfo?.hasAIExplanations ?? true;
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-background to-muted/20">
+    <div className="from-background to-muted/20 flex min-h-screen flex-col bg-gradient-to-b">
       <div className="container mx-auto flex flex-1 flex-col gap-8 px-4 py-8 md:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col items-center gap-4 text-center">
+        <div data-tour="sat-search-hero" className="flex flex-col items-center gap-4 text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-            Encuentra tu Clave SAT con{" "}
-            <span className="text-primary">IA</span>
+            Encuentra tu Clave SAT con <span className="text-primary">IA</span>
           </h1>
-          <p className="max-w-2xl text-lg text-muted-foreground md:text-xl">
-            Describe tu actividad comercial con palabras naturales y nuestro
-            motor de inteligencia artificial encontrará el código exacto para tu
-            facturación.
+          <p className="text-muted-foreground max-w-2xl text-lg md:text-xl">
+            Describe tu actividad comercial con palabras naturales y nuestro motor de inteligencia
+            artificial encontrará el código exacto para tu facturación.
           </p>
         </div>
 
@@ -144,6 +137,31 @@ export function SATSearchContent() {
           aiSearchesRemaining={planInfo?.aiSearchesRemaining}
           aiSearchesLimit={planInfo?.aiSearchesLimit}
         />
+
+        <div
+          data-tour="sat-search-plan-limit"
+          className="border-primary/20 bg-primary/5 text-muted-foreground rounded-2xl border p-4 text-sm shadow-sm"
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="secondary" className="text-xs">
+              Plan {currentPlan}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {planInfo?.aiSearchesLimit === null
+                ? 'IA ilimitada'
+                : `${planInfo?.aiSearchesLimit} sugerencias IA/mes`}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {planInfo
+              ? planInfo.aiSearchesRemaining === null
+                ? 'Búsquedas inteligentes ilimitadas este mes.'
+                : `${planInfo.aiSearchesRemaining} de ${
+                    planInfo.aiSearchesLimit ?? '?'
+                  } búsquedas IA restantes.`
+              : 'Cargando límites de tu plan...'}
+          </p>
+        </div>
 
         {/* Aviso cuando se acabaron las búsquedas con IA */}
         {(planInfo?.aiSearchesRemaining === 0 || limitReached) && (
@@ -169,10 +187,7 @@ export function SATSearchContent() {
 
         {/* Sugerencias */}
         {!hasSearched && (
-          <SATSuggestions
-            suggestions={SUGGESTIONS}
-            onSuggestionClick={handleSuggestionClick}
-          />
+          <SATSuggestions suggestions={SUGGESTIONS} onSuggestionClick={handleSuggestionClick} />
         )}
 
         {/* Explicación de IA (solo si el plan lo permite) */}
@@ -180,14 +195,22 @@ export function SATSearchContent() {
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="flex flex-col gap-3 flex-1">
+                <div className="flex flex-1 flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">IA (GPT-4o-mini)</Badge>
-                    <Badge variant={confidence === 'high' ? 'default' : confidence === 'medium' ? 'secondary' : 'outline'}>
+                    <Badge
+                      variant={
+                        confidence === 'high'
+                          ? 'default'
+                          : confidence === 'medium'
+                            ? 'secondary'
+                            : 'outline'
+                      }
+                    >
                       Confianza: {confidence?.toUpperCase()}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     <strong>Análisis de IA:</strong> {aiExplanation}
                   </p>
                 </div>
@@ -209,11 +232,9 @@ export function SATSearchContent() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold">
-                  Resultados
-                </span>
+                <span className="text-lg font-semibold">Resultados</span>
                 {results.length > 0 && (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-muted-foreground text-sm">
                     Página {currentPage} de {totalPages} • {results.length} resultados
                   </span>
                 )}
@@ -227,21 +248,21 @@ export function SATSearchContent() {
             ) : results.length > 0 ? (
               <>
                 <SATSearchResults results={paginatedResults} />
-                
+
                 {/* Paginación */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-4">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
                       className="gap-2"
                     >
                       <ChevronLeft className="size-4" />
                       Anterior
                     </Button>
-                    
+
                     <div className="flex items-center gap-2">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Button
@@ -249,17 +270,17 @@ export function SATSearchContent() {
                           variant={currentPage === page ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setCurrentPage(page)}
-                          className="w-10 h-10"
+                          className="h-10 w-10"
                         >
                           {page}
                         </Button>
                       ))}
                     </div>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
                       className="gap-2"
                     >
@@ -270,10 +291,9 @@ export function SATSearchContent() {
                 )}
               </>
             ) : (
-              <div className="rounded-lg border bg-card p-8 text-center">
+              <div className="bg-card rounded-lg border p-8 text-center">
                 <p className="text-muted-foreground">
-                  No se encontraron resultados para tu búsqueda. Intenta con
-                  otros términos.
+                  No se encontraron resultados para tu búsqueda. Intenta con otros términos.
                 </p>
               </div>
             )}
