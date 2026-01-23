@@ -470,26 +470,21 @@ function TourController({ user }: { user?: User }) {
         if (!isTourCompleted(TOUR_IDS.dashboard) && currentTour === null) {
           startTour();
           startNextStep(TOUR_IDS.dashboard);
-        } else {
-          // Si ya se completó o hay un tour activo, resetear flags
-          hasStartedRef.current = false;
-          tourStartedRef.current = null;
-        }
-      }, 1000);
-    }
+        if (
+          isNextStepVisible === false &&
+          isRunning &&
+          currentTour === null &&
+          hasStartedRef.current &&
+          !navigationInProgressRef.current
+        ) {
   }, [
-    isLoading,
-    isCompleted,
-    isRunning,
-    isNextStepVisible,
-    currentTour,
-    pathname,
-    startTour,
-    startNextStep,
-    isTourCompleted,
-  ]);
-
-  useEffect(() => {
+          if (tourStartedRef.current) {
+            console.debug("[TourController] detected tour closed, marking completed:", tourStartedRef.current, { pathname });
+            // Intentar marcar el tour individual como completado
+            markTourCompleted(tourStartedRef.current).catch((error) => {
+              console.error("Error al marcar tour como completado:", error);
+            });
+          }
     // Detectar cuando el tour se completa (cuando se cierra y estaba corriendo)
     // Solo marcar como completado si no hay navegación en progreso
     if (
