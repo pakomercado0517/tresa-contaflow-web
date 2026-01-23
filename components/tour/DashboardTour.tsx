@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { NextStepProvider, NextStepReact, useNextStep } from 'nextstepjs';
 import { useTour } from '@/lib/hooks/useTour';
 import { TOUR_IDS } from '@/lib/constants/tour';
-import type { CardComponentProps, Tour } from 'nextstepjs';
+import type { CardComponentProps, Tour, Step } from 'nextstepjs';
 import type { User } from '@/lib/types/auth';
 
 interface DashboardTourProps {
@@ -13,7 +13,15 @@ interface DashboardTourProps {
   user?: User;
 }
 
-const tourSteps: Tour[] = [
+interface CustomStep extends Step {
+  isLastTour?: boolean;
+}
+
+// Used to prevent re-starting the same tour between `skipTour()` and `router.push()`.
+// This is module-scoped on purpose so `CustomTourCard` and `TourController` can share it.
+const navigationPendingRef = { current: false };
+
+const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
   {
     tour: 'dashboardTour',
     steps: [
@@ -28,7 +36,6 @@ const tourSteps: Tour[] = [
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
-        nextRoute: "/dashboard/sat-search",
       },
       {
         icon: '⚙️',
@@ -167,6 +174,7 @@ const tourSteps: Tour[] = [
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
+        nextRoute: '/dashboard/sat-search',
       },
     ],
   },
@@ -309,13 +317,14 @@ const tourSteps: Tour[] = [
         icon: '💡',
         title: 'Sugerencias rápidas',
         content:
-          'Utiliza las sugerencias para probar búsquedas populares, acelerar el descubrimiento y experimentar con nuevas descripciones.',
+          'Utiliza las sugerencias para probar búsquedas populares, acelerar el descubrimiento y experimentar con nuevas descripciones. ¡Felicidades! Has completado el tour completo de ContaFlow.',
         selector: "[data-tour='sat-search-suggestions']",
         side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
+        isLastTour: true, // Marcar como el último tour
       },
     ],
   },
@@ -328,7 +337,7 @@ function CustomTourCard({
   nextStep,
   prevStep,
   skipTour,
-}: CardComponentProps) {
+}: CardComponentProps & { step: CustomStep }) {
   const router = useRouter();
   const { markTourCompleted } = useTour();
   const { currentTour } = useNextStep();
@@ -336,27 +345,60 @@ function CustomTourCard({
   const handleNext = async () => {
     const isLastStep = currentStep === totalSteps - 1;
 
-    if (isLastStep && step.nextRoute) {
-      // Si es el último paso y tiene nextRoute, marcar como completado y navegar
+    if (isLastStep) {
+      // Si es el último paso, marcar tour como completado
       if (currentTour) {
         try {
-          console.debug("[Tour] marking tour completed (card)", currentTour, { step, currentStep });
-          await markTourCompleted(currentTour);
-          console.debug("[Tour] markTourCompleted OK (card)", currentTour);
+          console.debug('[Tour] 🎯 marking tour completed (card)', currentTour, {
+            step,
+            currentStep,
+            totalSteps,
+          });
+          markTourCompleted(currentTour);
+          console.debug('[Tour] ✅ markTourCompleted OK (card)', currentTour);
         } catch (error) {
-          console.error('Error al marcar tour como completado:', error);
+          console.error('[Tour] ❌ Error al marcar tour como completado:', error);
           // Continuar con la navegación aunque falle la API
         }
       }
-      // Navegar a la siguiente ruta; no forzar el cierre del overlay aquí
-      try {
-        console.debug("[Tour] navigating to nextRoute", step.nextRoute);
-        router.push(step.nextRoute!);
-      } catch (e) {
-        console.error("[Tour] router.push error:", e);
-        // Fallback: cerrar overlay y navegar con delay
+
+      // Si es el último tour completo (satSearchTour), mostrar mensaje de felicitaciones
+      if (step.isLastTour) {
+        console.debug('[Tour] 🎉 Last tour completed! All tours should be finished now.');
+        // Cerrar el overlay después de un breve delay para que el usuario vea la finalización
+        setTimeout(() => {
+          skipTour?.();
+        }, 1000);
+        return;
+      }
+
+      // Si es el último paso y tiene nextRoute, navegar
+      if (step.nextRoute) {
+        try {
+          console.debug(
+            '[Tour] 📍 nextRoute detected, waiting for localStorage to sync...',
+            step.nextRoute
+          );
+          // ⚠️ IMPORTANTE: Esperar un poco más para asegurar que localStorage se guardó
+          // antes de cerrar el overlay y navegar
+          setTimeout(() => {
+            console.debug('[Tour] 🔄 Closing overlay and navigating...');
+            navigationPendingRef.current = true;
+            skipTour?.();
+            setTimeout(() => {
+              router.push(step.nextRoute!);
+            }, 300);
+          }, 200);
+        } catch (e) {
+          console.error('[Tour] router.push error:', e);
+          // Fallback: cerrar overlay y navegar con delay mayor
+          navigationPendingRef.current = true;
+          skipTour?.();
+          setTimeout(() => router.push(step.nextRoute!), 800);
+        }
+      } else {
+        // Si no hay nextRoute, cerrar el overlay
         skipTour?.();
-        setTimeout(() => router.push(step.nextRoute!), 600);
       }
     } else {
       // Comportamiento normal
@@ -398,7 +440,11 @@ function CustomTourCard({
             onClick={handleNext}
             className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-1.5 text-sm transition-colors"
           >
-            {currentStep === totalSteps - 1 ? 'Finalizar' : 'Siguiente'}
+            {currentStep === totalSteps - 1
+              ? step.isLastTour
+                ? '¡Completar!'
+                : 'Finalizar'
+              : 'Siguiente'}
           </button>
         </div>
       </div>
@@ -421,8 +467,30 @@ function TourController({ user }: { user?: User }) {
   const hasStartedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const tourStartedRef = useRef<(typeof TOUR_IDS)[keyof typeof TOUR_IDS] | null>(null);
-  const navigationInProgressRef = useRef(false);
   const hasCheckedStatusRef = useRef(false);
+  const lastPathnameRef = useRef(pathname);
+
+  // Debug: mostrar estado de todos los tours cada 5 segundos
+  useEffect(() => {
+    const debugInterval = setInterval(() => {
+      const allTours = Object.values(TOUR_IDS);
+      const completedStatus = allTours.map((tour) => ({
+        tour,
+        completed: isTourCompleted(tour),
+      }));
+      console.debug('[Tour Debug] Current tour status:', {
+        currentPath: pathname,
+        currentTour,
+        isNextStepVisible,
+        completedStatus,
+        allCompleted: allTours.every((t) => isTourCompleted(t)),
+        isCompleted,
+        isRunning,
+      });
+    }, 5000);
+
+    return () => clearInterval(debugInterval);
+  }, [pathname, currentTour, isNextStepVisible, isTourCompleted, isCompleted, isRunning]);
 
   useEffect(() => {
     // Limpiar timer si el componente se desmonta
@@ -440,7 +508,6 @@ function TourController({ user }: { user?: User }) {
       hasCheckedStatusRef.current = true;
     }
   }, [user, checkTourStatus]);
-
   useEffect(() => {
     // Iniciar el tour automáticamente solo una vez si no se ha completado
     // Solo iniciar en el dashboard y después de verificar el estado
@@ -466,57 +533,87 @@ function TourController({ user }: { user?: User }) {
 
       // Esperar un poco para que el DOM esté listo
       timerRef.current = setTimeout(() => {
+        // Verificar que los elementos necesarios estén en el DOM
+        const sidebarElement = document.querySelector("[data-tour='sidebar']");
+        if (!sidebarElement) {
+          console.warn('[Tour] Sidebar element not found, retrying...');
+          // Reintentar después de un breve delay
+          setTimeout(() => {
+            if (!isTourCompleted(TOUR_IDS.dashboard) && currentTour === null) {
+              startTour();
+              startNextStep(TOUR_IDS.dashboard);
+            }
+          }, 500);
+          return;
+        }
+
         // Verificar nuevamente antes de iniciar (por si acaso)
         if (!isTourCompleted(TOUR_IDS.dashboard) && currentTour === null) {
+          console.debug('[Tour] Starting dashboard tour with DOM ready');
           startTour();
           startNextStep(TOUR_IDS.dashboard);
-        if (
-          isNextStepVisible === false &&
-          isRunning &&
-          currentTour === null &&
-          hasStartedRef.current &&
-          !navigationInProgressRef.current
-        ) {
-  }, [
-          if (tourStartedRef.current) {
-            console.debug("[TourController] detected tour closed, marking completed:", tourStartedRef.current, { pathname });
-            // Intentar marcar el tour individual como completado
-            markTourCompleted(tourStartedRef.current).catch((error) => {
-              console.error("Error al marcar tour como completado:", error);
-            });
-          }
-    // Detectar cuando el tour se completa (cuando se cierra y estaba corriendo)
-    // Solo marcar como completado si no hay navegación en progreso
-    if (
-      isNextStepVisible === false &&
-      isRunning &&
-      currentTour === null &&
-      hasStartedRef.current &&
-      !navigationInProgressRef.current
-    ) {
-      // Si es el último tour (sat-search), marcar todo como completado en la API
-      if (tourStartedRef.current === TOUR_IDS.satSearch) {
-        // markTourCompleted ya llama a completeTour cuando se completan todos los tours
-        markTourCompleted(tourStartedRef.current).catch((error) => {
-          console.error('Error al marcar tour como completado:', error);
-        });
-      } else if (tourStartedRef.current) {
-        // Para otros tours, solo marcar el tour individual como completado
-        // (la navegación ya lo hizo en CustomTourCard cuando se hace clic en "Finalizar")
-        // Pero si se cierra de otra forma (skip), también marcarlo aquí
-        markTourCompleted(tourStartedRef.current).catch((error) => {
-          console.error('Error al marcar tour como completado:', error);
-        });
-      }
-      hasStartedRef.current = false;
-      tourStartedRef.current = null;
+        } else {
+          // Si ya se completó o hay un tour activo, resetear flags
+          hasStartedRef.current = false;
+          tourStartedRef.current = null;
+        }
+      }, 1500);
     }
-  }, [isNextStepVisible, isRunning, currentTour, markTourCompleted]);
+  }, [
+    isLoading,
+    isCompleted,
+    isRunning,
+    isNextStepVisible,
+    currentTour,
+    pathname,
+    startTour,
+    startNextStep,
+    isTourCompleted,
+  ]);
+
+  // Detectar cuando el tour se completa (cuando se cierra y estaba corriendo)
+  // Nota: esto cubre casos donde el usuario cierra/omite el tour (no solo "Finalizar").
+  useEffect(() => {
+    if (isNextStepVisible === false && isRunning && currentTour === null && hasStartedRef.current) {
+      if (tourStartedRef.current) {
+        console.debug(
+          '[TourController] detected tour closed, marking completed:',
+          tourStartedRef.current,
+          { pathname }
+        );
+        console.log(
+          '[TourController] Marcando tour como completado (cierre detectado):',
+          tourStartedRef.current
+        );
+
+        // Marcar el tour individual como completado
+        markTourCompleted(tourStartedRef.current);
+      }
+
+      // Si estamos en medio de una navegación disparada por el tour (nextRoute),
+      // NO reseteamos todavía: eso podría re-iniciar el tour en la ruta actual.
+      if (!navigationPendingRef.current) {
+        hasStartedRef.current = false;
+        tourStartedRef.current = null;
+      }
+    }
+  }, [isNextStepVisible, isRunning, currentTour, markTourCompleted, pathname]);
 
   // La navegación se maneja en CustomTourCard cuando se hace clic en "Finalizar"
 
   // Detectar cambios de ruta para iniciar tours específicos
   useEffect(() => {
+    // Si acabamos de cambiar de ruta por un nextRoute, ahora sí podemos resetear
+    // los flags para permitir el inicio del siguiente tour.
+    if (lastPathnameRef.current !== pathname) {
+      lastPathnameRef.current = pathname;
+      if (navigationPendingRef.current) {
+        navigationPendingRef.current = false;
+        hasStartedRef.current = false;
+        tourStartedRef.current = null;
+      }
+    }
+
     // Si estamos en invoices y no hay tour activo y no se ha completado, iniciar el tour
     if (
       pathname === '/dashboard/invoices' &&
@@ -524,15 +621,17 @@ function TourController({ user }: { user?: User }) {
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.invoices &&
-      !isTourCompleted(TOUR_IDS.invoices) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.invoices)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.invoices;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.invoices);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.invoices) && currentTour === null) {
+          console.debug('[Tour] Starting invoices tour');
+          startTour();
+          startNextStep(TOUR_IDS.invoices);
+        }
+      }, 1500);
     }
 
     // Si estamos en expenses y no hay tour activo y no se ha completado, iniciar el tour
@@ -542,15 +641,17 @@ function TourController({ user }: { user?: User }) {
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.expenses &&
-      !isTourCompleted(TOUR_IDS.expenses) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.expenses)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.expenses;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.expenses);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.expenses) && currentTour === null) {
+          console.debug('[Tour] Starting expenses tour');
+          startTour();
+          startNextStep(TOUR_IDS.expenses);
+        }
+      }, 1500);
     }
 
     // Si estamos en certification y no hay tour activo y no se ha completado, iniciar el tour
@@ -560,15 +661,17 @@ function TourController({ user }: { user?: User }) {
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.certification &&
-      !isTourCompleted(TOUR_IDS.certification) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.certification)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.certification;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.certification);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.certification) && currentTour === null) {
+          console.debug('[Tour] Starting certification tour');
+          startTour();
+          startNextStep(TOUR_IDS.certification);
+        }
+      }, 1500);
     }
 
     // Si llegamos al buscador SAT, iniciamos el tour que muestra la IA y límites de plan
@@ -578,23 +681,19 @@ function TourController({ user }: { user?: User }) {
       currentTour === null &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.satSearch &&
-      !isTourCompleted(TOUR_IDS.satSearch) &&
-      !navigationInProgressRef.current
+      !isTourCompleted(TOUR_IDS.satSearch)
     ) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.satSearch;
       timerRef.current = setTimeout(() => {
-        startTour();
-        startNextStep(TOUR_IDS.satSearch);
-      }, 1000);
+        if (!isTourCompleted(TOUR_IDS.satSearch) && currentTour === null) {
+          console.debug('[Tour] Starting SAT search tour');
+          startTour();
+          startNextStep(TOUR_IDS.satSearch);
+        }
+      }, 1500);
     }
   }, [pathname, isNextStepVisible, currentTour, startTour, startNextStep, isTourCompleted]);
-
-  useEffect(() => {
-    // Si la ruta cambia y hay un tour activo, es una navegacion controlada por el tour.
-    // Evita que el tour se "autocomplemente" y se reinicien flags al montar la nueva pagina.
-    navigationInProgressRef.current = currentTour !== null;
-  }, [currentTour]);
 
   return null;
 }

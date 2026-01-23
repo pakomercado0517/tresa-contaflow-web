@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { useProfileFreezeDetector } from '@/lib/hooks/useProfileFreezeDetector';
@@ -16,7 +16,6 @@ import type { Plan } from '@/lib/types/subscription';
  */
 export function ProfileFreezeDetector() {
   const queryClient = useQueryClient();
-  const [showModal, setShowModal] = useState(false);
 
   // Obtener perfiles
   const { data: profilesData } = useQuery({
@@ -56,29 +55,20 @@ export function ProfileFreezeDetector() {
     enabled: true,
   });
 
-  // Mostrar modal cuando se detecta exceso
-  useEffect(() => {
-    if (shouldShowModal && !showModal) {
-      setShowModal(true);
-    }
-  }, [shouldShowModal, showModal]);
+  // Mientras exista exceso, el modal debe permanecer abierto.
+  const handleModalClose = useCallback(() => {
+    // no-op: solo se cerrara cuando shouldShowModal sea false
+  }, []);
 
-  const handleModalClose = () => {
-    setShowModal(false);
-  };
-
-  const handleFreezeSuccess = () => {
+  const handleFreezeSuccess = useCallback(() => {
     // Invalidar queries para refrescar datos
     queryClient.invalidateQueries({ queryKey: ['profiles'] });
     queryClient.invalidateQueries({ queryKey: ['subscription'] });
-
-    // Cerrar modal después de refrescar
-    setShowModal(false);
-  };
+  }, [queryClient]);
 
   return (
     <ProfileFreezeModal
-      isOpen={showModal}
+      isOpen={shouldShowModal}
       profiles={profiles}
       planLimit={planLimit}
       onClose={handleModalClose}
