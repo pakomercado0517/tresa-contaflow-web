@@ -311,17 +311,77 @@ export function InvoicesListContent({
   };
 
   const getStatusBadge = (invoice: Invoice) => {
-    if (invoice.validacion?.valido) {
+    // Primero mostrar estado de validación
+    if (!invoice.validacion?.valido) {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <AlertTitle className="h-3 w-3" />
+          ERROR
+        </Badge>
+      );
+    }
+
+    // Para facturas PUE, siempre están pagadas
+    if (invoice.tipo === 'PUE') {
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600 text-white">
+          ✓ Pagado
+        </Badge>
+      );
+    }
+
+    // Para facturas PPD, verificar estado de pago
+    if (invoice.tipo === 'PPD') {
+      const estadoPago = invoice.estadoPago;
+
+      // Si no hay estadoPago, considerar como no pagado
+      if (!estadoPago) {
+        return (
+          <Badge variant="outline" className="border-orange-500 text-orange-600 bg-orange-50">
+            No Pagado
+          </Badge>
+        );
+      }
+
+      // Si está completamente pagado
+      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600 text-white">
+            ✓ Pagado
+          </Badge>
+        );
+      }
+
+      // Si tiene pago parcial
+      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+        return (
+          <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">
+            Pago Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+          </Badge>
+        );
+      }
+
+      // Si no está pagado
+      return (
+        <Badge variant="outline" className="border-orange-500 text-orange-600 bg-orange-50">
+          No Pagado
+        </Badge>
+      );
+    }
+
+    // Para complementos de pago, mostrar como válido
+    if (invoice.tipo === 'COMPLEMENTO_PAGO') {
       return (
         <Badge className="bg-green-500 hover:bg-green-600 text-white">
           ✓ VÁLIDO
         </Badge>
       );
     }
+
+    // Default: válido
     return (
-      <Badge variant="destructive" className="flex items-center gap-1">
-        <AlertTitle className="h-3 w-3" />
-        ERROR
+      <Badge className="bg-green-500 hover:bg-green-600 text-white">
+        ✓ VÁLIDO
       </Badge>
     );
   };

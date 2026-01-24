@@ -134,7 +134,7 @@ export async function getTrendData(
     return months.map(({ mes, año }, index) => ({
       mes,
       año,
-      ingresos: results[index]?.metrics.totalFacturado || 0,
+      ingresos: results[index]?.metrics.totalPagado || 0,
       gastos: results[index]?.metrics.totalCompras || 0,
     }));
   }
@@ -158,7 +158,7 @@ export async function getTrendData(
     ? previousYearMonths.map((mes, index) => ({
         mes,
         año: previousYear,
-        ingresos: previousYearResults[index]?.metrics.totalFacturado || 0,
+        ingresos: previousYearResults[index]?.metrics.totalPagado || 0,
         gastos: previousYearResults[index]?.metrics.totalCompras || 0,
       }))
     : [];
@@ -169,7 +169,7 @@ export async function getTrendData(
       return {
         mes,
         año: year,
-        ingresos: currentYearResults[i].metrics.totalFacturado,
+        ingresos: currentYearResults[i].metrics.totalPagado,
         gastos: currentYearResults[i].metrics.totalCompras,
       };
     }

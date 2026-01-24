@@ -1,3 +1,17 @@
+export type EstadoPago = 'PAGADO' | 'PAGO_PARCIAL' | 'NO_PAGADO';
+
+export interface EstadoPagoDetalle {
+  estado: EstadoPago;
+  totalFactura: number;
+  totalPagado: number;
+  saldoPendiente: number;
+  porcentajePagado: number;
+  completamentePagado: boolean;
+  ultimoSaldoInsoluto: number | null;
+  tieneComplementos: boolean;
+  tienePagosManuales: boolean;
+}
+
 export interface Invoice {
   id: string;
   profile_id: string;
@@ -49,6 +63,7 @@ export interface Invoice {
     errores: string[];
     valido: boolean;
   };
+  estadoPago?: EstadoPagoDetalle | null;
   profile?: {
     id: string;
     nombre: string;

@@ -1,3 +1,5 @@
+import type { EstadoPagoDetalle } from './invoices';
+
 export interface Expense {
   id: string;
   profile_id: string;
@@ -49,6 +51,7 @@ export interface Expense {
     errores: string[];
     valido: boolean;
   };
+  estadoPago?: EstadoPagoDetalle | null;
   profile?: {
     id: string;
     nombre: string;

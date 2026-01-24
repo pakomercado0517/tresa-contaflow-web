@@ -29,12 +29,52 @@ export function RecentInvoicesTable({
   };
 
   const getStatusBadge = (invoice: Invoice) => {
+    // Para facturas PUE, siempre están pagadas
     if (invoice.tipo === "PUE") {
       return (
-        <Badge className="bg-primary text-primary-foreground">Timbrada</Badge>
+        <Badge className="bg-green-500 text-white">Pagado</Badge>
       );
     }
-    return <Badge variant="outline">Pendiente</Badge>;
+
+    // Para facturas PPD, verificar estado de pago
+    if (invoice.tipo === "PPD") {
+      const estadoPago = invoice.estadoPago;
+
+      // Si no hay estadoPago, considerar como no pagado
+      if (!estadoPago) {
+        return (
+          <Badge variant="outline" className="border-orange-500 text-orange-600">
+            No Pagado
+          </Badge>
+        );
+      }
+
+      // Si está completamente pagado
+      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+        return (
+          <Badge className="bg-green-500 text-white">Pagado</Badge>
+        );
+      }
+
+      // Si tiene pago parcial
+      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+        return (
+          <Badge variant="outline" className="border-blue-500 text-blue-600">
+            Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+          </Badge>
+        );
+      }
+
+      // Si no está pagado
+      return (
+        <Badge variant="outline" className="border-orange-500 text-orange-600">
+          No Pagado
+        </Badge>
+      );
+    }
+
+    // Para complementos de pago
+    return <Badge variant="outline">Pago</Badge>;
   };
 
   return (

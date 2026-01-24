@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import type { Expense } from "@/lib/types/expenses";
@@ -40,6 +41,63 @@ export function RecentExpensesTable({
         <AlertCircle className="h-4 w-4 text-orange-400" />
       </div>
     );
+  };
+
+  const getPaymentStatusBadge = (expense: Expense) => {
+    // Solo mostrar estado de pago para gastos XML con tipo PUE o PPD
+    if (expense.tipo_origen !== 'XML' || !expense.tipo || expense.tipo === 'COMPLEMENTO_PAGO') {
+      return null;
+    }
+
+    // Para gastos PUE, siempre están pagados
+    if (expense.tipo === 'PUE') {
+      return (
+        <Badge className="bg-green-500 text-white text-xs mt-1">
+          Pagado
+        </Badge>
+      );
+    }
+
+    // Para gastos PPD, verificar estado de pago
+    if (expense.tipo === 'PPD') {
+      const estadoPago = expense.estadoPago;
+
+      // Si no hay estadoPago, considerar como no pagado
+      if (!estadoPago) {
+        return (
+          <Badge variant="outline" className="border-orange-500 text-orange-600 text-xs mt-1">
+            No Pagado
+          </Badge>
+        );
+      }
+
+      // Si está completamente pagado
+      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+        return (
+          <Badge className="bg-green-500 text-white text-xs mt-1">
+            Pagado
+          </Badge>
+        );
+      }
+
+      // Si tiene pago parcial
+      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+        return (
+          <Badge variant="outline" className="border-blue-500 text-blue-600 text-xs mt-1">
+            Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+          </Badge>
+        );
+      }
+
+      // Si no está pagado
+      return (
+        <Badge variant="outline" className="border-orange-500 text-orange-600 text-xs mt-1">
+          No Pagado
+        </Badge>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -96,7 +154,12 @@ export function RecentExpensesTable({
                   <td className="py-3 px-2 text-sm font-medium">
                     {formatCurrency(expense.total)}
                   </td>
-                  <td className="py-3 px-2">{getValidationIcon(expense)}</td>
+                  <td className="py-3 px-2">
+                    <div className="flex flex-col items-start gap-1">
+                      {getValidationIcon(expense)}
+                      {getPaymentStatusBadge(expense)}
+                    </div>
+                  </td>
                 </tr>
               ))
             ) : (

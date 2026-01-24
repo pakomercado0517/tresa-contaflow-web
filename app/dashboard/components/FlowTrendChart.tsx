@@ -187,7 +187,7 @@ export function FlowTrendChart({
                 onClick={() => setFilter("ingresos")}
                 className={filter === "ingresos" ? "bg-primary" : ""}
               >
-                Ingresos
+                Ingresos (Total pagado)
               </Button>
               <Button
                 variant={filter === "gastos" ? "default" : "outline"}

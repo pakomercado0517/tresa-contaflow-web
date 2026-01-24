@@ -306,6 +306,55 @@ export function ExpensesListContent({
   const deleteKeyword = 'ELIMINAR';
   const isDeleteBlocked = isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
+  const getPaymentStatusBadge = (expense: Expense) => {
+    // Solo mostrar estado de pago para gastos XML con tipo PUE o PPD
+    if (expense.tipo_origen !== 'XML' || !expense.tipo || expense.tipo === 'COMPLEMENTO_PAGO') {
+      return null;
+    }
+
+    // Para gastos PUE, siempre están pagados
+    if (expense.tipo === 'PUE') {
+      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+    }
+
+    // Para gastos PPD, verificar estado de pago
+    if (expense.tipo === 'PPD') {
+      const estadoPago = expense.estadoPago;
+
+      // Si no hay estadoPago, considerar como no pagado
+      if (!estadoPago) {
+        return (
+          <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
+            No Pagado
+          </Badge>
+        );
+      }
+
+      // Si está completamente pagado
+      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+        return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+      }
+
+      // Si tiene pago parcial
+      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+        return (
+          <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600">
+            Pago Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+          </Badge>
+        );
+      }
+
+      // Si no está pagado
+      return (
+        <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
+          No Pagado
+        </Badge>
+      );
+    }
+
+    return null;
+  };
+
   // Calcular métricas desde los gastos filtrados
   const xmlExpenses = expenses.filter((e) => e.tipo_origen === 'XML');
   const manualExpenses = expenses.filter((e) => e.tipo_origen === 'MANUAL');
@@ -453,6 +502,7 @@ export function ExpensesListContent({
                   <TableHead className="min-w-[100px]">ORIGEN</TableHead>
                   <TableHead className="min-w-[150px]">UUID</TableHead>
                   <TableHead className="min-w-[120px]">TOTAL</TableHead>
+                  <TableHead className="min-w-[120px]">ESTADO PAGO</TableHead>
                   <TableHead className="min-w-[120px] text-right">ACCIONES</TableHead>
                 </TableRow>
               </TableHeader>
@@ -491,6 +541,7 @@ export function ExpensesListContent({
                       <TableCell className="font-medium whitespace-nowrap">
                         {formatCurrency(expense.total)}
                       </TableCell>
+                      <TableCell>{getPaymentStatusBadge(expense)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
@@ -508,7 +559,7 @@ export function ExpensesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-8">
+                    <TableCell colSpan={8} className="py-8">
                       <EmptyState
                         icon={FileX}
                         title={
