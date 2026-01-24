@@ -93,6 +93,7 @@ export interface MetricsResponse {
     totalFacturado: number;
     totalPagado: number;
     totalCompras: number;
+    totalComprasPagadas: number;
     totalPagadoMenosCompras: number;
     pendientePagar: number;
     totalFacturas: number;
@@ -101,6 +102,10 @@ export interface MetricsResponse {
     facturasPPD: number;
     facturasPagadasCompletamente: number;
     facturasParcialmentePagadas: number;
+    gastosPUE: number;
+    gastosPPD: number;
+    gastosPagadosCompletamente: number;
+    gastosParcialmentePagados: number;
   };
 }
 

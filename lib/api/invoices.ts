@@ -135,7 +135,7 @@ export async function getTrendData(
       mes,
       año,
       ingresos: results[index]?.metrics.totalPagado || 0,
-      gastos: results[index]?.metrics.totalCompras || 0,
+      gastos: results[index]?.metrics.totalComprasPagadas ?? results[index]?.metrics.totalCompras ?? 0,
     }));
   }
 
@@ -159,7 +159,7 @@ export async function getTrendData(
         mes,
         año: previousYear,
         ingresos: previousYearResults[index]?.metrics.totalPagado || 0,
-        gastos: previousYearResults[index]?.metrics.totalCompras || 0,
+        gastos: previousYearResults[index]?.metrics.totalComprasPagadas ?? previousYearResults[index]?.metrics.totalCompras ?? 0,
       }))
     : [];
 
@@ -170,7 +170,7 @@ export async function getTrendData(
         mes,
         año: year,
         ingresos: currentYearResults[i].metrics.totalPagado,
-        gastos: currentYearResults[i].metrics.totalCompras,
+        gastos: currentYearResults[i].metrics.totalComprasPagadas ?? currentYearResults[i].metrics.totalCompras ?? 0,
       };
     }
     return {

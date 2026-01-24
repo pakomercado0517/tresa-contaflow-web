@@ -69,21 +69,22 @@ export function FlowTrendChart({
 
   // Actualizar datos cuando cambien las props iniciales y estemos en vista "año-actual"
   useEffect(() => {
-    if (shouldUseInitialData) {
-      // Usar queueMicrotask para evitar setState síncrono en el efecto
-      queueMicrotask(() => {
-        if (isMountedRef.current) {
-          setData(initialData);
-          setIsLoading(false);
-        }
-      });
+    if (shouldUseInitialData && isMountedRef.current) {
+      // Actualizar datos inmediatamente cuando cambian las props
+      setData(initialData);
+      setIsLoading(false);
     }
-  }, [initialData, shouldUseInitialData]);
+  }, [initialData, shouldUseInitialData, profileId, año]);
 
   // Cargar datos cuando cambie el período, profileId o año (solo para modos que no sean "año-actual")
   useEffect(() => {
-    // Si estamos en vista "año-actual", no hacer fetch
+    // Si estamos en vista "año-actual", usar initialData del servidor
     if (shouldUseInitialData) {
+      // Si cambia el profileId o año, actualizar con initialData
+      if (isMountedRef.current) {
+        setData(initialData);
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -117,7 +118,7 @@ export function FlowTrendChart({
     return () => {
       cancelled = true;
     };
-  }, [periodView, profileId, selectedYear, shouldUseInitialData]);
+  }, [periodView, profileId, selectedYear, shouldUseInitialData, initialData]);
 
   // Limpiar al desmontar
   useEffect(() => {

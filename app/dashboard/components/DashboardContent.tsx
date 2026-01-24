@@ -110,6 +110,7 @@ export async function DashboardContent({
           </div>
         }>
           <FlowTrendChart
+            key={`${profileId || 'all'}-${año}`}
             initialData={trendData}
             profileId={profileId}
             año={año}
