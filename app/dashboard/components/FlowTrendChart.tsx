@@ -69,34 +69,35 @@ export function FlowTrendChart({
 
   // Actualizar datos cuando cambien las props iniciales y estemos en vista "año-actual"
   useEffect(() => {
-    if (shouldUseInitialData && isMountedRef.current) {
-      // Actualizar datos inmediatamente cuando cambian las props
-      setData(initialData);
-      setIsLoading(false);
+    if (shouldUseInitialData) {
+      // Usar setTimeout para evitar setState síncrono en el efecto
+      const timeoutId = setTimeout(() => {
+        if (isMountedRef.current) {
+          setData(initialData);
+          setIsLoading(false);
+        }
+      }, 0);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [initialData, shouldUseInitialData, profileId, año]);
 
   // Cargar datos cuando cambie el período, profileId o año (solo para modos que no sean "año-actual")
   useEffect(() => {
-    // Si estamos en vista "año-actual", usar initialData del servidor
+    // Si estamos en vista "año-actual", no hacer fetch
     if (shouldUseInitialData) {
-      // Si cambia el profileId o año, actualizar con initialData
-      if (isMountedRef.current) {
-        setData(initialData);
-        setIsLoading(false);
-      }
       return;
     }
 
     // Para otros modos, hacer fetch de los datos
     let cancelled = false;
     
-    // Usar queueMicrotask para evitar setState síncrono en el efecto
-    queueMicrotask(() => {
+    // Usar setTimeout para evitar setState síncrono en el efecto
+    const loadingTimeoutId = setTimeout(() => {
       if (!cancelled && isMountedRef.current) {
         setIsLoading(true);
       }
-    });
+    }, 0);
 
     const fetchData = async () => {
       try {
@@ -117,8 +118,9 @@ export function FlowTrendChart({
 
     return () => {
       cancelled = true;
+      clearTimeout(loadingTimeoutId);
     };
-  }, [periodView, profileId, selectedYear, shouldUseInitialData, initialData]);
+  }, [periodView, profileId, selectedYear, shouldUseInitialData]);
 
   // Limpiar al desmontar
   useEffect(() => {
