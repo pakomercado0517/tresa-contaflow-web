@@ -35,7 +35,7 @@ export function ProfileSelector({ profiles, selectedProfileId }: ProfileSelector
     } else {
       params.delete('profileId');
     }
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/dashboard?${params.toString()}`, { scroll: false });
   }
 
   return (

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Line,
   XAxis,
@@ -19,24 +19,24 @@ import {
   ResponsiveContainer,
   Area,
   AreaChart,
-} from "recharts";
-import { getTrendDataClient } from "@/lib/api/invoices.client";
-import type { TrendPeriodView } from "@/lib/api/invoices";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+} from 'recharts';
+import { getTrendDataClient } from '@/lib/api/invoices.client';
+import type { TrendPeriodView } from '@/lib/api/invoices';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 const MONTHS_SHORT = [
-  "Ene",
-  "Feb",
-  "Mar",
-  "Abr",
-  "May",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dic",
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
 ];
 
 type TrendDataPoint = {
@@ -52,20 +52,14 @@ interface FlowTrendChartProps {
   año?: number;
 }
 
-export function FlowTrendChart({
-  initialData,
-  profileId,
-  año,
-}: FlowTrendChartProps) {
-  const [filter, setFilter] = useState<"ingresos" | "gastos" | "ambos">(
-    "ambos"
-  );
-  const [periodView, setPeriodView] = useState<TrendPeriodView>("año-actual");
+export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartProps) {
+  const [filter, setFilter] = useState<'ingresos' | 'gastos' | 'ambos'>('ambos');
+  const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [data, setData] = useState<TrendDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const selectedYear = año || new Date().getFullYear();
   const isMountedRef = useRef(true);
-  const shouldUseInitialData = periodView === "año-actual";
+  const shouldUseInitialData = periodView === 'año-actual';
 
   // Actualizar datos cuando cambien las props iniciales y estemos en vista "año-actual"
   useEffect(() => {
@@ -77,7 +71,7 @@ export function FlowTrendChart({
           setIsLoading(false);
         }
       }, 0);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [initialData, shouldUseInitialData, profileId, año]);
@@ -91,7 +85,7 @@ export function FlowTrendChart({
 
     // Para otros modos, hacer fetch de los datos
     let cancelled = false;
-    
+
     // Usar setTimeout para evitar setState síncrono en el efecto
     const loadingTimeoutId = setTimeout(() => {
       if (!cancelled && isMountedRef.current) {
@@ -107,7 +101,7 @@ export function FlowTrendChart({
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error al cargar datos de tendencia:", error);
+        console.error('Error al cargar datos de tendencia:', error);
         if (!cancelled && isMountedRef.current) {
           setIsLoading(false);
         }
@@ -133,8 +127,7 @@ export function FlowTrendChart({
   const currentYear = new Date().getFullYear();
   const chartData = data.map((item) => {
     const monthLabel = MONTHS_SHORT[item.mes - 1];
-    const label =
-      item.año === currentYear ? monthLabel : `${monthLabel} ${item.año}`;
+    const label = item.año === currentYear ? monthLabel : `${monthLabel} ${item.año}`;
 
     return {
       fecha: label,
@@ -147,14 +140,14 @@ export function FlowTrendChart({
   const hasData = data.some((item) => item.ingresos > 0 || item.gastos > 0);
 
   const periodViewLabels: Record<TrendPeriodView, string> = {
-    "año-actual": "Año Actual",
-    "últimos-12-meses": "Últimos 12 Meses",
-    "año-completo": "Año Completo",
-    "comparar-anterior": "Comparar con Anterior",
+    'año-actual': 'Año Actual',
+    'últimos-12-meses': 'Últimos 12 Meses',
+    'año-completo': 'Año Completo',
+    'comparar-anterior': 'Comparar con Anterior',
   };
 
   return (
-    <Card data-tour="trend-chart" className="p-6 bg-card border-border">
+    <Card data-tour="trend-chart" className="bg-card border-border p-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h3 className="text-lg font-semibold">Tendencia de Flujo</h3>
@@ -163,48 +156,44 @@ export function FlowTrendChart({
               value={periodView}
               onValueChange={(value) => setPeriodView(value as TrendPeriodView)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="año-actual">
-                  {periodViewLabels["año-actual"]}
-                </SelectItem>
+                <SelectItem value="año-actual">{periodViewLabels['año-actual']}</SelectItem>
                 <SelectItem value="últimos-12-meses">
-                  {periodViewLabels["últimos-12-meses"]}
+                  {periodViewLabels['últimos-12-meses']}
                 </SelectItem>
-                <SelectItem value="año-completo">
-                  {periodViewLabels["año-completo"]}
-                </SelectItem>
+                <SelectItem value="año-completo">{periodViewLabels['año-completo']}</SelectItem>
                 {selectedYear === currentYear && (
                   <SelectItem value="comparar-anterior">
-                    {periodViewLabels["comparar-anterior"]}
+                    {periodViewLabels['comparar-anterior']}
                   </SelectItem>
                 )}
               </SelectContent>
             </Select>
             <div className="flex gap-2">
               <Button
-                variant={filter === "ingresos" ? "default" : "outline"}
+                variant={filter === 'ingresos' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFilter("ingresos")}
-                className={filter === "ingresos" ? "bg-primary" : ""}
+                onClick={() => setFilter('ingresos')}
+                className={filter === 'ingresos' ? 'bg-primary' : ''}
               >
                 Ingresos (Total pagado)
               </Button>
               <Button
-                variant={filter === "gastos" ? "default" : "outline"}
+                variant={filter === 'gastos' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFilter("gastos")}
-                className={filter === "gastos" ? "bg-primary" : ""}
+                onClick={() => setFilter('gastos')}
+                className={filter === 'gastos' ? 'bg-primary' : ''}
               >
                 Gastos
               </Button>
               <Button
-                variant={filter === "ambos" ? "default" : "outline"}
+                variant={filter === 'ambos' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFilter("ambos")}
-                className={filter === "ambos" ? "bg-primary" : ""}
+                onClick={() => setFilter('ambos')}
+                className={filter === 'ambos' ? 'bg-primary' : ''}
               >
                 Ambos
               </Button>
@@ -214,7 +203,7 @@ export function FlowTrendChart({
 
         <div className="h-80">
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <LoadingSpinner message="Cargando datos..." />
             </div>
           ) : hasData ? (
@@ -231,20 +220,16 @@ export function FlowTrendChart({
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="fecha"
-                  stroke="#9ca3af"
-                  style={{ fontSize: "12px" }}
-                />
-                <YAxis stroke="#9ca3af" style={{ fontSize: "12px" }} />
+                <XAxis dataKey="fecha" stroke="#9ca3af" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#1f2937",
-                    border: "1px solid #374151",
-                    borderRadius: "8px",
+                    backgroundColor: '#1f2937',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
                   }}
                 />
-                {(filter === "ingresos" || filter === "ambos") && (
+                {(filter === 'ingresos' || filter === 'ambos') && (
                   <>
                     <Area
                       type="monotone"
@@ -255,7 +240,7 @@ export function FlowTrendChart({
                     />
                   </>
                 )}
-                {(filter === "gastos" || filter === "ambos") && (
+                {(filter === 'gastos' || filter === 'ambos') && (
                   <Line
                     type="monotone"
                     dataKey="gastos"
@@ -267,7 +252,7 @@ export function FlowTrendChart({
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <p className="text-muted-foreground text-center">
                 No hay datos disponibles para mostrar.
                 <br />
@@ -282,4 +267,3 @@ export function FlowTrendChart({
     </Card>
   );
 }
-

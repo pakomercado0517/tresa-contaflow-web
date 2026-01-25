@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { ProfileSelector } from "@/components/common/ProfileSelector";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import type { Profile } from "@/lib/types/profiles";
+} from '@/components/ui/select';
+import { ProfileSelector } from '@/components/common/ProfileSelector';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+import type { Profile } from '@/lib/types/profiles';
 
 interface DashboardHeaderProps {
   profiles?: Profile[];
@@ -36,18 +36,18 @@ export function DashboardHeader({
   const currentYear = selectedYear || currentDate.getFullYear();
 
   const months = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
 
   // Generar años (5 años: 2 anteriores, actual, 2 futuros)
@@ -55,21 +55,21 @@ export function DashboardHeader({
 
   function updateFilters(month?: number, year?: number) {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     // Usar el valor proporcionado o el valor actual
     const newMonth = month !== undefined ? month : currentMonth;
     const newYear = year !== undefined ? year : currentYear;
-    
-    params.set("mes", newMonth.toString());
-    params.set("año", newYear.toString());
-    
+
+    params.set('mes', newMonth.toString());
+    params.set('año', newYear.toString());
+
     if (selectedProfileId) {
-      params.set("profileId", selectedProfileId);
+      params.set('profileId', selectedProfileId);
     } else {
-      params.delete("profileId");
+      params.delete('profileId');
     }
-    
-    router.push(`/dashboard?${params.toString()}`);
+
+    router.push(`/dashboard?${params.toString()}`, { scroll: false });
   }
 
   function handleMonthChange(month: number) {
@@ -81,7 +81,7 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="border-border bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-40 w-full border-b backdrop-blur">
       <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold">Resumen General</h1>
@@ -90,7 +90,7 @@ export function DashboardHeader({
               value={currentMonth.toString()}
               onValueChange={(value) => handleMonthChange(Number(value))}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-35">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -105,7 +105,7 @@ export function DashboardHeader({
               value={currentYear.toString()}
               onValueChange={(value) => handleYearChange(Number(value))}
             >
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-25">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -122,16 +122,11 @@ export function DashboardHeader({
         <div className="flex items-center gap-3">
           {profiles.length > 0 && (
             <div data-tour="profile-selector">
-              <ProfileSelector
-                profiles={profiles}
-                selectedProfileId={selectedProfileId}
-              />
+              <ProfileSelector profiles={profiles} selectedProfileId={selectedProfileId} />
             </div>
           )}
           {companyName && (
-            <span className="hidden lg:block text-sm text-muted-foreground">
-              {companyName}
-            </span>
+            <span className="text-muted-foreground hidden text-sm lg:block">{companyName}</span>
           )}
           <Button
             asChild
@@ -148,4 +143,3 @@ export function DashboardHeader({
     </header>
   );
 }
-
