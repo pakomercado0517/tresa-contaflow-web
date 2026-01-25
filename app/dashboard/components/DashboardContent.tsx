@@ -1,30 +1,36 @@
-import { Suspense } from "react";
-import dynamic from "next/dynamic";
-import { DashboardHeader } from "./DashboardHeader";
-import { DashboardGreeting } from "./DashboardGreeting";
-import { MetricsCards } from "./MetricsCards";
-import { RecentInvoicesTable } from "./RecentInvoicesTable";
-import { RecentExpensesTable } from "./RecentExpensesTable";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { TrialBannerWrapper } from "./TrialBannerWrapper";
-import { getMetrics, getInvoices, getTrendData } from "@/lib/api/invoices";
-import { getExpenses } from "@/lib/api/expenses";
-import { getProfiles } from "@/lib/api/profiles";
-import { getCurrentUser } from "@/lib/api/auth.server";
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import { DashboardHeader } from './DashboardHeader';
+import { DashboardGreeting } from './DashboardGreeting';
+import { MetricsCards } from './MetricsCards';
+import { RecentInvoicesTable } from './RecentInvoicesTable';
+import { RecentExpensesTable } from './RecentExpensesTable';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { TrialBannerWrapper } from './TrialBannerWrapper';
+import { getMetrics, getInvoices, getTrendData } from '@/lib/api/invoices';
+import { getExpenses } from '@/lib/api/expenses';
+import { getProfiles } from '@/lib/api/profiles';
+import { getCurrentUser } from '@/lib/api/auth.server';
 
 // Lazy load componentes pesados (jsPDF y Recharts)
 // Nota: Estos componentes ya son Client Components, el lazy loading reduce el bundle inicial
-const ExportPDFButton = dynamic(() => import("./ExportPDFButton").then((mod) => ({ default: mod.ExportPDFButton })), {
-  loading: () => <div className="h-10 w-32 animate-pulse rounded-md bg-muted" />,
-});
+const ExportPDFButton = dynamic(
+  () => import('./ExportPDFButton').then((mod) => ({ default: mod.ExportPDFButton })),
+  {
+    loading: () => <div className="bg-muted h-10 w-32 animate-pulse rounded-md" />,
+  }
+);
 
-const FlowTrendChart = dynamic(() => import("./FlowTrendChart").then((mod) => ({ default: mod.FlowTrendChart })), {
-  loading: () => (
-    <div className="h-96 w-full animate-pulse rounded-lg bg-muted flex items-center justify-center">
-      <LoadingSpinner message="Cargando gráfico..." />
-    </div>
-  ),
-});
+const FlowTrendChart = dynamic(
+  () => import('./FlowTrendChart').then((mod) => ({ default: mod.FlowTrendChart })),
+  {
+    loading: () => (
+      <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
+        <LoadingSpinner message="Cargando gráfico..." />
+      </div>
+    ),
+  }
+);
 
 interface DashboardContentProps {
   searchParams?: Promise<{
@@ -34,9 +40,7 @@ interface DashboardContentProps {
   }>;
 }
 
-export async function DashboardContent({
-  searchParams,
-}: DashboardContentProps) {
+export async function DashboardContent({ searchParams }: DashboardContentProps) {
   const params = await searchParams;
   const profileId = params?.profileId;
   const mes = params?.mes ? Number(params.mes) : new Date().getMonth() + 1;
@@ -53,16 +57,15 @@ export async function DashboardContent({
     getCurrentUser(),
   ]);
 
-  const activeProfile = profiles.data.find((p) => p.id === profileId) ||
-    profiles.data[0];
+  const activeProfile = profiles.data.find((p) => p.id === profileId) || profiles.data[0];
   const selectedCompanyName = profileId
     ? activeProfile?.nombre
     : profiles.data.length > 0
-      ? "Todas las empresas"
+      ? 'Todas las empresas'
       : undefined;
 
   // Obtener el nombre del usuario para mostrar
-  const userName = currentUser.user.nombre || currentUser.user.email.split("@")[0];
+  const userName = currentUser.user.nombre || currentUser.user.email.split('@')[0];
 
   // Calcular métricas para el PDF
   const totalFacturado = metrics.metrics.totalFacturado || 0;
@@ -82,10 +85,10 @@ export async function DashboardContent({
         selectedYear={año}
         companyName={selectedCompanyName}
       />
-      <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
         {/* Trial Banner - Solo se muestra si el usuario está en trial */}
         <TrialBannerWrapper />
-        
+
         <div className="flex items-center justify-between">
           <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
           <ExportPDFButton
@@ -104,17 +107,14 @@ export async function DashboardContent({
           />
         </div>
         <MetricsCards metrics={metrics.metrics} />
-        <Suspense fallback={
-          <div className="h-96 w-full animate-pulse rounded-lg bg-muted flex items-center justify-center">
-            <LoadingSpinner message="Cargando gráfico..." />
-          </div>
-        }>
-          <FlowTrendChart
-            key={`${profileId || 'all'}-${año}`}
-            initialData={trendData}
-            profileId={profileId}
-            año={año}
-          />
+        <Suspense
+          fallback={
+            <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
+              <LoadingSpinner message="Cargando gráfico..." />
+            </div>
+          }
+        >
+          <FlowTrendChart initialData={trendData} profileId={profileId} año={año} />
         </Suspense>
         <div className="grid gap-6 md:grid-cols-2">
           <RecentInvoicesTable invoices={invoices.data} />
@@ -124,4 +124,3 @@ export async function DashboardContent({
     </>
   );
 }
-
