@@ -38,7 +38,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Expense } from '@/lib/types/expenses';
 import type { Profile } from '@/lib/types/profiles';
 import type { Subscription } from '@/lib/types/subscription';
-import { exportToPDF } from '@/lib/utils/pdf-export';
+import {
+  exportToPDF,
+  normalizeExpensesForExport,
+} from '@/lib/utils/pdf-export';
 import { deleteExpense } from '@/lib/api/expenses.client';
 import { ApiError } from '@/lib/api/client';
 
@@ -208,13 +211,15 @@ export function ExpensesListContent({
 
   const handleExportPDF = async () => {
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
-
-    // Calcular métricas para el resumen
-    const totalGastos = expenses.reduce((sum, exp) => sum + exp.total, 0);
+    const normalizedExpenses = normalizeExpensesForExport(expenses);
+    const totalGastos = normalizedExpenses.reduce(
+      (sum, exp) => sum + exp.total,
+      0
+    );
 
     await exportToPDF({
       tipo: 'gastos',
-      expenses,
+      expenses: normalizedExpenses,
       profileName: selectedProfile?.nombre || 'Todos los perfiles',
       rfc: selectedProfile?.rfc || '',
       mes: selectedMes,

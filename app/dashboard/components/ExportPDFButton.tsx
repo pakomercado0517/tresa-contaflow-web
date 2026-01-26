@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { logger } from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
-import { exportToPDF } from "@/lib/utils/pdf-export";
+import {
+  exportToPDF,
+  normalizeInvoicesForExport,
+  normalizeExpensesForExport,
+} from "@/lib/utils/pdf-export";
 import { apiClient } from "@/lib/api/client";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Expense } from "@/lib/types/expenses";
@@ -55,10 +59,13 @@ export function ExportPDFButton({
         ),
       ]);
 
+      const invoices = normalizeInvoicesForExport(invoicesResponse.data || []);
+      const expenses = normalizeExpensesForExport(expensesResponse.data || []);
+
       await exportToPDF({
         tipo: "completo",
-        invoices: invoicesResponse.data || [],
-        expenses: expensesResponse.data || [],
+        invoices,
+        expenses,
         profileName: profileName || "Todos los perfiles",
         rfc: rfc || "",
         mes,

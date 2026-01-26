@@ -99,16 +99,39 @@ interface ExportProfilesOptions {
 }
 
 // ==================== UTILIDADES ====================
-function formatCurrency(amount: number): string {
-  // Validar que sea un número válido
-  if (typeof amount !== "number" || isNaN(amount)) {
+function toNumber(value: number | string): number {
+  return typeof value === "number" ? value : parseFloat(String(value)) || 0;
+}
+
+function formatCurrency(amount: number | string): string {
+  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+  if (typeof numAmount !== "number" || isNaN(numAmount)) {
     return "$0.00";
   }
-  
-  return `$${amount.toLocaleString("es-MX", {
+  return `$${numAmount.toLocaleString("es-MX", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+/** Normaliza facturas para exportación PDF (total y pagos[].monto como number). */
+export function normalizeInvoicesForExport(invoices: Invoice[]): Invoice[] {
+  return invoices.map((inv) => ({
+    ...inv,
+    total: toNumber(inv.total),
+    pagos: (inv.pagos ?? []).map((p) => ({
+      ...p,
+      monto: toNumber(p.monto),
+    })),
+  }));
+}
+
+/** Normaliza gastos para exportación PDF (total como number). */
+export function normalizeExpensesForExport(expenses: Expense[]): Expense[] {
+  return expenses.map((exp) => ({
+    ...exp,
+    total: toNumber(exp.total),
+  }));
 }
 
 function formatDate(dateString: string): string {

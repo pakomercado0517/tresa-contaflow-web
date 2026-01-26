@@ -36,7 +36,10 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Profile } from "@/lib/types/profiles";
-import { exportToPDF } from "@/lib/utils/pdf-export";
+import {
+  exportToPDF,
+  normalizeInvoicesForExport,
+} from "@/lib/utils/pdf-export";
 import { deleteInvoice } from "@/lib/api/invoices.client";
 import { ApiError } from "@/lib/api/client";
 
@@ -107,6 +110,7 @@ export function InvoicesListContent({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [lastExportPayload, setLastExportPayload] = useState<Record<string, unknown> | null>(null);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -251,34 +255,30 @@ export function InvoicesListContent({
 
   const handleExportPDF = async () => {
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
-    
+    const normalizedInvoices = normalizeInvoicesForExport(invoices);
+
     // Calcular métricas para el resumen
-    const totalFacturado = invoices.reduce((sum, inv) => {
-      const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total) || 0;
-      return sum + total;
-    }, 0);
-    
+    const totalFacturado = normalizedInvoices.reduce(
+      (sum, inv) => sum + inv.total,
+      0
+    );
+
     // Las facturas PUE están pagadas automáticamente
     // Las facturas PPD están pagadas si tienen complementos de pago o están completamente pagadas
-    const facturasPagadas = invoices.filter((inv) => {
-      if (inv.tipo === "PUE") return true; // PUE siempre están pagadas
-      if (inv.tipo === "PPD") {
-        // Para PPD, considerar pagadas si tienen complemento_pago completo
-        // Por ahora, todas las PPD se consideran pagadas si tienen complemento_pago
-        return inv.complemento_pago !== null;
-      }
+    const facturasPagadas = normalizedInvoices.filter((inv) => {
+      if (inv.tipo === "PUE") return true;
+      if (inv.tipo === "PPD") return inv.complemento_pago !== null;
       return false;
     });
-    const totalPagado = facturasPagadas.reduce((sum, inv) => {
-      const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total) || 0;
-      return sum + total;
-    }, 0);
-    
+    const totalPagado = facturasPagadas.reduce(
+      (sum, inv) => sum + inv.total,
+      0
+    );
     const pendientePorPagar = totalFacturado - totalPagado;
 
-    await exportToPDF({
+    const payload = {
       tipo: "facturas",
-      invoices,
+      invoices: normalizedInvoices,
       profileName: selectedProfile?.nombre || "Todos los perfiles",
       rfc: selectedProfile?.rfc || "",
       mes: selectedMes,
@@ -289,11 +289,17 @@ export function InvoicesListContent({
         totalCompras: 0,
         pendientePorPagar,
         diferencia: 0,
-        totalFacturas: invoices.length,
-        facturasPUE: invoices.filter((inv) => inv.tipo === "PUE").length,
-        facturasPPD: invoices.filter((inv) => inv.tipo === "PPD").length,
+        totalFacturas: normalizedInvoices.length,
+        facturasPUE: normalizedInvoices.filter((inv) => inv.tipo === "PUE").length,
+        facturasPPD: normalizedInvoices.filter((inv) => inv.tipo === "PPD").length,
       },
-    });
+    } as const;
+
+    setLastExportPayload(payload as Record<string, unknown>);
+    // eslint-disable-next-line no-console
+    console.log("exportToPDF payload:", payload);
+
+    await exportToPDF(payload);
   };
 
   const getTypeBadge = (tipo: string) => {
@@ -423,6 +429,19 @@ export function InvoicesListContent({
           </Link>
         </div>
       </div>
+
+      {/* Visual log del payload de exportación (temporal) */}
+      {lastExportPayload && (
+        <div className="rounded-lg border bg-card border-border p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium">Último payload para exportación PDF</p>
+            <Button variant="ghost" onClick={() => setLastExportPayload(null)}>
+              Ocultar
+            </Button>
+          </div>
+          <pre className="text-xs max-h-48 overflow-auto whitespace-pre-wrap">{JSON.stringify(lastExportPayload, null, 2)}</pre>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <SummaryCards
