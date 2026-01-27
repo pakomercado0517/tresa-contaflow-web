@@ -96,6 +96,7 @@ export interface MetricsResponse {
     totalComprasPagadas: number;
     totalPagadoMenosCompras: number;
     pendientePagar: number;
+    gastosPendientes: number;
     totalFacturas: number;
     totalGastos: number;
     facturasPUE: number;

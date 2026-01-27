@@ -296,7 +296,6 @@ export function InvoicesListContent({
     } as const;
 
     setLastExportPayload(payload as Record<string, unknown>);
-    // eslint-disable-next-line no-console
     console.log("exportToPDF payload:", payload);
 
     await exportToPDF(payload);
