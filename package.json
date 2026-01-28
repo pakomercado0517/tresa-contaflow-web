@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify:all": "pnpm lint && pnpm typecheck && pnpm build",
+    "verify:ci": "pnpm lint && pnpm typecheck"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",

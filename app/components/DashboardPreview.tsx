@@ -6,36 +6,37 @@ export function DashboardPreview() {
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
             Todo tu control financiero, claro y ordenado
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl">
-            Visualiza ingresos, gastos y facturas en un solo lugar. 
-            Sin hojas de cálculo, sin buscar XML uno por uno y sin depender de terceros 
-            para entender cómo va tu negocio o el de tus clientes.
+          <p className="text-muted-foreground max-w-xl text-lg">
+            Visualiza ingresos, gastos y facturas en un solo lugar. Sin hojas de cálculo, sin buscar
+            XML uno por uno y sin depender de terceros para entender cómo va tu negocio o el de tus
+            clientes.
           </p>
-          <p className="text-sm text-muted-foreground italic">
-            <span className="font-bold">Menos tiempo administrando facturas. Más tiempo tomando decisiones.</span>
+          <p className="text-muted-foreground text-sm italic">
+            <span className="font-bold">
+              Menos tiempo administrando facturas. Más tiempo tomando decisiones.
+            </span>
           </p>
-
         </div>
 
         <div className="flex-1">
-          <div className="relative w-full rounded-lg border border-border bg-card shadow-lg overflow-hidden">
-            <div className="flex items-center gap-2 p-4 border-b border-border bg-muted/30">
+          <div className="border-border bg-card relative w-full overflow-hidden rounded-lg border shadow-lg">
+            <div className="border-border bg-muted/30 flex items-center gap-2 border-b p-4">
               <div className="h-3 w-3 rounded-full bg-red-500"></div>
               <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
               <div className="h-3 w-3 rounded-full bg-green-500"></div>
             </div>
-            <div className="p-8 bg-background">
+            <div className="bg-background p-8">
               <div className="space-y-6">
-                <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center">
+                <div className="bg-muted/30 flex h-64 items-center justify-center rounded-lg">
                   <div className="w-full space-y-4">
-                    <div className="h-8 bg-muted/50 rounded w-1/3"></div>
-                    <div className="h-32 bg-primary/10 rounded flex items-end justify-center gap-2 p-4">
-                      <div className="h-20 w-12 bg-primary rounded"></div>
-                      <div className="h-28 w-12 bg-primary rounded"></div>
-                      <div className="h-16 w-12 bg-primary rounded"></div>
-                      <div className="h-24 w-12 bg-primary rounded"></div>
-                      <div className="h-32 w-12 bg-primary rounded"></div>
-                      <div className="h-18 w-12 bg-primary rounded"></div>
+                    <div className="bg-muted/50 h-8 w-1/3 rounded"></div>
+                    <div className="bg-primary/10 flex h-32 items-end justify-center gap-2 rounded p-4">
+                      <div className="bg-primary h-20 w-12 rounded"></div>
+                      <div className="bg-primary h-28 w-12 rounded"></div>
+                      <div className="bg-primary h-16 w-12 rounded"></div>
+                      <div className="bg-primary h-24 w-12 rounded"></div>
+                      <div className="bg-primary h-32 w-12 rounded"></div>
+                      <div className="bg-primary h-18 w-12 rounded"></div>
                     </div>
                   </div>
                 </div>
