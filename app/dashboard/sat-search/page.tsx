@@ -1,4 +1,4 @@
-import { SATSearchContent } from "./components/SATSearchContent";
+import { SATSearchContent } from './components/SATSearchContent';
 
 export default function SATSearchPage() {
   return (

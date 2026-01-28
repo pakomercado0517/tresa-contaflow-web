@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ErrorState } from "@/components/common/ErrorState";
-import { getProfilesClient } from "@/lib/api/profiles.client";
-import { getInvoicesClient, getMetricsClient } from "@/lib/api/invoices.client";
-import type { GetInvoicesResponse } from "@/lib/types/invoices";
-import type { GetProfilesResponse } from "@/lib/types/profiles";
-import type { MetricsResponse } from "@/lib/types/invoices";
-import { InvoicesListContent } from "./InvoicesListContent";
+import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { ErrorState } from '@/components/common/ErrorState';
+import { getProfilesClient } from '@/lib/api/profiles.client';
+import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
+import type { GetInvoicesResponse } from '@/lib/types/invoices';
+import type { GetProfilesResponse } from '@/lib/types/profiles';
+import type { MetricsResponse } from '@/lib/types/invoices';
+import { InvoicesListContent } from './InvoicesListContent';
 
 interface NormalizedInvoiceParams {
   profileId?: string;
@@ -37,29 +37,28 @@ export function InvoicesPageClient() {
   const searchParams = useSearchParams();
 
   const normalizedParams: NormalizedInvoiceParams = useMemo(() => {
-    const profileIdParam = searchParams.get("profileId");
-    const tipoParam = searchParams.get("tipo");
+    const profileIdParam = searchParams.get('profileId');
+    const tipoParam = searchParams.get('tipo');
 
     return {
-      profileId:
-        profileIdParam && profileIdParam !== "all" ? profileIdParam : undefined,
-      mes: toNumber(searchParams.get("mes"), getDefaultMes()),
-      año: toNumber(searchParams.get("año"), getDefaultAño()),
-      tipo: tipoParam && tipoParam !== "all" ? tipoParam : undefined,
-      page: toNumber(searchParams.get("page"), 1),
-      search: searchParams.get("search") ?? undefined,
+      profileId: profileIdParam && profileIdParam !== 'all' ? profileIdParam : undefined,
+      mes: toNumber(searchParams.get('mes'), getDefaultMes()),
+      año: toNumber(searchParams.get('año'), getDefaultAño()),
+      tipo: tipoParam && tipoParam !== 'all' ? tipoParam : undefined,
+      page: toNumber(searchParams.get('page'), 1),
+      search: searchParams.get('search') ?? undefined,
     };
   }, [searchParams]);
 
   const profilesQuery = useQuery<GetProfilesResponse, Error>({
-    queryKey: ["profiles"],
+    queryKey: ['profiles'],
     queryFn: () => getProfilesClient(),
     staleTime: 60_000,
   });
 
   const invoicesQuery = useQuery<GetInvoicesResponse, Error>({
     queryKey: [
-      "invoices",
+      'invoices',
       normalizedParams.profileId ?? null,
       normalizedParams.mes,
       normalizedParams.año,
@@ -82,17 +81,13 @@ export function InvoicesPageClient() {
 
   const metricsQuery = useQuery<MetricsResponse, Error>({
     queryKey: [
-      "invoice-metrics",
+      'invoice-metrics',
       normalizedParams.profileId ?? null,
       normalizedParams.mes,
       normalizedParams.año,
     ],
     queryFn: () =>
-      getMetricsClient(
-        normalizedParams.profileId,
-        normalizedParams.mes,
-        normalizedParams.año
-      ),
+      getMetricsClient(normalizedParams.profileId, normalizedParams.mes, normalizedParams.año),
     placeholderData: keepPreviousData,
   });
 
@@ -103,7 +98,7 @@ export function InvoicesPageClient() {
         title="Error al cargar las facturas"
         message={
           fatalError.message ||
-          "No se pudieron cargar las facturas. Por favor verifica tu conexión e intenta nuevamente."
+          'No se pudieron cargar las facturas. Por favor verifica tu conexión e intenta nuevamente.'
         }
       />
     );
@@ -139,10 +134,9 @@ export function InvoicesPageClient() {
     (invoicesQuery.isLoading && !invoicesQuery.data) ||
     (metricsQuery.isLoading && !metricsQuery.data);
 
-  const isUpdating =
-    !isInitialLoading && (invoicesQuery.isFetching || metricsQuery.isFetching);
+  const isUpdating = !isInitialLoading && (invoicesQuery.isFetching || metricsQuery.isFetching);
 
-  const tableState = isInitialLoading ? "loading" : isUpdating ? "updating" : "idle";
+  const tableState = isInitialLoading ? 'loading' : isUpdating ? 'updating' : 'idle';
 
   return (
     <InvoicesListContent

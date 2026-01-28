@@ -9,7 +9,7 @@ export default function SetupLoading() {
 
         <div className="bg-card rounded-lg border">
           <div className="bg-muted/40 h-12 animate-pulse border-b" />
-          <div className="p-6 space-y-4">
+          <div className="space-y-4 p-6">
             <div className="grid gap-4 md:grid-cols-2">
               {Array.from({ length: 2 }, (_, i) => (
                 <div key={i} className="bg-muted h-28 animate-pulse rounded-lg" />

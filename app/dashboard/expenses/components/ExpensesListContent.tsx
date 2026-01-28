@@ -38,10 +38,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Expense } from '@/lib/types/expenses';
 import type { Profile } from '@/lib/types/profiles';
 import type { Subscription } from '@/lib/types/subscription';
-import {
-  exportToPDF,
-  normalizeExpensesForExport,
-} from '@/lib/utils/pdf-export';
+import { exportToPDF, normalizeExpensesForExport } from '@/lib/utils/pdf-export';
 import { deleteExpense } from '@/lib/api/expenses.client';
 import { ApiError } from '@/lib/api/client';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
@@ -234,10 +231,7 @@ export function ExpensesListContent({
   const handleExportPDF = async () => {
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
     const normalizedExpenses = normalizeExpensesForExport(expenses);
-    const totalGastos = normalizedExpenses.reduce(
-      (sum, exp) => sum + exp.total,
-      0
-    );
+    const totalGastos = normalizedExpenses.reduce((sum, exp) => sum + exp.total, 0);
 
     await exportToPDF({
       tipo: 'gastos',
@@ -611,7 +605,7 @@ export function ExpensesListContent({
             </Table>
 
             {tableState !== 'idle' && (
-              <div className="absolute inset-0 bg-background/90 backdrop-blur-[2px]">
+              <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
                 <TableRowsSkeleton rows={10} />
               </div>
             )}

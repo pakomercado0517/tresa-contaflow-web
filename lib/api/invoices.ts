@@ -1,10 +1,10 @@
-import { serverApiClient } from "./server-client";
-import { apiClient } from "./client";
+import { serverApiClient } from './server-client';
+import { apiClient } from './client';
 import type {
   GetInvoicesResponse,
   MetricsResponse,
   UploadInvoiceResponse,
-} from "@/lib/types/invoices";
+} from '@/lib/types/invoices';
 
 interface GetInvoicesParams {
   profileId?: string;
@@ -20,21 +20,19 @@ interface GetInvoicesParams {
  * Obtiene las facturas del usuario (Server Component only)
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
-export async function getInvoices(
-  params?: GetInvoicesParams
-): Promise<GetInvoicesResponse> {
+export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoicesResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.profileId) queryParams.append("profileId", params.profileId);
-  if (params?.mes) queryParams.append("mes", params.mes.toString());
-  if (params?.año) queryParams.append("año", params.año.toString());
-  if (params?.tipo) queryParams.append("tipo", params.tipo);
-  if (params?.page) queryParams.append("page", params.page.toString());
-  if (params?.limit) queryParams.append("limit", params.limit.toString());
-  if (params?.search) queryParams.append("search", params.search);
+  if (params?.profileId) queryParams.append('profileId', params.profileId);
+  if (params?.mes) queryParams.append('mes', params.mes.toString());
+  if (params?.año) queryParams.append('año', params.año.toString());
+  if (params?.tipo) queryParams.append('tipo', params.tipo);
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.search) queryParams.append('search', params.search);
 
   const queryString = queryParams.toString();
-  const endpoint = `/api/invoices${queryString ? `?${queryString}` : ""}`;
+  const endpoint = `/api/invoices${queryString ? `?${queryString}` : ''}`;
 
   return serverApiClient<GetInvoicesResponse>(endpoint, {
     redirectOnAuthError: true,
@@ -52,12 +50,12 @@ export async function getMetrics(
 ): Promise<MetricsResponse> {
   const queryParams = new URLSearchParams();
 
-  if (profileId) queryParams.append("profileId", profileId);
-  if (mes) queryParams.append("mes", mes.toString());
-  if (año) queryParams.append("año", año.toString());
+  if (profileId) queryParams.append('profileId', profileId);
+  if (mes) queryParams.append('mes', mes.toString());
+  if (año) queryParams.append('año', año.toString());
 
   const queryString = queryParams.toString();
-  const endpoint = `/api/invoices/metrics${queryString ? `?${queryString}` : ""}`;
+  const endpoint = `/api/invoices/metrics${queryString ? `?${queryString}` : ''}`;
 
   return serverApiClient<MetricsResponse>(endpoint, {
     redirectOnAuthError: true,
@@ -68,10 +66,10 @@ export async function getMetrics(
  * Modos de visualización para la tendencia
  */
 export type TrendPeriodView =
-  | "año-actual" // Solo el año seleccionado hasta el mes actual (por defecto)
-  | "últimos-12-meses" // Rolling window de últimos 12 meses
-  | "año-completo" // Todos los 12 meses del año seleccionado
-  | "comparar-anterior"; // Año actual + últimos 3 meses del año anterior
+  | 'año-actual' // Solo el año seleccionado hasta el mes actual (por defecto)
+  | 'últimos-12-meses' // Rolling window de últimos 12 meses
+  | 'año-completo' // Todos los 12 meses del año seleccionado
+  | 'comparar-anterior'; // Año actual + últimos 3 meses del año anterior
 
 /**
  * Obtiene datos de tendencia mensual (Server Component only)
@@ -80,34 +78,46 @@ export type TrendPeriodView =
 export async function getTrendData(
   profileId?: string,
   año?: number,
-  periodView: TrendPeriodView = "año-actual"
+  periodView: TrendPeriodView = 'año-actual',
+  mesCorte?: number
 ): Promise<Array<{ mes: number; año: number; ingresos: number; gastos: number }>> {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
   const year = año || currentYear;
 
+  const clampedMesCorte = mesCorte ? Math.min(12, Math.max(1, mesCorte)) : undefined;
+  const currentYearCutoffMonth =
+    year === currentYear
+      ? Math.min(clampedMesCorte ?? currentMonth, currentMonth)
+      : clampedMesCorte;
+
   let monthsToFetch = 12;
   let shouldIncludePrevYearTail = false;
   let shouldFetchLast12Months = false;
 
   switch (periodView) {
-    case "año-actual":
+    case 'año-actual':
       // Solo el año seleccionado hasta el mes actual
-      monthsToFetch = year < currentYear ? 12 : currentMonth;
+      monthsToFetch =
+        year < currentYear
+          ? 12
+          : year === currentYear
+            ? (currentYearCutoffMonth ?? currentMonth)
+            : (currentYearCutoffMonth ?? 12);
       break;
-    case "últimos-12-meses":
+    case 'últimos-12-meses':
       // Rolling window de últimos 12 meses
       shouldFetchLast12Months = true;
       break;
-    case "año-completo":
+    case 'año-completo':
       // Todos los 12 meses del año seleccionado
       monthsToFetch = 12;
       break;
-    case "comparar-anterior":
+    case 'comparar-anterior':
       // Año actual + últimos 3 meses del año anterior (solo si es el año actual)
       if (year === currentYear) {
-        monthsToFetch = currentMonth;
+        monthsToFetch = currentYearCutoffMonth ?? currentMonth;
         shouldIncludePrevYearTail = true;
       } else {
         monthsToFetch = 12;
@@ -135,7 +145,8 @@ export async function getTrendData(
       mes,
       año,
       ingresos: results[index]?.metrics.totalPagado || 0,
-      gastos: results[index]?.metrics.totalComprasPagadas ?? results[index]?.metrics.totalCompras ?? 0,
+      gastos:
+        results[index]?.metrics.totalComprasPagadas ?? results[index]?.metrics.totalCompras ?? 0,
     }));
   }
 
@@ -159,7 +170,10 @@ export async function getTrendData(
         mes,
         año: previousYear,
         ingresos: previousYearResults[index]?.metrics.totalPagado || 0,
-        gastos: previousYearResults[index]?.metrics.totalComprasPagadas ?? previousYearResults[index]?.metrics.totalCompras ?? 0,
+        gastos:
+          previousYearResults[index]?.metrics.totalComprasPagadas ??
+          previousYearResults[index]?.metrics.totalCompras ??
+          0,
       }))
     : [];
 
@@ -170,7 +184,10 @@ export async function getTrendData(
         mes,
         año: year,
         ingresos: currentYearResults[i].metrics.totalPagado,
-        gastos: currentYearResults[i].metrics.totalComprasPagadas ?? currentYearResults[i].metrics.totalCompras ?? 0,
+        gastos:
+          currentYearResults[i].metrics.totalComprasPagadas ??
+          currentYearResults[i].metrics.totalCompras ??
+          0,
       };
     }
     return {
@@ -188,16 +205,13 @@ export async function getTrendData(
  * Sube un archivo XML de factura al backend (Client Component only)
  * El sistema determina automáticamente si es factura o gasto basándose en el RFC
  */
-export async function uploadInvoice(
-  file: File,
-  profileId: string
-): Promise<UploadInvoiceResponse> {
+export async function uploadInvoice(file: File, profileId: string): Promise<UploadInvoiceResponse> {
   const formData = new FormData();
-  formData.append("xml", file);
-  formData.append("profileId", profileId);
+  formData.append('xml', file);
+  formData.append('profileId', profileId);
 
-  return apiClient<UploadInvoiceResponse>("/api/invoices/upload", {
-    method: "POST",
+  return apiClient<UploadInvoiceResponse>('/api/invoices/upload', {
+    method: 'POST',
     body: formData,
     requireAuth: true,
   });

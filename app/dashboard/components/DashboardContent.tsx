@@ -53,7 +53,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
     getInvoices({ profileId, mes, año, limit: 3 }),
     getExpenses({ profileId, mes, año, limit: 3 }),
     getProfiles(),
-    getTrendData(profileId, año),
+    getTrendData(profileId, año, 'año-actual', mes),
     getCurrentUser(),
   ]);
 
@@ -114,7 +114,13 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
             </div>
           }
         >
-          <FlowTrendChart initialData={trendData} profileId={profileId} año={año} />
+          <FlowTrendChart
+            key={`${profileId ?? 'all'}-${año}-${mes}`}
+            initialData={trendData}
+            profileId={profileId}
+            año={año}
+            mes={mes}
+          />
         </Suspense>
         <div className="grid gap-6 md:grid-cols-2">
           <RecentInvoicesTable invoices={invoices.data} />

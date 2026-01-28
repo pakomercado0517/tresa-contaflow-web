@@ -50,14 +50,16 @@ interface FlowTrendChartProps {
   initialData: TrendDataPoint[];
   profileId?: string;
   año?: number;
+  mes?: number;
 }
 
-export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartProps) {
+export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendChartProps) {
   const [filter, setFilter] = useState<'ingresos' | 'gastos' | 'ambos'>('ambos');
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [data, setData] = useState<TrendDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const selectedYear = año || new Date().getFullYear();
+  const selectedMonth = mes;
   const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
 
@@ -95,7 +97,12 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
 
     const fetchData = async () => {
       try {
-        const newData = await getTrendDataClient(profileId, selectedYear, periodView);
+        const newData = await getTrendDataClient(
+          profileId,
+          selectedYear,
+          periodView,
+          selectedMonth
+        );
         if (!cancelled && isMountedRef.current) {
           setData(newData);
           setIsLoading(false);
@@ -114,7 +121,7 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
       cancelled = true;
       clearTimeout(loadingTimeoutId);
     };
-  }, [periodView, profileId, selectedYear, shouldUseInitialData]);
+  }, [periodView, profileId, selectedYear, selectedMonth, shouldUseInitialData]);
 
   // Limpiar al desmontar
   useEffect(() => {

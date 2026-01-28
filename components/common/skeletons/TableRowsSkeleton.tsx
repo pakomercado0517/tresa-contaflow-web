@@ -3,16 +3,7 @@ interface TableRowsSkeletonProps {
   columnWidths?: string[];
 }
 
-const DEFAULT_COLUMN_WIDTHS = [
-  "w-44",
-  "w-24",
-  "w-40",
-  "w-40",
-  "w-32",
-  "w-24",
-  "w-28",
-  "w-24",
-];
+const DEFAULT_COLUMN_WIDTHS = ['w-44', 'w-24', 'w-40', 'w-40', 'w-32', 'w-24', 'w-28', 'w-24'];
 
 export function TableRowsSkeleton({
   rows = 8,
@@ -21,10 +12,7 @@ export function TableRowsSkeleton({
   return (
     <div className="animate-pulse">
       {Array.from({ length: rows }, (_, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="flex items-center gap-4 border-b border-border px-4 py-3"
-        >
+        <div key={rowIndex} className="border-border flex items-center gap-4 border-b px-4 py-3">
           {columnWidths.map((widthClass, colIndex) => (
             <div
               key={colIndex}

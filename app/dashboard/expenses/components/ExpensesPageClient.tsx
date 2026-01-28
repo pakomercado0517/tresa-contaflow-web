@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ErrorState } from "@/components/common/ErrorState";
-import { getProfilesClient } from "@/lib/api/profiles.client";
-import { getExpensesClient } from "@/lib/api/expenses.client";
-import { getMetricsClient } from "@/lib/api/invoices.client";
-import { useSubscription } from "@/lib/hooks/useSubscription";
-import type { GetExpensesResponse } from "@/lib/types/expenses";
-import type { GetProfilesResponse } from "@/lib/types/profiles";
-import type { MetricsResponse } from "@/lib/types/invoices";
-import { ExpensesListContent } from "./ExpensesListContent";
+import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { ErrorState } from '@/components/common/ErrorState';
+import { getProfilesClient } from '@/lib/api/profiles.client';
+import { getExpensesClient } from '@/lib/api/expenses.client';
+import { getMetricsClient } from '@/lib/api/invoices.client';
+import { useSubscription } from '@/lib/hooks/useSubscription';
+import type { GetExpensesResponse } from '@/lib/types/expenses';
+import type { GetProfilesResponse } from '@/lib/types/profiles';
+import type { MetricsResponse } from '@/lib/types/invoices';
+import { ExpensesListContent } from './ExpensesListContent';
 
 interface NormalizedExpenseParams {
   profileId?: string;
@@ -40,30 +40,28 @@ export function ExpensesPageClient() {
   const { subscription } = useSubscription();
 
   const normalizedParams: NormalizedExpenseParams = useMemo(() => {
-    const profileIdParam = searchParams.get("profileId");
-    const categoriaParam = searchParams.get("categoria");
+    const profileIdParam = searchParams.get('profileId');
+    const categoriaParam = searchParams.get('categoria');
 
     return {
-      profileId:
-        profileIdParam && profileIdParam !== "all" ? profileIdParam : undefined,
-      mes: toNumber(searchParams.get("mes"), getDefaultMes()),
-      año: toNumber(searchParams.get("año"), getDefaultAño()),
-      categoria:
-        categoriaParam && categoriaParam !== "all" ? categoriaParam : undefined,
-      page: toNumber(searchParams.get("page"), 1),
-      search: searchParams.get("search") ?? undefined,
+      profileId: profileIdParam && profileIdParam !== 'all' ? profileIdParam : undefined,
+      mes: toNumber(searchParams.get('mes'), getDefaultMes()),
+      año: toNumber(searchParams.get('año'), getDefaultAño()),
+      categoria: categoriaParam && categoriaParam !== 'all' ? categoriaParam : undefined,
+      page: toNumber(searchParams.get('page'), 1),
+      search: searchParams.get('search') ?? undefined,
     };
   }, [searchParams]);
 
   const profilesQuery = useQuery<GetProfilesResponse, Error>({
-    queryKey: ["profiles"],
+    queryKey: ['profiles'],
     queryFn: () => getProfilesClient(),
     staleTime: 60_000,
   });
 
   const expensesQuery = useQuery<GetExpensesResponse, Error>({
     queryKey: [
-      "expenses",
+      'expenses',
       normalizedParams.profileId ?? null,
       normalizedParams.mes,
       normalizedParams.año,
@@ -86,17 +84,13 @@ export function ExpensesPageClient() {
 
   const metricsQuery = useQuery<MetricsResponse, Error>({
     queryKey: [
-      "invoice-metrics",
+      'invoice-metrics',
       normalizedParams.profileId ?? null,
       normalizedParams.mes,
       normalizedParams.año,
     ],
     queryFn: () =>
-      getMetricsClient(
-        normalizedParams.profileId,
-        normalizedParams.mes,
-        normalizedParams.año
-      ),
+      getMetricsClient(normalizedParams.profileId, normalizedParams.mes, normalizedParams.año),
     placeholderData: keepPreviousData,
   });
 
@@ -107,7 +101,7 @@ export function ExpensesPageClient() {
         title="Error al cargar los gastos"
         message={
           fatalError.message ||
-          "No se pudieron cargar los gastos. Por favor verifica tu conexión e intenta nuevamente."
+          'No se pudieron cargar los gastos. Por favor verifica tu conexión e intenta nuevamente.'
         }
       />
     );
@@ -126,10 +120,9 @@ export function ExpensesPageClient() {
     (expensesQuery.isLoading && !expensesQuery.data) ||
     (metricsQuery.isLoading && !metricsQuery.data);
 
-  const isUpdating =
-    !isInitialLoading && (expensesQuery.isFetching || metricsQuery.isFetching);
+  const isUpdating = !isInitialLoading && (expensesQuery.isFetching || metricsQuery.isFetching);
 
-  const tableState = isInitialLoading ? "loading" : isUpdating ? "updating" : "idle";
+  const tableState = isInitialLoading ? 'loading' : isUpdating ? 'updating' : 'idle';
 
   return (
     <ExpensesListContent
@@ -141,7 +134,7 @@ export function ExpensesPageClient() {
       initialProfileId={normalizedParams.profileId}
       initialMes={normalizedParams.mes}
       initialAño={normalizedParams.año}
-      initialCategoria={normalizedParams.categoria ?? "all"}
+      initialCategoria={normalizedParams.categoria ?? 'all'}
       initialSearch={normalizedParams.search}
       tableState={tableState}
     />
