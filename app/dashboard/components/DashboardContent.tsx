@@ -39,7 +39,6 @@ interface DashboardContentProps {
 }
 
 export async function DashboardContent({ profileId, mes, año }: DashboardContentProps) {
-
   // No usar .catch() aquí porque captura los errores de redirect()
   // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
   const [metrics, invoices, expenses, profiles, trendData, currentUser] = await Promise.all([

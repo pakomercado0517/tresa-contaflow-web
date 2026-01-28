@@ -1,22 +1,20 @@
-import { DashboardContent } from "./components/DashboardContent";
+import { DashboardContent } from './components/DashboardContent';
 
 interface DashboardPageProps {
   searchParams?: Promise<{
     profileId?: string;
     mes?: string;
-    "año"?: string;
+    año?: string;
   }>;
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: DashboardPageProps) {
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const currentDate = new Date();
   const params = await searchParams;
 
   const profileId = params?.profileId;
   const mesParam = params?.mes;
-  const añoParam = params?.["año"];
+  const añoParam = params?.['año'];
 
   const mesNumber = mesParam ? Number(mesParam) : currentDate.getMonth() + 1;
   const añoNumber = añoParam ? Number(añoParam) : currentDate.getFullYear();
@@ -26,4 +24,3 @@ export default async function DashboardPage({
 
   return <DashboardContent profileId={profileId} mes={mes} año={año} />;
 }
-
