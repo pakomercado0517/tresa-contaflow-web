@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SetupTabsProps {
   profilesContent: ReactNode;
@@ -46,20 +47,36 @@ export function SetupTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="profiles" className="flex items-center gap-2">
-          <User className="h-4 w-4" />
-          Perfiles
-        </TabsTrigger>
-        <TabsTrigger value="account" className="flex items-center gap-2">
-          <Settings className="h-4 w-4" />
-          Cuenta
-        </TabsTrigger>
-        <TabsTrigger value="subscription" className="flex items-center gap-2">
-          <CreditCard className="h-4 w-4" />
-          Suscripción
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex justify-start">
+        <TabsList
+          className={cn(
+            "inline-flex w-fit h-auto bg-[#1a1a1a] rounded-lg p-1 border-none",
+            "text-muted-foreground"
+          )}
+        >
+          <TabsTrigger
+            value="profiles"
+            className="flex items-center gap-2 rounded-md px-4 py-2 transition-all border-none bg-transparent text-white data-[state=active]:bg-[#00ff80]! data-[state=active]:text-gray-900! data-[state=active]:shadow-none dark:data-[state=active]:bg-[#00ff80]! dark:data-[state=active]:text-gray-900! [&_svg]:text-gray-400 [&_svg]:data-[state=active]:text-gray-900!"
+          >
+            <User className="h-4 w-4" />
+            Perfiles
+          </TabsTrigger>
+          <TabsTrigger
+            value="account"
+            className="flex items-center gap-2 rounded-md px-4 py-2 transition-all border-none bg-transparent text-white data-[state=active]:bg-[#00ff80]! data-[state=active]:text-gray-900! data-[state=active]:shadow-none dark:data-[state=active]:bg-[#00ff80]! dark:data-[state=active]:text-gray-900! [&_svg]:text-gray-400 [&_svg]:data-[state=active]:text-gray-900!"
+          >
+            <Settings className="h-4 w-4" />
+            Cuenta
+          </TabsTrigger>
+          <TabsTrigger
+            value="subscription"
+            className="flex items-center gap-2 rounded-md px-4 py-2 transition-all border-none bg-transparent text-white data-[state=active]:bg-[#00ff80]! data-[state=active]:text-gray-900! data-[state=active]:shadow-none dark:data-[state=active]:bg-[#00ff80]! dark:data-[state=active]:text-gray-900! [&_svg]:text-gray-400 [&_svg]:data-[state=active]:text-gray-900!"
+          >
+            <CreditCard className="h-4 w-4" />
+            Suscripción
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="profiles" className="mt-6">
         {profilesContent}
