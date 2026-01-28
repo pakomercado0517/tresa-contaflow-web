@@ -36,6 +36,7 @@ export function ProfileSelector({ profiles, selectedProfileId }: ProfileSelector
       params.delete('profileId');
     }
     router.push(`/dashboard?${params.toString()}`, { scroll: false });
+    router.refresh();
   }
 
   return (

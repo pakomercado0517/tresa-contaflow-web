@@ -1,5 +1,14 @@
 import { apiClient } from './client';
-import type { DeleteProfileResponse, Profile } from '@/lib/types/profiles';
+import type { DeleteProfileResponse, GetProfilesResponse, Profile } from '@/lib/types/profiles';
+
+/**
+ * Obtiene los perfiles del usuario (Client Component only)
+ */
+export async function getProfilesClient(): Promise<GetProfilesResponse> {
+  return apiClient<GetProfilesResponse>('/api/profiles', {
+    requireAuth: true,
+  });
+}
 
 /**
  * Elimina un perfil del usuario (Client Component only)

@@ -50,16 +50,23 @@ interface FlowTrendChartProps {
   initialData: TrendDataPoint[];
   profileId?: string;
   año?: number;
+  mes?: number;
 }
 
-export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartProps) {
+export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendChartProps) {
   const [filter, setFilter] = useState<'ingresos' | 'gastos' | 'ambos'>('ambos');
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [data, setData] = useState<TrendDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
+  const [animationId, setAnimationId] = useState(0);
   const selectedYear = año || new Date().getFullYear();
+  const selectedMonth = mes;
   const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
+
+  const bumpAnimation = () => {
+    setAnimationId((prev) => prev + 1);
+  };
 
   // Actualizar datos cuando cambien las props iniciales y estemos en vista "año-actual"
   useEffect(() => {
@@ -69,12 +76,13 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
         if (isMountedRef.current) {
           setData(initialData);
           setIsLoading(false);
+          bumpAnimation();
         }
       }, 0);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [initialData, shouldUseInitialData, profileId, año]);
+  }, [initialData, shouldUseInitialData, profileId, año, mes]);
 
   // Cargar datos cuando cambie el período, profileId o año (solo para modos que no sean "año-actual")
   useEffect(() => {
@@ -95,10 +103,16 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
 
     const fetchData = async () => {
       try {
-        const newData = await getTrendDataClient(profileId, selectedYear, periodView);
+        const newData = await getTrendDataClient(
+          profileId,
+          selectedYear,
+          periodView,
+          selectedMonth
+        );
         if (!cancelled && isMountedRef.current) {
           setData(newData);
           setIsLoading(false);
+          bumpAnimation();
         }
       } catch (error) {
         console.error('Error al cargar datos de tendencia:', error);
@@ -114,7 +128,7 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
       cancelled = true;
       clearTimeout(loadingTimeoutId);
     };
-  }, [periodView, profileId, selectedYear, shouldUseInitialData]);
+  }, [periodView, profileId, selectedYear, selectedMonth, shouldUseInitialData]);
 
   // Limpiar al desmontar
   useEffect(() => {
@@ -201,12 +215,8 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
           </div>
         </div>
 
-        <div className="h-80">
-          {isLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <LoadingSpinner message="Cargando datos..." />
-            </div>
-          ) : hasData ? (
+        <div className="relative h-80">
+          {hasData ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -232,21 +242,29 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
                 {(filter === 'ingresos' || filter === 'ambos') && (
                   <>
                     <Area
+                      key={`ingresos-${animationId}`}
                       type="monotone"
                       dataKey="ingresos"
                       stroke="#22c55e"
                       strokeWidth={3}
                       fill="url(#colorIngresos)"
+                      isAnimationActive
+                      animationDuration={450}
+                      animationEasing="ease-out"
                     />
                   </>
                 )}
                 {(filter === 'gastos' || filter === 'ambos') && (
                   <Line
+                    key={`gastos-${animationId}`}
                     type="monotone"
                     dataKey="gastos"
                     stroke="#ef4444"
                     strokeWidth={2}
                     strokeDasharray="5 5"
+                    isAnimationActive
+                    animationDuration={450}
+                    animationEasing="ease-out"
                   />
                 )}
               </AreaChart>
@@ -260,6 +278,12 @@ export function FlowTrendChart({ initialData, profileId, año }: FlowTrendChartP
                   Sube tus primeras facturas y gastos para ver la tendencia.
                 </span>
               </p>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="bg-background/60 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
+              <LoadingSpinner message="Actualizando..." />
             </div>
           )}
         </div>

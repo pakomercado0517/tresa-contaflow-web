@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { useProfileFreezeDetector } from '@/lib/hooks/useProfileFreezeDetector';
 import { ProfileFreezeModal } from '@/components/common/ProfileFreezeModal';
+import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { Profile } from '@/lib/types/profiles';
 import type { Plan } from '@/lib/types/subscription';
 
@@ -18,13 +19,13 @@ export function ProfileFreezeDetector() {
   const queryClient = useQueryClient();
 
   // Obtener perfiles
-  const { data: profilesData } = useQuery({
+  const { data: profilesData } = useQuery<GetProfilesResponse>({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const response = await apiClient<{ data: Profile[] }>('/api/profiles', {
+      const response = await apiClient<GetProfilesResponse>('/api/profiles', {
         requireAuth: true,
       });
-      return response.data;
+      return response;
     },
   });
 
@@ -44,7 +45,7 @@ export function ProfileFreezeDetector() {
     },
   });
 
-  const profiles = profilesData || [];
+  const profiles: Profile[] = profilesData?.data ?? [];
   // Usar el plan vigente (no anticipar cambios futuros)
   const plan = subscriptionData?.plan || 'FREE';
 

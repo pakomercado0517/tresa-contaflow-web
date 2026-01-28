@@ -3,6 +3,7 @@ import { DashboardFooter } from '@/components/layout/DashboardFooter';
 import { DashboardTour } from '@/components/tour/DashboardTour';
 import { getCurrentUser } from '@/lib/api/auth.server';
 import { ProfileFreezeDetector } from '@/components/auth/ProfileFreezeDetector';
+import { DashboardRouteTransition } from '@/components/layout/DashboardRouteTransition';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const currentUser = await getCurrentUser();
@@ -14,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="bg-background flex min-h-screen">
           <Sidebar user={currentUser.user} />
           <div className="flex min-w-0 flex-1 flex-col md:ml-64">
-            {children}
+            <DashboardRouteTransition>{children}</DashboardRouteTransition>
             <DashboardFooter />
           </div>
         </div>
