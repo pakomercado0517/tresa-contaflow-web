@@ -33,18 +33,12 @@ const FlowTrendChart = dynamic(
 );
 
 interface DashboardContentProps {
-  searchParams?: Promise<{
-    profileId?: string;
-    mes?: string;
-    año?: string;
-  }>;
+  profileId?: string;
+  mes: number;
+  año: number;
 }
 
-export async function DashboardContent({ searchParams }: DashboardContentProps) {
-  const params = await searchParams;
-  const profileId = params?.profileId;
-  const mes = params?.mes ? Number(params.mes) : new Date().getMonth() + 1;
-  const año = params?.año ? Number(params.año) : new Date().getFullYear();
+export async function DashboardContent({ profileId, mes, año }: DashboardContentProps) {
 
   // No usar .catch() aquí porque captura los errores de redirect()
   // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
@@ -114,13 +108,7 @@ export async function DashboardContent({ searchParams }: DashboardContentProps) 
             </div>
           }
         >
-          <FlowTrendChart
-            key={`${profileId ?? 'all'}-${año}-${mes}`}
-            initialData={trendData}
-            profileId={profileId}
-            año={año}
-            mes={mes}
-          />
+          <FlowTrendChart initialData={trendData} profileId={profileId} año={año} mes={mes} />
         </Suspense>
         <div className="grid gap-6 md:grid-cols-2">
           <RecentInvoicesTable invoices={invoices.data} />

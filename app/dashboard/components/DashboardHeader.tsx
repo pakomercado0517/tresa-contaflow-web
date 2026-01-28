@@ -70,6 +70,7 @@ export function DashboardHeader({
     }
 
     router.push(`/dashboard?${params.toString()}`, { scroll: false });
+    router.refresh();
   }
 
   function handleMonthChange(month: number) {
