@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import type { LoginResponse } from "@/lib/types/auth";
 
@@ -61,6 +62,8 @@ export async function loginAction(
       redirect("/auth/verify-email");
     }
 
+    // Limpiar caché del dashboard para datos frescos
+    revalidatePath('/dashboard');
     redirect("/dashboard");
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) {

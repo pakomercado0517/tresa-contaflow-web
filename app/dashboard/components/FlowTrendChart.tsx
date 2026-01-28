@@ -58,31 +58,22 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [data, setData] = useState<TrendDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
-  const [animationId, setAnimationId] = useState(0);
   const selectedYear = año || new Date().getFullYear();
   const selectedMonth = mes;
   const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
 
-  const bumpAnimation = () => {
-    setAnimationId((prev) => prev + 1);
-  };
+  // Serializar initialData para comparación de contenido (no referencia)
+  const initialDataKey = JSON.stringify(initialData);
 
   // Actualizar datos cuando cambien las props iniciales y estemos en vista "año-actual"
   useEffect(() => {
     if (shouldUseInitialData) {
-      // Usar setTimeout para evitar setState síncrono en el efecto
-      const timeoutId = setTimeout(() => {
-        if (isMountedRef.current) {
-          setData(initialData);
-          setIsLoading(false);
-          bumpAnimation();
-        }
-      }, 0);
-
-      return () => clearTimeout(timeoutId);
+      setData(initialData);
+      setIsLoading(false);
     }
-  }, [initialData, shouldUseInitialData, profileId, año, mes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDataKey, shouldUseInitialData, profileId, año, mes]);
 
   // Cargar datos cuando cambie el período, profileId o año (solo para modos que no sean "año-actual")
   useEffect(() => {
@@ -93,13 +84,7 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
 
     // Para otros modos, hacer fetch de los datos
     let cancelled = false;
-
-    // Usar setTimeout para evitar setState síncrono en el efecto
-    const loadingTimeoutId = setTimeout(() => {
-      if (!cancelled && isMountedRef.current) {
-        setIsLoading(true);
-      }
-    }, 0);
+    setIsLoading(true);
 
     const fetchData = async () => {
       try {
@@ -112,7 +97,6 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
         if (!cancelled && isMountedRef.current) {
           setData(newData);
           setIsLoading(false);
-          bumpAnimation();
         }
       } catch (error) {
         console.error('Error al cargar datos de tendencia:', error);
@@ -126,7 +110,6 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
 
     return () => {
       cancelled = true;
-      clearTimeout(loadingTimeoutId);
     };
   }, [periodView, profileId, selectedYear, selectedMonth, shouldUseInitialData]);
 
@@ -216,8 +199,7 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
         </div>
 
         <div className="relative h-80">
-          {hasData ? (
-            <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
@@ -242,7 +224,6 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                 {(filter === 'ingresos' || filter === 'ambos') && (
                   <>
                     <Area
-                      key={`ingresos-${animationId}`}
                       type="monotone"
                       dataKey="ingresos"
                       stroke="#22c55e"
@@ -256,7 +237,6 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                 )}
                 {(filter === 'gastos' || filter === 'ambos') && (
                   <Line
-                    key={`gastos-${animationId}`}
                     type="monotone"
                     dataKey="gastos"
                     stroke="#ef4444"
@@ -269,15 +249,35 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                 )}
               </AreaChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-muted-foreground text-center">
-                No hay datos disponibles para mostrar.
-                <br />
-                <span className="text-sm">
-                  Sube tus primeras facturas y gastos para ver la tendencia.
-                </span>
-              </p>
+
+          {/* Overlay con mensaje cuando no hay datos */}
+          {!hasData && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/30 rounded-lg">
+              <div className="bg-card border-2 border-border rounded-lg p-6 shadow-xl max-w-sm mx-4">
+                <div className="text-center space-y-3">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <svg
+                      className="w-8 h-8 text-primary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-lg text-foreground">
+                    No hay datos disponibles
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Sube tus primeras facturas y gastos para ver la tendencia de flujo.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
