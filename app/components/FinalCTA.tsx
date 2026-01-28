@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { registerUser } from "@/lib/api/auth";
 import type { RegisterRequest } from "@/lib/types/auth";
 
 export function FinalCTA() {
   const router = useRouter();
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -71,18 +70,15 @@ export function FinalCTA() {
 
       await registerUser(registerData);
 
-      toast({
-        title: "¡Registro exitoso!",
+      toast.success("¡Registro exitoso!", {
         description: "Revisa tu correo para verificar tu cuenta.",
       });
 
       router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error al registrar. Intenta nuevamente.";
-      toast({
-        title: "Error al registrar",
+      toast.error("Error al registrar", {
         description: errorMessage,
-        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
