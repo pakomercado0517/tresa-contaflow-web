@@ -200,64 +200,64 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
 
         <div className="relative h-80">
           <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="fecha" stroke="#9ca3af" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                  }}
-                />
-                {(filter === 'ingresos' || filter === 'ambos') && (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="ingresos"
-                      stroke="#22c55e"
-                      strokeWidth={3}
-                      fill="url(#colorIngresos)"
-                      isAnimationActive
-                      animationDuration={450}
-                      animationEasing="ease-out"
-                    />
-                  </>
-                )}
-                {(filter === 'gastos' || filter === 'ambos') && (
-                  <Line
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="fecha" stroke="#9ca3af" style={{ fontSize: '12px' }} />
+              <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1f2937',
+                  border: '1px solid #374151',
+                  borderRadius: '8px',
+                }}
+              />
+              {(filter === 'ingresos' || filter === 'ambos') && (
+                <>
+                  <Area
                     type="monotone"
-                    dataKey="gastos"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
+                    dataKey="ingresos"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    fill="url(#colorIngresos)"
                     isAnimationActive
                     animationDuration={450}
                     animationEasing="ease-out"
                   />
-                )}
-              </AreaChart>
-            </ResponsiveContainer>
+                </>
+              )}
+              {(filter === 'gastos' || filter === 'ambos') && (
+                <Line
+                  type="monotone"
+                  dataKey="gastos"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  isAnimationActive
+                  animationDuration={450}
+                  animationEasing="ease-out"
+                />
+              )}
+            </AreaChart>
+          </ResponsiveContainer>
 
           {/* Overlay con mensaje cuando no hay datos */}
           {!hasData && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/30 rounded-lg">
-              <div className="bg-card border-2 border-border rounded-lg p-6 shadow-xl max-w-sm mx-4">
-                <div className="text-center space-y-3">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <div className="bg-background/30 absolute inset-0 flex items-center justify-center rounded-lg">
+              <div className="bg-card border-border mx-4 max-w-sm rounded-lg border-2 p-6 shadow-xl">
+                <div className="space-y-3 text-center">
+                  <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
                     <svg
-                      className="w-8 h-8 text-primary"
+                      className="text-primary h-8 w-8"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -270,10 +270,10 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                       />
                     </svg>
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground">
+                  <h3 className="text-foreground text-lg font-semibold">
                     No hay datos disponibles
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Sube tus primeras facturas y gastos para ver la tendencia de flujo.
                   </p>
                 </div>
