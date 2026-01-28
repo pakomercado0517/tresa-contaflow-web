@@ -1,5 +1,9 @@
 import { DashboardContent } from './components/DashboardContent';
 
+// Forzar renderizado dinámico y evitar caché para datos siempre frescos
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface DashboardPageProps {
   searchParams?: Promise<{
     profileId?: string;
