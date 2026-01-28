@@ -1,12 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail } from "lucide-react";
+import { Mail, Check } from "lucide-react";
 
 export function HeroSection() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [isValidEmail, setIsValidEmail] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsValidEmail(emailRegex.test(value));
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    validateEmail(value);
+  };
+
+  const handleStartFree = () => {
+    if (!isValidEmail) return;
+    setIsLoading(true);
+    router.push(`/auth/register?email=${encodeURIComponent(email)}`);
+  };
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:py-32 lg:px-8">
@@ -36,12 +57,21 @@ export function HeroSection() {
                 type="email"
                 placeholder="Ingresa tu correo profesional"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
+                disabled={isLoading}
                 className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               />
+              {isValidEmail && (
+                <Check className="h-5 w-5 text-green-500" />
+              )}
             </div>
-            <Button size="lg" className="bg-primary hover:bg-primary/90 whitespace-nowrap">
-              Empieza gratis
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 whitespace-nowrap disabled:opacity-50" 
+              onClick={handleStartFree}
+              disabled={!isValidEmail || isLoading}
+            >
+              {isLoading ? "Redirigiendo..." : "Empieza gratis"}
             </Button>
           </div>
 

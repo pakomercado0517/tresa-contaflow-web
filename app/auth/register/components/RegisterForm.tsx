@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,17 @@ import { UserPlus, Mail, Lock, ArrowRight, Loader2, User, Phone } from "lucide-r
 import { registerAction } from "../actions";
 
 export function RegisterForm() {
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [emailFromQuery, setEmailFromQuery] = useState("");
+
+  useEffect(() => {
+    const email = searchParams.get("email");
+    if (email) {
+      setEmailFromQuery(email);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -93,6 +103,7 @@ export function RegisterForm() {
                 placeholder="nombre@empresa.com"
                 required
                 disabled={isPending}
+                defaultValue={emailFromQuery}
                 className="pl-10 bg-background"
               />
             </div>

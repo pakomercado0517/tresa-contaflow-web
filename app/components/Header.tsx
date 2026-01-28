@@ -38,9 +38,14 @@ export function Header() {
           </Link>
         </nav>
 
-        <Button asChild className="bg-primary hover:bg-primary/90">
-          <Link href="/auth/login">Iniciar Sesión</Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10">
+            <Link href="/auth/login">Iniciar Sesión</Link>
+          </Button>
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <Link href="/auth/register">Registrarse</Link>
+          </Button>
+        </div>
       </div>
     </header>
   );
