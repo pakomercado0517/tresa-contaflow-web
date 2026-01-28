@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,14 +14,9 @@ export function RegisterForm() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [emailFromQuery, setEmailFromQuery] = useState('');
-
-  useEffect(() => {
-    const email = searchParams.get('email');
-    if (email) {
-      setEmailFromQuery(email);
-    }
-  }, [searchParams]);
+  
+  // Derivar el email directamente de searchParams sin estado
+  const emailFromQuery = searchParams.get('email') || '';
 
   async function handleSubmit(formData: FormData) {
     setError(null);
