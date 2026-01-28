@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
-import { logger } from '@/lib/utils/logger';
-import { logoutUser } from '@/lib/api/auth';
+import { usePathname } from 'next/navigation';
+import { logoutAction } from '@/app/dashboard/setup/actions';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -65,7 +64,6 @@ const navigationItems: NavItem[] = [
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   // Obtener el nombre completo o usar email como fallback
   const displayName = user.nombre
@@ -80,19 +78,13 @@ export function Sidebar({ user }: SidebarProps) {
     : user.email[0].toUpperCase();
 
   const handleLogout = async () => {
-    try {
-      // Llamar a la API de logout con token de autenticación
-      await logoutUser();
-    } catch (error) {
-      logger.error('Error al cerrar sesión', error);
-    } finally {
-      // Limpiar localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('tour:onboarding');
-      }
-      // Redirigir al login
-      router.push('/auth/login');
+    // Limpiar localStorage antes de cerrar sesión
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tour:onboarding');
     }
+
+    // Llamar a la Server Action que elimina cookies y redirige
+    await logoutAction();
   };
 
   return (
