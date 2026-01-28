@@ -1,6 +1,6 @@
 export function DashboardPreview() {
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8">
+    <section id="demo" className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="flex-1 space-y-6">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">

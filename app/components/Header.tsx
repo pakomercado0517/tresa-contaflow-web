@@ -22,13 +22,13 @@ export function Header() {
             href="#beneficios"
             className="text-foreground/80 hover:text-foreground text-sm font-medium transition-colors"
           >
-            Beneficios
+            Funcionalidades
           </Link>
           <Link
-            href="#contadores"
+            href="#demo"
             className="text-foreground/80 hover:text-foreground text-sm font-medium transition-colors"
           >
-            Para Contadores
+            Cómo Funciona
           </Link>
           <Link
             href="#precios"
