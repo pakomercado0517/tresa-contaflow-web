@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, FileText, X, FileX, Trash2, Download } from 'lucide-react';
@@ -44,6 +44,7 @@ import {
 } from '@/lib/utils/pdf-export';
 import { deleteExpense } from '@/lib/api/expenses.client';
 import { ApiError } from '@/lib/api/client';
+import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -61,6 +62,7 @@ interface ExpensesListContentProps {
   initialAño?: number;
   initialCategoria?: string;
   initialSearch?: string;
+  tableState?: 'idle' | 'loading' | 'updating';
 }
 
 const MONTHS = [
@@ -129,9 +131,11 @@ export function ExpensesListContent({
   initialAño,
   initialCategoria,
   initialSearch,
+  tableState = 'idle',
 }: ExpensesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
@@ -158,16 +162,33 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedCategoria, search, router]);
 
+  // Sincronizar estado interno con URL (permite back/forward sin desalineación)
+  useEffect(() => {
+    const urlProfileId = searchParams.get('profileId') ?? 'all';
+    const urlMes = Number(searchParams.get('mes') ?? new Date().getMonth() + 1);
+    const urlAño = Number(searchParams.get('año') ?? new Date().getFullYear());
+    const urlCategoria = searchParams.get('categoria') ?? 'all';
+    const urlSearch = searchParams.get('search') ?? '';
+
+    isSyncingFromUrlRef.current = true;
+    setSelectedProfileId(urlProfileId);
+    setSelectedMes(urlMes);
+    setSelectedAño(urlAño);
+    setSelectedCategoria(urlCategoria);
+    setSearch(urlSearch);
+
+    const timeout = window.setTimeout(() => {
+      isSyncingFromUrlRef.current = false;
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchParams]);
+
   // Aplicar filtros automáticamente cuando cambien (excepto búsqueda)
   useEffect(() => {
-    // Solo aplicar si no es la carga inicial
-    if (
-      selectedMes !== initialMes ||
-      selectedAño !== initialAño ||
-      selectedCategoria !== initialCategoria
-    ) {
-      applyFilters();
-    }
+    if (isInitialLoad) return;
+    if (isSyncingFromUrlRef.current) return;
+    applyFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMes, selectedAño, selectedCategoria]); // Solo estos filtros se aplican automáticamente
 
@@ -179,6 +200,7 @@ export function ExpensesListContent({
   // Debounce para la búsqueda - SOLO se ejecuta cuando cambia search
   useEffect(() => {
     if (isInitialLoad) return;
+    if (isSyncingFromUrlRef.current) return;
 
     const timer = setTimeout(() => {
       applyFilters();
@@ -497,7 +519,7 @@ export function ExpensesListContent({
       {/* Expenses Table */}
       <div data-tour="expenses-table" className="bg-card overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
-          <div className="max-h-[600px] overflow-y-auto">
+          <div className="relative max-h-[600px] overflow-y-auto">
             <Table>
               <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                 <TableRow>
@@ -587,6 +609,12 @@ export function ExpensesListContent({
                 )}
               </TableBody>
             </Table>
+
+            {tableState !== 'idle' && (
+              <div className="absolute inset-0 bg-background/90 backdrop-blur-[2px]">
+                <TableRowsSkeleton rows={10} />
+              </div>
+            )}
           </div>
         </div>
       </div>

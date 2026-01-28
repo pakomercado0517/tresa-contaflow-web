@@ -1,5 +1,47 @@
 import { apiClient } from "./client";
-import type { UploadExpenseResponse, CreateExpenseRequest, CreateExpenseResponse, DeleteExpenseResponse } from "@/lib/types/expenses";
+import type {
+  UploadExpenseResponse,
+  CreateExpenseRequest,
+  CreateExpenseResponse,
+  DeleteExpenseResponse,
+  GetExpensesResponse,
+} from "@/lib/types/expenses";
+
+export interface GetExpensesClientParams {
+  profileId?: string;
+  mes?: number;
+  año?: number;
+  tipo?: string;
+  categoria?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+/**
+ * Obtiene los gastos del usuario (Client Component only)
+ */
+export async function getExpensesClient(
+  params?: GetExpensesClientParams
+): Promise<GetExpensesResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (params?.profileId) queryParams.append("profileId", params.profileId);
+  if (params?.mes) queryParams.append("mes", params.mes.toString());
+  if (params?.año) queryParams.append("año", params.año.toString());
+  if (params?.tipo) queryParams.append("tipo", params.tipo);
+  if (params?.categoria) queryParams.append("categoria", params.categoria);
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.search) queryParams.append("search", params.search);
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/expenses${queryString ? `?${queryString}` : ""}`;
+
+  return apiClient<GetExpensesResponse>(endpoint, {
+    requireAuth: true,
+  });
+}
 
 /**
  * Sube un archivo XML de gasto al backend (Client Component only)

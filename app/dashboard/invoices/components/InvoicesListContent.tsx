@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, X, FileX, Trash2, Download } from "lucide-react";
@@ -42,6 +42,7 @@ import {
 } from "@/lib/utils/pdf-export";
 import { deleteInvoice } from "@/lib/api/invoices.client";
 import { ApiError } from "@/lib/api/client";
+import { TableRowsSkeleton } from "@/components/common/skeletons/TableRowsSkeleton";
 
 interface InvoicesListContentProps {
   invoices: Invoice[];
@@ -63,6 +64,7 @@ interface InvoicesListContentProps {
   initialAño?: number;
   initialTipo?: string;
   initialSearch?: string;
+  tableState?: "idle" | "loading" | "updating";
 }
 
 const MONTHS = [
@@ -97,9 +99,11 @@ export function InvoicesListContent({
   initialAño,
   initialTipo,
   initialSearch,
+  tableState = "idle",
 }: InvoicesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || "");
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || "all");
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
@@ -123,16 +127,33 @@ export function InvoicesListContent({
     router.push(`/dashboard/invoices?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedTipo, search, router]);
 
+  // Sincronizar estado interno con URL (permite back/forward sin desalineación)
+  useEffect(() => {
+    const urlProfileId = searchParams.get("profileId") ?? "all";
+    const urlMes = Number(searchParams.get("mes") ?? new Date().getMonth() + 1);
+    const urlAño = Number(searchParams.get("año") ?? new Date().getFullYear());
+    const urlTipo = searchParams.get("tipo") ?? "all";
+    const urlSearch = searchParams.get("search") ?? "";
+
+    isSyncingFromUrlRef.current = true;
+    setSelectedProfileId(urlProfileId);
+    setSelectedMes(urlMes);
+    setSelectedAño(urlAño);
+    setSelectedTipo(urlTipo);
+    setSearch(urlSearch);
+
+    const timeout = window.setTimeout(() => {
+      isSyncingFromUrlRef.current = false;
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchParams]);
+
   // Aplicar filtros automáticamente cuando cambien (excepto búsqueda)
   useEffect(() => {
-    // Solo aplicar si no es la carga inicial
-    if (
-      selectedMes !== initialMes ||
-      selectedAño !== initialAño ||
-      selectedTipo !== initialTipo
-    ) {
-      applyFilters();
-    }
+    if (isInitialLoad) return;
+    if (isSyncingFromUrlRef.current) return;
+    applyFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMes, selectedAño, selectedTipo]); // Solo estos filtros se aplican automáticamente
 
@@ -144,6 +165,7 @@ export function InvoicesListContent({
   // Debounce para la búsqueda - SOLO se ejecuta cuando cambia search
   useEffect(() => {
     if (isInitialLoad) return;
+    if (isSyncingFromUrlRef.current) return;
 
     const timer = setTimeout(() => {
       applyFilters();
@@ -517,7 +539,7 @@ export function InvoicesListContent({
       {/* Invoices Table */}
       <div data-tour="invoices-table" className="border rounded-lg overflow-hidden bg-card">
         <div className="overflow-x-auto">
-          <div className="max-h-[600px] overflow-y-auto">
+          <div className="relative max-h-[600px] overflow-y-auto">
             <Table>
               <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
                 <TableRow>
@@ -604,6 +626,12 @@ export function InvoicesListContent({
                 )}
               </TableBody>
             </Table>
+
+            {tableState !== "idle" && (
+              <div className="absolute inset-0 bg-background/90 backdrop-blur-[2px]">
+                <TableRowsSkeleton rows={10} />
+              </div>
+            )}
           </div>
         </div>
       </div>

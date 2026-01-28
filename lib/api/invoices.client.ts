@@ -1,6 +1,45 @@
 import { apiClient } from "./client";
-import type { UploadInvoiceResponse, DeleteInvoiceResponse, MetricsResponse } from "@/lib/types/invoices";
+import type {
+  UploadInvoiceResponse,
+  DeleteInvoiceResponse,
+  MetricsResponse,
+  GetInvoicesResponse,
+} from "@/lib/types/invoices";
 import type { TrendPeriodView } from "./invoices";
+
+export interface GetInvoicesClientParams {
+  profileId?: string;
+  mes?: number;
+  año?: number;
+  tipo?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+/**
+ * Obtiene las facturas del usuario (Client Component only)
+ */
+export async function getInvoicesClient(
+  params?: GetInvoicesClientParams
+): Promise<GetInvoicesResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (params?.profileId) queryParams.append("profileId", params.profileId);
+  if (params?.mes) queryParams.append("mes", params.mes.toString());
+  if (params?.año) queryParams.append("año", params.año.toString());
+  if (params?.tipo) queryParams.append("tipo", params.tipo);
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.search) queryParams.append("search", params.search);
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/invoices${queryString ? `?${queryString}` : ""}`;
+
+  return apiClient<GetInvoicesResponse>(endpoint, {
+    requireAuth: true,
+  });
+}
 
 export type TrendDataPoint = {
   mes: number;
