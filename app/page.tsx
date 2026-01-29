@@ -13,7 +13,7 @@ import type { PublicPlansResponse } from '@/lib/types/subscription';
 async function PricingSectionWrapper() {
   // Obtener datos, si falla devuelve array vacío
   let initialData: PublicPlansResponse | null = null;
-  
+
   try {
     initialData = await getPublicPlans('monthly');
   } catch (error) {

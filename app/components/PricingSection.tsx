@@ -123,7 +123,10 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
     }
 
     // Características SAT
-    if (plan.limits.satAISearchesPerMonth !== null && plan.limits.satAISearchesPerMonth !== undefined) {
+    if (
+      plan.limits.satAISearchesPerMonth !== null &&
+      plan.limits.satAISearchesPerMonth !== undefined
+    ) {
       features.push({
         label: 'Búsquedas SAT con IA',
         value: plan.limits.satAISearchesPerMonth.toString(),
