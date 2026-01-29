@@ -165,7 +165,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
         </div>
 
         <div className="flex justify-center">
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-6 max-w-md text-center">
+          <div className="max-w-md rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
             <p className="text-amber-800">
               Por el momento no podemos mostrarte los planes, registrate para poder verlos.
             </p>
@@ -204,7 +204,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
               billingCycle === 'monthly'
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:text-foreground'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             Mensual
           </button>
@@ -215,14 +215,16 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
               billingCycle === 'annual'
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:text-foreground'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             Anual
-            <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
-              billingCycle === 'annual' 
-                ? 'bg-white/20 text-white' 
-                : 'bg-green-500/20 text-green-600'
-            }`}>
+            <span
+              className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                billingCycle === 'annual'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-green-500/20 text-green-600'
+              }`}
+            >
               Ahorra 15%
             </span>
           </button>
@@ -230,7 +232,9 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
       </div>
 
       {/* Plan Cards */}
-      <div className={`grid gap-6 md:grid-cols-2 lg:grid-cols-4 ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+      <div
+        className={`grid gap-6 md:grid-cols-2 lg:grid-cols-4 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
+      >
         {plans.map((plan) => {
           const metadata = planMetadata[plan.id as keyof typeof planMetadata];
           const Icon = iconMap[metadata.icon];
@@ -261,7 +265,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                   <div className="flex items-baseline gap-2">
                     <p className="text-3xl font-bold">{formatPrice(plan.price)}</p>
                     {showDiscount && (
-                      <span className="text-muted-foreground line-through text-sm">
+                      <span className="text-muted-foreground text-sm line-through">
                         {formatPrice(plan.originalPrice)}
                       </span>
                     )}
@@ -289,7 +293,9 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                   {features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
                       <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
-                      <span className="text-sm">{feature.label}: {feature.value}</span>
+                      <span className="text-sm">
+                        {feature.label}: {feature.value}
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -1,10 +1,10 @@
-import { serverApiClient } from "./server-client";
+import { serverApiClient } from './server-client';
 import type {
   GetSubscriptionResponse,
   CreatePortalSessionResponse,
   GetAvailablePlansResponse,
   PublicPlansResponse,
-} from "@/lib/types/subscription";
+} from '@/lib/types/subscription';
 
 /**
  * Obtiene la suscripción del usuario (Server Component only)
@@ -12,7 +12,7 @@ import type {
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
 export async function getSubscription(): Promise<GetSubscriptionResponse> {
-  return serverApiClient<GetSubscriptionResponse>("/api/subscription", {
+  return serverApiClient<GetSubscriptionResponse>('/api/subscription', {
     redirectOnAuthError: true,
   });
 }
@@ -22,13 +22,10 @@ export async function getSubscription(): Promise<GetSubscriptionResponse> {
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
 export async function createPortalSession(): Promise<CreatePortalSessionResponse> {
-  return serverApiClient<CreatePortalSessionResponse>(
-    "/api/subscription/create-portal-session",
-    {
-      method: "POST",
-      redirectOnAuthError: true,
-    }
-  );
+  return serverApiClient<CreatePortalSessionResponse>('/api/subscription/create-portal-session', {
+    method: 'POST',
+    redirectOnAuthError: true,
+  });
 }
 
 /**
@@ -37,10 +34,10 @@ export async function createPortalSession(): Promise<CreatePortalSessionResponse
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
 export async function getAvailablePlans(
-  billing: "monthly" | "annual" = "monthly"
+  billing: 'monthly' | 'annual' = 'monthly'
 ): Promise<GetAvailablePlansResponse> {
   const queryParams = new URLSearchParams();
-  queryParams.append("billing", billing);
+  queryParams.append('billing', billing);
 
   return serverApiClient<GetAvailablePlansResponse>(
     `/api/subscription/plans?${queryParams.toString()}`,
@@ -56,10 +53,10 @@ export async function getAvailablePlans(
  * Este endpoint no requiere autenticación
  */
 export async function getPublicPlans(
-  billing: "monthly" | "annual" = "monthly"
+  billing: 'monthly' | 'annual' = 'monthly'
 ): Promise<PublicPlansResponse> {
   const queryParams = new URLSearchParams();
-  queryParams.append("billing", billing);
+  queryParams.append('billing', billing);
 
   return serverApiClient<PublicPlansResponse>(
     `/api/subscription/public-plans?${queryParams.toString()}`,
@@ -69,4 +66,3 @@ export async function getPublicPlans(
     }
   );
 }
-

@@ -30,7 +30,13 @@ export default function HomePage() {
       <TrustSection />
       <FeaturesSection />
       <DashboardPreview />
-      <Suspense fallback={<div className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8"><div className="h-96 bg-muted animate-pulse rounded" /></div>}>
+      <Suspense
+        fallback={
+          <div className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8">
+            <div className="bg-muted h-96 animate-pulse rounded" />
+          </div>
+        }
+      >
         <PricingSectionWrapper />
       </Suspense>
       <FinalCTA />
