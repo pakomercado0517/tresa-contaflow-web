@@ -81,12 +81,6 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
     return `$${price.toLocaleString('es-MX')} MXN`;
   };
 
-  const formatLimitValue = (value: number | null | undefined, label: string): string => {
-    if (value === null || value === undefined) return `${label}: Ilimitados`;
-    if (typeof value === 'number') return `${value} ${label}`;
-    return `${label}: ${value}`;
-  };
-
   // Funciones auxiliares para obtener features desde los límites
   const getFeaturesFromLimits = (plan: PublicPlan): Array<{ label: string; value: string }> => {
     const features: Array<{ label: string; value: string }> = [];
@@ -129,7 +123,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
     }
 
     // Características SAT
-    if (plan.limits.satAISearchesPerMonth !== null) {
+    if (plan.limits.satAISearchesPerMonth !== null && plan.limits.satAISearchesPerMonth !== undefined) {
       features.push({
         label: 'Búsquedas SAT con IA',
         value: plan.limits.satAISearchesPerMonth.toString(),
@@ -264,7 +258,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                 <div>
                   <div className="flex items-baseline gap-2">
                     <p className="text-3xl font-bold">{formatPrice(plan.price)}</p>
-                    {showDiscount && (
+                    {showDiscount && plan.originalPrice !== null && (
                       <span className="text-muted-foreground text-sm line-through">
                         {formatPrice(plan.originalPrice)}
                       </span>

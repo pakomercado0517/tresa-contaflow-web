@@ -59,10 +59,6 @@ export async function getPublicPlans(
   queryParams.append('billing', billing);
 
   return serverApiClient<PublicPlansResponse>(
-    `/api/subscription/public-plans?${queryParams.toString()}`,
-    {
-      // No requiere autenticación (es público)
-      requireAuth: false,
-    }
+    `/api/subscription/public-plans?${queryParams.toString()}`
   );
 }

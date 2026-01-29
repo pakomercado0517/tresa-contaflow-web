@@ -11,15 +11,17 @@ import { getPublicPlans } from '@/lib/api/subscription';
 import type { PublicPlansResponse } from '@/lib/types/subscription';
 
 async function PricingSectionWrapper() {
+  // Obtener datos, si falla devuelve array vacío
+  let initialData: PublicPlansResponse | null = null;
+  
   try {
-    const initialData: PublicPlansResponse = await getPublicPlans('monthly');
-    return <PricingSection initialPlans={initialData.plans} />;
+    initialData = await getPublicPlans('monthly');
   } catch (error) {
-    // Si falla, mostrar PricingSection sin datos iniciales
-    // El componente fallará gracefully con el mensaje de error
     console.error('Error fetching public plans:', error);
-    return <PricingSection initialPlans={[]} />;
   }
+
+  const plans = initialData?.plans || [];
+  return <PricingSection initialPlans={plans} />;
 }
 
 export default function HomePage() {
