@@ -3,6 +3,7 @@ import type {
   GetSubscriptionResponse,
   CreatePortalSessionResponse,
   GetAvailablePlansResponse,
+  PublicPlansResponse,
 } from "@/lib/types/subscription";
 
 /**
@@ -45,6 +46,26 @@ export async function getAvailablePlans(
     `/api/subscription/plans?${queryParams.toString()}`,
     {
       redirectOnAuthError: true,
+    }
+  );
+}
+
+/**
+ * Obtiene los planes públicos sin autenticación (Server Component only)
+ * @param billing - Tipo de facturación: "monthly" o "annual" (default: "monthly")
+ * Este endpoint no requiere autenticación
+ */
+export async function getPublicPlans(
+  billing: "monthly" | "annual" = "monthly"
+): Promise<PublicPlansResponse> {
+  const queryParams = new URLSearchParams();
+  queryParams.append("billing", billing);
+
+  return serverApiClient<PublicPlansResponse>(
+    `/api/subscription/public-plans?${queryParams.toString()}`,
+    {
+      // No requiere autenticación (es público)
+      requireAuth: false,
     }
   );
 }

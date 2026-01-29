@@ -87,3 +87,25 @@ export interface GetAvailablePlansResponse {
   plans: AvailablePlan[];
   billing: 'monthly' | 'annual';
 }
+
+/**
+ * Plan público para mostrar en la página de inicio
+ * (endpoint publico: GET /api/subscription/public-plans)
+ */
+export interface PublicPlan {
+  id: Plan;
+  name: Plan;
+  price: number; // Precio según billing (mensual o anual)
+  originalPrice: number | null; // Precio original (descuento en anual)
+  billing: 'monthly' | 'annual';
+  limits: PlanLimits;
+  trialDays: number | null; // Días de periodo de prueba
+}
+
+/**
+ * Response del endpoint GET /api/subscription/public-plans (sin autenticación)
+ */
+export interface PublicPlansResponse {
+  plans: PublicPlan[];
+  billing: 'monthly' | 'annual';
+}
