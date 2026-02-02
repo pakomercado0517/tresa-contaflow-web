@@ -53,6 +53,7 @@ interface InvoicesListContentProps {
   metrics: {
     totalFacturado: number;
     totalFacturas: number;
+    facturasPendientesPago: number;
     facturasPUE: number;
     facturasPPD: number;
   };
@@ -390,9 +391,6 @@ export function InvoicesListContent({
     return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
   };
 
-  const validInvoices = invoices.filter((inv) => inv.validacion?.valido).length;
-  const errorInvoices = invoices.filter((inv) => !inv.validacion?.valido).length;
-
   return (
     <div className="w-full space-y-6">
       {/* Header */}
@@ -445,8 +443,8 @@ export function InvoicesListContent({
 
       {/* Summary Cards */}
       <SummaryCards
-        validCount={validInvoices}
-        errorCount={errorInvoices}
+        totalCount={metrics.totalFacturas}
+        pendingPaymentCount={metrics.facturasPendientesPago}
         totalIncome={metrics.totalFacturado}
       />
 

@@ -123,6 +123,7 @@ export function InvoicesPageClient() {
     facturasPPD: 0,
     facturasPagadasCompletamente: 0,
     facturasParcialmentePagadas: 0,
+    facturasPendientesPago: 0,
     gastosPUE: 0,
     gastosPPD: 0,
     gastosPagadosCompletamente: 0,
@@ -146,6 +147,7 @@ export function InvoicesPageClient() {
       metrics={{
         totalFacturado: metrics.totalFacturado,
         totalFacturas: metrics.totalFacturas,
+        facturasPendientesPago: metrics.facturasPendientesPago,
         facturasPUE: metrics.facturasPUE,
         facturasPPD: metrics.facturasPPD,
       }}

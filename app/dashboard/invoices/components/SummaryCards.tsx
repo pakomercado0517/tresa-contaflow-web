@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { CheckCircle2, AlertTriangle, DollarSign, TrendingUp } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { FileText, Clock, DollarSign, TrendingUp } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface SummaryCardsProps {
-  validCount: number;
-  errorCount: number;
+  totalCount: number;
+  pendingPaymentCount: number;
   totalIncome: number;
 }
 
-export function SummaryCards({ validCount, errorCount, totalIncome }: SummaryCardsProps) {
+export function SummaryCards({ totalCount, pendingPaymentCount, totalIncome }: SummaryCardsProps) {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -21,36 +21,38 @@ export function SummaryCards({ validCount, errorCount, totalIncome }: SummaryCar
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {/* Facturas Válidas */}
+      {/* Total de Facturas */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-green-500/10 p-4">
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
+            <div className="rounded-full bg-blue-500/10 p-4">
+              <FileText className="h-8 w-8 text-blue-500" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">FACTURAS VÁLIDAS</p>
-              <p className="text-3xl font-bold text-green-500">{validCount.toLocaleString()}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span className="text-xs text-green-500">+12% vs mes anterior</span>
+              <p className="text-muted-foreground mb-1 text-sm">TOTAL DE FACTURAS</p>
+              <p className="text-3xl font-bold text-blue-500">{totalCount.toLocaleString()}</p>
+              <div className="mt-1 flex items-center gap-1">
+                <TrendingUp className="h-3 w-3 text-blue-500" />
+                <span className="text-xs text-blue-500">Período actual</span>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Facturas con Error */}
+      {/* Facturas Pendientes de Pago */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-red-500/10 p-4">
-              <AlertTriangle className="h-8 w-8 text-red-500" />
+            <div className="rounded-full bg-orange-500/10 p-4">
+              <Clock className="h-8 w-8 text-orange-500" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">FACTURAS CON ERROR</p>
-              <p className="text-3xl font-bold text-red-500">{errorCount.toLocaleString()}</p>
-              <p className="text-xs text-red-500 mt-1">! Requieren atención</p>
+              <p className="text-muted-foreground mb-1 text-sm">PENDIENTES DE PAGO</p>
+              <p className="text-3xl font-bold text-orange-500">
+                {pendingPaymentCount.toLocaleString()}
+              </p>
+              <p className="mt-1 text-xs text-orange-500">Requieren seguimiento</p>
             </div>
           </div>
         </CardContent>
@@ -60,13 +62,13 @@ export function SummaryCards({ validCount, errorCount, totalIncome }: SummaryCar
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-full bg-primary/10 p-4">
-              <DollarSign className="h-8 w-8 text-primary" />
+            <div className="bg-primary/10 rounded-full p-4">
+              <DollarSign className="text-primary h-8 w-8" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">INGRESOS DEL PERIODO</p>
+              <p className="text-muted-foreground mb-1 text-sm">INGRESOS DEL PERIODO</p>
               <p className="text-3xl font-bold">{formatCurrency(totalIncome)}</p>
-              <p className="text-xs text-muted-foreground mt-1">MXN (Pesos Mexicanos)</p>
+              <p className="text-muted-foreground mt-1 text-xs">MXN (Pesos Mexicanos)</p>
             </div>
           </div>
         </CardContent>
@@ -74,4 +76,3 @@ export function SummaryCards({ validCount, errorCount, totalIncome }: SummaryCar
     </div>
   );
 }
-
