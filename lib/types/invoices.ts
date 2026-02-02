@@ -103,6 +103,7 @@ export interface MetricsResponse {
     facturasPPD: number;
     facturasPagadasCompletamente: number;
     facturasParcialmentePagadas: number;
+    facturasPendientesPago: number;
     gastosPUE: number;
     gastosPPD: number;
     gastosPagadosCompletamente: number;
