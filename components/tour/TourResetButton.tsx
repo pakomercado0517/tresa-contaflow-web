@@ -15,6 +15,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TOUR_IDS } from "@/lib/constants/tour";
 
+const TOUR_RESET_EVENT = "contaflow:tour-reset";
+
 export function TourResetButton() {
   const { resetTour, startTour } = useTour();
   const { startNextStep } = useNextStep();
@@ -25,6 +27,10 @@ export function TourResetButton() {
     setIsResetting(true);
     resetTour();
     startTour();
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(TOUR_RESET_EVENT));
+    }
 
     // Redirigir al dashboard y luego iniciar el tour
     router.push("/dashboard");
