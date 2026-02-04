@@ -1,21 +1,15 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { PlayCircle } from "lucide-react";
-import { useTour } from "@/lib/hooks/useTour";
-import { useNextStep } from "nextstepjs";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { TOUR_IDS } from "@/lib/constants/tour";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PlayCircle } from 'lucide-react';
+import { useTour } from '@/lib/hooks/useTour';
+import { useNextStep } from 'nextstepjs';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { TOUR_IDS } from '@/lib/constants/tour';
 
-const TOUR_RESET_EVENT = "contaflow:tour-reset";
+const TOUR_RESET_EVENT = 'contaflow:tour-reset';
 
 export function TourResetButton() {
   const { resetTour, startTour } = useTour();
@@ -28,13 +22,13 @@ export function TourResetButton() {
     resetTour();
     startTour();
 
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event(TOUR_RESET_EVENT));
     }
 
     // Redirigir al dashboard y luego iniciar el tour
-    router.push("/dashboard");
-    
+    router.push('/dashboard');
+
     // Esperar un momento para que la página cargue antes de iniciar el tour
     setTimeout(() => {
       startNextStep(TOUR_IDS.dashboard);
@@ -57,8 +51,8 @@ export function TourResetButton() {
           variant="outline"
           className="w-full"
         >
-          <PlayCircle className="h-4 w-4 mr-2" />
-          {isResetting ? "Iniciando..." : "Iniciar Tour"}
+          <PlayCircle className="mr-2 h-4 w-4" />
+          {isResetting ? 'Iniciando...' : 'Iniciar Tour'}
         </Button>
       </CardContent>
     </Card>

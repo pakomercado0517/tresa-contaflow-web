@@ -603,7 +603,8 @@ function TourController({ user }: { user?: User }) {
       currentTour === null &&
       pathname === '/dashboard' &&
       tourStartedRef.current !== TOUR_IDS.dashboard &&
-      (!isManualRunRef.current && !isTourCompleted(TOUR_IDS.dashboard));
+      !isManualRunRef.current &&
+      !isTourCompleted(TOUR_IDS.dashboard);
 
     if (
       canStartDashboardTour ||
@@ -646,7 +647,8 @@ function TourController({ user }: { user?: User }) {
         if (
           !hasFinishedAllToursRef.current &&
           (!latestIsCompletedRef.current || isManualRunRef.current) &&
-          (!isManualRunRef.current && !latestIsTourCompletedRef.current(TOUR_IDS.dashboard)) &&
+          !isManualRunRef.current &&
+          !latestIsTourCompletedRef.current(TOUR_IDS.dashboard) &&
           currentTour === null
         ) {
           console.debug('[Tour] Starting dashboard tour with DOM ready');
@@ -744,8 +746,7 @@ function TourController({ user }: { user?: User }) {
         if (
           !hasFinishedAllToursRef.current &&
           (!latestIsCompletedRef.current || isManualRunRef.current) &&
-          (isManualRunRef.current ||
-            !latestIsTourCompletedRef.current(TOUR_IDS.invoices)) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.invoices)) &&
           (currentTour === null || isManualRunRef.current)
         ) {
           console.debug('[Tour] Starting invoices tour');
@@ -770,8 +771,7 @@ function TourController({ user }: { user?: User }) {
         if (
           !hasFinishedAllToursRef.current &&
           (!latestIsCompletedRef.current || isManualRunRef.current) &&
-          (isManualRunRef.current ||
-            !latestIsTourCompletedRef.current(TOUR_IDS.expenses)) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.expenses)) &&
           (currentTour === null || isManualRunRef.current)
         ) {
           console.debug('[Tour] Starting expenses tour');
@@ -796,8 +796,7 @@ function TourController({ user }: { user?: User }) {
         if (
           !hasFinishedAllToursRef.current &&
           (!latestIsCompletedRef.current || isManualRunRef.current) &&
-          (isManualRunRef.current ||
-            !latestIsTourCompletedRef.current(TOUR_IDS.satSearch)) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.satSearch)) &&
           (currentTour === null || isManualRunRef.current)
         ) {
           console.debug('[Tour] Starting SAT search tour');
@@ -821,8 +820,7 @@ function TourController({ user }: { user?: User }) {
         if (
           !hasFinishedAllToursRef.current &&
           (!latestIsCompletedRef.current || isManualRunRef.current) &&
-          (isManualRunRef.current ||
-            !latestIsTourCompletedRef.current(TOUR_IDS.certification)) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.certification)) &&
           (currentTour === null || isManualRunRef.current)
         ) {
           console.debug('[Tour] Starting certification tour');
