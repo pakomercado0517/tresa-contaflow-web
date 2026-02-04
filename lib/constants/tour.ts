@@ -17,6 +17,6 @@ export const TOUR_IDS = {
   dashboard: 'dashboardTour',
   invoices: 'invoicesTour',
   expenses: 'expensesTour',
-  certification: 'certificationTour',
   satSearch: 'satSearchTour',
+  certification: 'certificationTour',
 } as const;

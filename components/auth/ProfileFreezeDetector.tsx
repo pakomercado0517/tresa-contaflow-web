@@ -19,7 +19,7 @@ export function ProfileFreezeDetector() {
   const queryClient = useQueryClient();
 
   // Obtener perfiles
-  const { data: profilesData } = useQuery<GetProfilesResponse>({
+  const { data: profilesData, isSuccess: isProfilesReady } = useQuery<GetProfilesResponse>({
     queryKey: ['profiles'],
     queryFn: async () => {
       const response = await apiClient<GetProfilesResponse>('/api/profiles', {
@@ -30,7 +30,7 @@ export function ProfileFreezeDetector() {
   });
 
   // Obtener plan actual
-  const { data: subscriptionData } = useQuery({
+  const { data: subscriptionData, isSuccess: isSubscriptionReady } = useQuery({
     queryKey: ['subscription'],
     queryFn: async () => {
       const response = await apiClient<{
@@ -46,14 +46,16 @@ export function ProfileFreezeDetector() {
   });
 
   const profiles: Profile[] = profilesData?.data ?? [];
-  // Usar el plan vigente (no anticipar cambios futuros)
-  const plan = subscriptionData?.plan || 'FREE';
+  // Usar el plan vigente solo cuando esté listo
+  const plan = subscriptionData?.plan;
 
   // Detectar si necesita freeze
+  const isDataReady = isProfilesReady && isSubscriptionReady && Boolean(plan);
+
   const { shouldShowModal, planLimit } = useProfileFreezeDetector({
     profiles,
-    plan,
-    enabled: true,
+    plan: plan ?? 'FREE',
+    enabled: isDataReady,
   });
 
   // Mientras exista exceso, el modal debe permanecer abierto.
@@ -66,6 +68,10 @@ export function ProfileFreezeDetector() {
     queryClient.invalidateQueries({ queryKey: ['profiles'] });
     queryClient.invalidateQueries({ queryKey: ['subscription'] });
   }, [queryClient]);
+
+  if (!isDataReady) {
+    return null;
+  }
 
   return (
     <ProfileFreezeModal

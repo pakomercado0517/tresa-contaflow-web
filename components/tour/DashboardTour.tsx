@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { NextStepProvider, NextStepReact, useNextStep } from 'nextstepjs';
+import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
 import { useTour } from '@/lib/hooks/useTour';
 import { TOUR_IDS } from '@/lib/constants/tour';
 import type { CardComponentProps, Tour, Step } from 'nextstepjs';
 import type { User } from '@/lib/types/auth';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface DashboardTourProps {
   children: React.ReactNode;
@@ -20,6 +29,8 @@ interface CustomStep extends Step {
 // Used to prevent re-starting the same tour between `skipTour()` and `router.push()`.
 // This is module-scoped on purpose so `CustomTourCard` and `TourController` can share it.
 const navigationPendingRef = { current: false };
+const TOUR_COMPLETED_EVENT = 'contaflow:tour-complete';
+const TOUR_RESET_EVENT = 'contaflow:tour-reset';
 
 const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
   {
@@ -137,48 +148,6 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
     ],
   },
   {
-    tour: 'certificationTour',
-    steps: [
-      {
-        icon: '🏢',
-        title: 'Constancia de Situación Fiscal',
-        content:
-          'Esta guía te ayudará a obtener tu Constancia de Situación Fiscal (CSF) del SAT. Es un trámite importante para muchas empresas.',
-        selector: "[data-tour='certification-hero']",
-        side: 'bottom',
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 8,
-        pointerRadius: 8,
-      },
-      {
-        icon: '📋',
-        title: 'Pasos para obtener tu CSF',
-        content:
-          'Sigue estos 3 pasos para navegar el portal del SAT: prepara tus credenciales (RFC y e.firma), navega a Trámites, y genera tu PDF.',
-        selector: "[data-tour='certification-steps']",
-        side: 'top',
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 8,
-        pointerRadius: 8,
-      },
-      {
-        icon: '🔗',
-        title: 'Acceso al portal del SAT',
-        content:
-          "Haz clic en el botón 'Ir al portal del SAT' para dirigirte directamente a la plataforma oficial donde podrás completar el trámite.",
-        selector: "[data-tour='certification-cta']",
-        side: 'top',
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 8,
-        pointerRadius: 8,
-        nextRoute: '/dashboard/sat-search',
-      },
-    ],
-  },
-  {
     tour: 'invoicesTour',
     steps: [
       {
@@ -270,7 +239,7 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
-        nextRoute: '/dashboard/certification',
+        nextRoute: '/dashboard/sat-search',
       },
     ],
   },
@@ -324,7 +293,49 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         showSkip: true,
         pointerPadding: 8,
         pointerRadius: 8,
-        isLastTour: true, // Marcar como el último tour
+        nextRoute: '/dashboard/certification',
+      },
+    ],
+  },
+  {
+    tour: 'certificationTour',
+    steps: [
+      {
+        icon: '🏢',
+        title: 'Constancia de Situación Fiscal',
+        content:
+          'Esta guía te ayudará a obtener tu Constancia de Situación Fiscal (CSF) del SAT. Es un trámite importante para muchas empresas.',
+        selector: "[data-tour='certification-hero']",
+        side: 'bottom',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: '📋',
+        title: 'Pasos para obtener tu CSF',
+        content:
+          'Sigue estos 3 pasos para navegar el portal del SAT: prepara tus credenciales (RFC y e.firma), navega a Trámites, y genera tu PDF.',
+        selector: "[data-tour='certification-steps']",
+        side: 'top',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+      },
+      {
+        icon: '🔗',
+        title: 'Acceso al portal del SAT',
+        content:
+          "Haz clic en el botón 'Ir al portal del SAT' para dirigirte directamente a la plataforma oficial donde podrás completar el trámite.",
+        selector: "[data-tour='certification-cta']",
+        side: 'top',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 8,
+        pointerRadius: 8,
+        isLastTour: true,
       },
     ],
   },
@@ -365,9 +376,15 @@ function CustomTourCard({
       // Si es el último tour completo (satSearchTour), mostrar mensaje de felicitaciones
       if (step.isLastTour) {
         console.debug('[Tour] 🎉 Last tour completed! All tours should be finished now.');
-        // Cerrar el overlay después de un breve delay para que el usuario vea la finalización
+        // Cerrar el overlay y redirigir al dashboard con mensaje de finalización
         setTimeout(() => {
+          navigationPendingRef.current = true;
           skipTour?.();
+          setTimeout(() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new Event(TOUR_COMPLETED_EVENT));
+            }
+          }, 200);
         }, 1000);
         return;
       }
@@ -464,11 +481,70 @@ function TourController({ user }: { user?: User }) {
   } = useTour();
   const { startNextStep, isNextStepVisible, currentTour } = useNextStep();
   const pathname = usePathname();
+  const isAuthenticated = Boolean(user);
   const hasStartedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const tourStartedRef = useRef<(typeof TOUR_IDS)[keyof typeof TOUR_IDS] | null>(null);
   const hasCheckedStatusRef = useRef(false);
   const lastPathnameRef = useRef(pathname);
+  const hasFinishedAllToursRef = useRef(false);
+  const isManualRunRef = useRef(false);
+  const latestIsCompletedRef = useRef(isCompleted);
+  const latestIsTourCompletedRef = useRef(isTourCompleted);
+
+  useEffect(() => {
+    latestIsCompletedRef.current = isCompleted;
+    latestIsTourCompletedRef.current = isTourCompleted;
+  }, [isCompleted, isTourCompleted]);
+
+  useEffect(() => {
+    if (!isCompleted) return;
+    if (!isManualRunRef.current) {
+      hasFinishedAllToursRef.current = true;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      hasStartedRef.current = false;
+      tourStartedRef.current = null;
+    }
+  }, [isCompleted]);
+
+  useEffect(() => {
+    const handleReset = () => {
+      isManualRunRef.current = true;
+      hasFinishedAllToursRef.current = false;
+      hasStartedRef.current = false;
+      tourStartedRef.current = null;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+
+    const handleCompleted = () => {
+      hasFinishedAllToursRef.current = true;
+      isManualRunRef.current = false;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      hasStartedRef.current = false;
+      tourStartedRef.current = null;
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(TOUR_RESET_EVENT, handleReset);
+      window.addEventListener(TOUR_COMPLETED_EVENT, handleCompleted);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(TOUR_RESET_EVENT, handleReset);
+        window.removeEventListener(TOUR_COMPLETED_EVENT, handleCompleted);
+      }
+    };
+  }, []);
 
   // Debug: mostrar estado de todos los tours cada 5 segundos
   useEffect(() => {
@@ -501,26 +577,46 @@ function TourController({ user }: { user?: User }) {
     };
   }, []);
 
-  // Verificar estado del tour cuando se recibe el usuario
+  // Verificar estado del tour cuando se recibe el usuario (o marcar no autenticado)
   useEffect(() => {
-    if (user && !hasCheckedStatusRef.current) {
+    if (hasCheckedStatusRef.current) return;
+
+    if (user) {
       checkTourStatus(user);
       hasCheckedStatusRef.current = true;
+      return;
     }
+
+    checkTourStatus(null);
+    hasCheckedStatusRef.current = true;
   }, [user, checkTourStatus]);
   useEffect(() => {
     // Iniciar el tour automáticamente solo una vez si no se ha completado
     // Solo iniciar en el dashboard y después de verificar el estado
-    if (
+    const canStartDashboardTour =
+      isAuthenticated &&
       !isLoading &&
-      !isCompleted &&
+      (!isCompleted || isManualRunRef.current) &&
       !isRunning &&
       !isNextStepVisible &&
       !hasStartedRef.current &&
       currentTour === null &&
       pathname === '/dashboard' &&
       tourStartedRef.current !== TOUR_IDS.dashboard &&
-      !isTourCompleted(TOUR_IDS.dashboard)
+      !isManualRunRef.current &&
+      !isTourCompleted(TOUR_IDS.dashboard);
+
+    if (
+      canStartDashboardTour ||
+      (isManualRunRef.current &&
+        isAuthenticated &&
+        !isLoading &&
+        !isRunning &&
+        !isNextStepVisible &&
+        !hasStartedRef.current &&
+        currentTour === null &&
+        pathname === '/dashboard' &&
+        tourStartedRef.current !== TOUR_IDS.dashboard)
     ) {
       // Limpiar cualquier timer anterior
       if (timerRef.current) {
@@ -548,7 +644,13 @@ function TourController({ user }: { user?: User }) {
         }
 
         // Verificar nuevamente antes de iniciar (por si acaso)
-        if (!isTourCompleted(TOUR_IDS.dashboard) && currentTour === null) {
+        if (
+          !hasFinishedAllToursRef.current &&
+          (!latestIsCompletedRef.current || isManualRunRef.current) &&
+          !isManualRunRef.current &&
+          !latestIsTourCompletedRef.current(TOUR_IDS.dashboard) &&
+          currentTour === null
+        ) {
           console.debug('[Tour] Starting dashboard tour with DOM ready');
           startTour();
           startNextStep(TOUR_IDS.dashboard);
@@ -560,6 +662,7 @@ function TourController({ user }: { user?: User }) {
       }, 1500);
     }
   }, [
+    isAuthenticated,
     isLoading,
     isCompleted,
     isRunning,
@@ -590,6 +693,11 @@ function TourController({ user }: { user?: User }) {
         markTourCompleted(tourStartedRef.current);
       }
 
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+
       // Si estamos en medio de una navegación disparada por el tour (nextRoute),
       // NO reseteamos todavía: eso podría re-iniciar el tour en la ruta actual.
       if (!navigationPendingRef.current) {
@@ -614,11 +722,20 @@ function TourController({ user }: { user?: User }) {
       }
     }
 
+    if (
+      !isAuthenticated ||
+      isLoading ||
+      (isCompleted && !isManualRunRef.current) ||
+      hasFinishedAllToursRef.current
+    ) {
+      return;
+    }
+
     // Si estamos en invoices y no hay tour activo y no se ha completado, iniciar el tour
     if (
       pathname === '/dashboard/invoices' &&
       !isNextStepVisible &&
-      currentTour === null &&
+      (currentTour === null || isManualRunRef.current) &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.invoices &&
       !isTourCompleted(TOUR_IDS.invoices)
@@ -626,7 +743,12 @@ function TourController({ user }: { user?: User }) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.invoices;
       timerRef.current = setTimeout(() => {
-        if (!isTourCompleted(TOUR_IDS.invoices) && currentTour === null) {
+        if (
+          !hasFinishedAllToursRef.current &&
+          (!latestIsCompletedRef.current || isManualRunRef.current) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.invoices)) &&
+          (currentTour === null || isManualRunRef.current)
+        ) {
           console.debug('[Tour] Starting invoices tour');
           startTour();
           startNextStep(TOUR_IDS.invoices);
@@ -638,7 +760,7 @@ function TourController({ user }: { user?: User }) {
     if (
       pathname === '/dashboard/expenses' &&
       !isNextStepVisible &&
-      currentTour === null &&
+      (currentTour === null || isManualRunRef.current) &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.expenses &&
       !isTourCompleted(TOUR_IDS.expenses)
@@ -646,7 +768,12 @@ function TourController({ user }: { user?: User }) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.expenses;
       timerRef.current = setTimeout(() => {
-        if (!isTourCompleted(TOUR_IDS.expenses) && currentTour === null) {
+        if (
+          !hasFinishedAllToursRef.current &&
+          (!latestIsCompletedRef.current || isManualRunRef.current) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.expenses)) &&
+          (currentTour === null || isManualRunRef.current)
+        ) {
           console.debug('[Tour] Starting expenses tour');
           startTour();
           startNextStep(TOUR_IDS.expenses);
@@ -656,29 +783,9 @@ function TourController({ user }: { user?: User }) {
 
     // Si estamos en certification y no hay tour activo y no se ha completado, iniciar el tour
     if (
-      pathname === '/dashboard/certification' &&
-      !isNextStepVisible &&
-      currentTour === null &&
-      !hasStartedRef.current &&
-      tourStartedRef.current !== TOUR_IDS.certification &&
-      !isTourCompleted(TOUR_IDS.certification)
-    ) {
-      hasStartedRef.current = true;
-      tourStartedRef.current = TOUR_IDS.certification;
-      timerRef.current = setTimeout(() => {
-        if (!isTourCompleted(TOUR_IDS.certification) && currentTour === null) {
-          console.debug('[Tour] Starting certification tour');
-          startTour();
-          startNextStep(TOUR_IDS.certification);
-        }
-      }, 1500);
-    }
-
-    // Si llegamos al buscador SAT, iniciamos el tour que muestra la IA y límites de plan
-    if (
       pathname === '/dashboard/sat-search' &&
       !isNextStepVisible &&
-      currentTour === null &&
+      (currentTour === null || isManualRunRef.current) &&
       !hasStartedRef.current &&
       tourStartedRef.current !== TOUR_IDS.satSearch &&
       !isTourCompleted(TOUR_IDS.satSearch)
@@ -686,22 +793,96 @@ function TourController({ user }: { user?: User }) {
       hasStartedRef.current = true;
       tourStartedRef.current = TOUR_IDS.satSearch;
       timerRef.current = setTimeout(() => {
-        if (!isTourCompleted(TOUR_IDS.satSearch) && currentTour === null) {
+        if (
+          !hasFinishedAllToursRef.current &&
+          (!latestIsCompletedRef.current || isManualRunRef.current) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.satSearch)) &&
+          (currentTour === null || isManualRunRef.current)
+        ) {
           console.debug('[Tour] Starting SAT search tour');
           startTour();
           startNextStep(TOUR_IDS.satSearch);
         }
       }, 1500);
     }
-  }, [pathname, isNextStepVisible, currentTour, startTour, startNextStep, isTourCompleted]);
+
+    if (
+      pathname === '/dashboard/certification' &&
+      !isNextStepVisible &&
+      (currentTour === null || isManualRunRef.current) &&
+      !hasStartedRef.current &&
+      tourStartedRef.current !== TOUR_IDS.certification &&
+      !isTourCompleted(TOUR_IDS.certification)
+    ) {
+      hasStartedRef.current = true;
+      tourStartedRef.current = TOUR_IDS.certification;
+      timerRef.current = setTimeout(() => {
+        if (
+          !hasFinishedAllToursRef.current &&
+          (!latestIsCompletedRef.current || isManualRunRef.current) &&
+          (isManualRunRef.current || !latestIsTourCompletedRef.current(TOUR_IDS.certification)) &&
+          (currentTour === null || isManualRunRef.current)
+        ) {
+          console.debug('[Tour] Starting certification tour');
+          startTour();
+          startNextStep(TOUR_IDS.certification);
+        }
+      }, 1500);
+    }
+  }, [
+    isAuthenticated,
+    isLoading,
+    isCompleted,
+    pathname,
+    isNextStepVisible,
+    currentTour,
+    startTour,
+    startNextStep,
+    isTourCompleted,
+  ]);
 
   return null;
 }
 
 export function DashboardTour({ children, user }: DashboardTourProps) {
+  const router = useRouter();
+  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
+  const shouldRedirectRef = useRef(false);
+
+  useEffect(() => {
+    const handleCompleted = () => {
+      shouldRedirectRef.current = true;
+      setIsCompletionDialogOpen(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(TOUR_COMPLETED_EVENT, handleCompleted);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(TOUR_COMPLETED_EVENT, handleCompleted);
+      }
+    };
+  }, []);
+
+  const handleDialogChange = (open: boolean) => {
+    setIsCompletionDialogOpen(open);
+    if (!open && shouldRedirectRef.current) {
+      shouldRedirectRef.current = false;
+      router.push('/dashboard');
+    }
+  };
+
+  const handleGoToDashboard = () => {
+    shouldRedirectRef.current = false;
+    setIsCompletionDialogOpen(false);
+    router.push('/dashboard');
+  };
+
   return (
     <NextStepProvider>
-      <NextStepReact
+      <NextStep
         steps={tourSteps}
         cardComponent={CustomTourCard}
         shadowRgb="0, 0, 0"
@@ -710,7 +891,21 @@ export function DashboardTour({ children, user }: DashboardTourProps) {
       >
         <TourController user={user} />
         {children}
-      </NextStepReact>
+      </NextStep>
+      <Dialog open={isCompletionDialogOpen} onOpenChange={handleDialogChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¡Terminaste el tour!</DialogTitle>
+            <DialogDescription>
+              Bienvenido a ContaFlow. Ya conoces los pasos esenciales para empezar a usar la
+              plataforma.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleGoToDashboard}>Ir al dashboard</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </NextStepProvider>
   );
 }
