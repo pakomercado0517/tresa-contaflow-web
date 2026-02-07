@@ -60,14 +60,12 @@ export async function DashboardContent({ profileId, mes, año }: DashboardConten
   // Obtener el nombre del usuario para mostrar
   const userName = currentUser.user.nombre || currentUser.user.email.split('@')[0];
 
-  // Calcular métricas para el PDF
-  const totalFacturado = metrics.metrics.totalFacturado || 0;
-  const totalPagado = metrics.metrics.totalPagado || 0;
-  const totalCompras = metrics.metrics.totalCompras || 0;
-  const pendientePorPagar = totalFacturado - totalPagado;
-  const diferencia = totalFacturado - totalCompras;
-  // Nota: totalPagadoMenosCompras está disponible desde la API en metrics.metrics.totalPagadoMenosCompras
-  // para evitar cálculos manuales de totalPagado - totalCompras
+  // Métricas para el PDF (mapeo desde PeriodMetricsResponse)
+  const totalFacturado = metrics.devengado.ingresos_devengados ?? 0;
+  const totalPagado = metrics.flujo.ingresos_cobrados ?? 0;
+  const totalCompras = metrics.flujo.egresos_pagados ?? 0;
+  const pendientePorPagar = metrics.pendientes.por_cobrar ?? 0;
+  const diferencia = metrics.flujo.flujo_neto ?? 0;
 
   return (
     <>
@@ -99,7 +97,12 @@ export async function DashboardContent({ profileId, mes, año }: DashboardConten
             }}
           />
         </div>
-        <MetricsCards metrics={metrics.metrics} />
+        <MetricsCards
+          metrics={metrics}
+          profileId={profileId}
+          mes={mes}
+          año={año}
+        />
         <Suspense
           fallback={
             <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">

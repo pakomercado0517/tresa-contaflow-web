@@ -5,25 +5,26 @@ import { SubscriptionContent } from "./components/SubscriptionContent";
 import { getSubscription } from "@/lib/api/subscription";
 import { getProfiles } from "@/lib/api/profiles";
 import { getCurrentUser } from "@/lib/api/auth.server";
-import { getMetrics } from "@/lib/api/invoices";
+import { getInvoices } from "@/lib/api/invoices";
+import { getExpenses } from "@/lib/api/expenses";
 import { getSATStats } from "@/lib/api/sat";
 
 export default async function SetupPage() {
-  // No usar .catch() aquí porque captura los errores de redirect()
-  // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
 
-  const [subscription, profiles, currentUser, metrics, satStats] = await Promise.all([
-    getSubscription(),
-    getProfiles(),
-    getCurrentUser(),
-    getMetrics(undefined, currentMonth, currentYear),
-    getSATStats().catch(() => null), // Si falla, continuar sin datos SAT
-  ]);
+  const [subscription, profiles, currentUser, invoicesRes, expensesRes, satStats] =
+    await Promise.all([
+      getSubscription(),
+      getProfiles(),
+      getCurrentUser(),
+      getInvoices({ mes: currentMonth, año: currentYear, limit: 1 }),
+      getExpenses({ mes: currentMonth, año: currentYear, limit: 1 }),
+      getSATStats().catch(() => null),
+    ]);
 
-  // Calcular el uso de XML/CFDI del mes actual (facturas + gastos)
-  const xmlUsed = metrics.metrics.totalFacturas + metrics.metrics.totalGastos;
+  const xmlUsed =
+    (invoicesRes.pagination?.total ?? 0) + (expensesRes.pagination?.total ?? 0);
 
   return (
     <main className="flex-1 p-4 md:p-6 lg:p-8">

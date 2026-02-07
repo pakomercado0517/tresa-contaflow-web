@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { User, Building2, ArrowRight, HelpCircle, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { User, Building2, ArrowRight, HelpCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { updateProfileAction } from "../../../actions";
+import { getRegimenesFiscalesClient } from "@/lib/api/sat.client";
 import type { Profile } from "@/lib/types/profiles";
 
 interface EditProfileFormProps {
@@ -20,18 +29,57 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
   );
   const [nombre, setNombre] = useState(profile.nombre);
   const [rfc, setRfc] = useState(profile.rfc.toUpperCase());
+  const [regimenesFiscales, setRegimenesFiscales] = useState<string[]>(
+    profile.regimenes_fiscales ?? []
+  );
+  const [regimenToAdd, setRegimenToAdd] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: regimenesData, isLoading: isLoadingRegimenes } = useQuery({
+    queryKey: ["regimenes-fiscales", tipoPersona],
+    queryFn: () => getRegimenesFiscalesClient(tipoPersona),
+  });
+
+  const regimenesOptions = useMemo(
+    () => regimenesData?.data ?? [],
+    [regimenesData?.data]
+  );
+  const availableToAdd = useMemo(
+    () => regimenesOptions.filter((r) => !regimenesFiscales.includes(r.clave)),
+    [regimenesOptions, regimenesFiscales]
+  );
 
   const initialNombre = profile.nombre;
   const initialRfc = profile.rfc.toUpperCase();
   const initialTipo = profile.tipo_persona;
+  const initialRegimenes = profile.regimenes_fiscales ?? [];
   const normalizedRfc = rfc.toUpperCase();
 
   const hasChanges =
     nombre.trim() !== initialNombre ||
     normalizedRfc !== initialRfc ||
-    tipoPersona !== initialTipo;
+    tipoPersona !== initialTipo ||
+    (regimenesFiscales.length !== initialRegimenes.length ||
+      regimenesFiscales.some((c, i) => c !== initialRegimenes[i]));
+
+  const handleAddRegimen = () => {
+    if (regimenToAdd && !regimenesFiscales.includes(regimenToAdd)) {
+      setRegimenesFiscales((prev) => [...prev, regimenToAdd].sort());
+      setRegimenToAdd("");
+    }
+  };
+
+  const handleRemoveRegimen = (clave: string) => {
+    setRegimenesFiscales((prev) => prev.filter((c) => c !== clave));
+  };
+
+  const handleTipoPersonaChange = (nuevoTipo: "FISICA" | "MORAL") => {
+    if (nuevoTipo === tipoPersona) return;
+    setTipoPersona(nuevoTipo);
+    setRegimenesFiscales([]);
+    setRegimenToAdd("");
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,6 +91,9 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
       formData.append("nombre", nombre);
       formData.append("rfc", normalizedRfc);
       formData.append("tipo_persona", tipoPersona);
+      regimenesFiscales.forEach((clave) =>
+        formData.append("regimenes_fiscales", clave)
+      );
 
       const result = await updateProfileAction(profile.id, formData);
 
@@ -73,7 +124,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
-            onClick={() => setTipoPersona("FISICA")}
+            onClick={() => handleTipoPersonaChange("FISICA")}
             className={`relative p-4 rounded-lg border-2 transition-all ${
               tipoPersona === "FISICA"
                 ? "border-primary bg-primary/5"
@@ -91,7 +142,7 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
 
           <button
             type="button"
-            onClick={() => setTipoPersona("MORAL")}
+            onClick={() => handleTipoPersonaChange("MORAL")}
             className={`relative p-4 rounded-lg border-2 transition-all ${
               tipoPersona === "MORAL"
                 ? "border-primary bg-primary/5"
@@ -150,6 +201,78 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
         <p className="text-xs text-muted-foreground">
           Introduce los 12 o 13 caracteres de tu homoclave.
         </p>
+      </div>
+
+      {/* Régimen(es) Fiscal(es) */}
+      <div className="space-y-2">
+        <Label>Régimen{regimenesFiscales.length !== 1 ? "es" : ""} Fiscal{regimenesFiscales.length !== 1 ? "es" : ""}</Label>
+        <p className="text-xs text-muted-foreground">
+          Selecciona los regímenes que aplican a este perfil. Puedes agregar varios.
+        </p>
+        <div className="flex gap-2">
+          <Select
+            value={regimenToAdd}
+            onValueChange={setRegimenToAdd}
+            disabled={isLoadingRegimenes || availableToAdd.length === 0}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue
+                placeholder={
+                  isLoadingRegimenes
+                    ? "Cargando regímenes..."
+                    : availableToAdd.length === 0
+                      ? "Todos agregados"
+                      : "Agregar régimen..."
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {availableToAdd.map((item) => (
+                <SelectItem key={item.clave} value={item.clave}>
+                  {item.clave} - {item.descripcion}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddRegimen}
+            disabled={!regimenToAdd}
+          >
+            Añadir
+          </Button>
+        </div>
+        {regimenesFiscales.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {regimenesFiscales.map((clave) => {
+              const item = regimenesOptions.find((r) => r.clave === clave);
+              const label = item ? `${item.clave} - ${item.descripcion}` : clave;
+              return (
+                <span
+                  key={clave}
+                  className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-sm"
+                >
+                  {label}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRegimen(clave)}
+                    className="ml-1 rounded p-0.5 hover:bg-primary/20"
+                    aria-label={`Quitar ${clave}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+        {isLoadingRegimenes && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Cargando catálogo de regímenes...
+          </div>
+        )}
       </div>
 
       {error && (

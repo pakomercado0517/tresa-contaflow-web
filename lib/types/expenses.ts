@@ -10,6 +10,11 @@ export interface Expense {
   total: number;
   subtotal: number;
   iva: number;
+  iva_amount?: number; // IVA trasladado (impuesto trasladado)
+  retencion_iva_amount?: number;
+  retencion_isr_amount?: number;
+  is_paid?: boolean;
+  payment_date?: string | null;
   concepto: string | null;
   categoria: string | null;
   uuid: string | null;
@@ -103,5 +108,45 @@ export interface CreateExpenseResponse {
 }
 
 export interface DeleteExpenseResponse {
+  message: string;
+}
+
+/** Request para POST /api/accrued-expenses (gastos manuales por período) */
+export interface CreateAccruedExpenseRequest {
+  profile_id: string;
+  period_id: string;
+  concept: string;
+  subtotal: number;
+  iva_amount?: number;
+  fecha: string;
+  type: 'manual';
+  categoria?: string;
+}
+
+/** Request para PUT /api/accrued-expenses/:id */
+export interface UpdateAccruedExpenseRequest {
+  concept?: string;
+  subtotal?: number;
+  iva_amount?: number;
+  is_paid?: boolean;
+  payment_date?: string | null;
+  categoria?: string | null;
+}
+
+export interface GetAccruedExpensesResponse {
+  data: Expense[];
+}
+
+export interface CreateAccruedExpenseResponse {
+  message: string;
+  data: Expense;
+}
+
+export interface UpdateAccruedExpenseResponse {
+  message: string;
+  data: Expense;
+}
+
+export interface DeleteAccruedExpenseResponse {
   message: string;
 }

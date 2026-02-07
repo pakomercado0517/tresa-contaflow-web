@@ -47,6 +47,11 @@ export async function createProfileAction(
     return { error: "El tipo de persona debe ser FISICA o MORAL" };
   }
 
+  const regimenesFiscales = formData.getAll("regimenes_fiscales");
+  const regimenesFiscalesArray = Array.isArray(regimenesFiscales)
+    ? (regimenesFiscales as string[]).filter((c): c is string => typeof c === "string")
+    : [];
+
   try {
     // Verificar límites antes de crear
     const [subscription, profiles] = await Promise.all([
@@ -72,6 +77,7 @@ export async function createProfileAction(
       nombre,
       rfc,
       tipo_persona: tipoPersona,
+      regimenes_fiscales: regimenesFiscalesArray,
     };
 
     await createProfile(requestData);
@@ -131,11 +137,17 @@ export async function updateProfileAction(
     return { error: "El tipo de persona debe ser FISICA o MORAL" };
   }
 
+  const regimenesFiscales = formData.getAll("regimenes_fiscales");
+  const regimenesFiscalesArray = Array.isArray(regimenesFiscales)
+    ? (regimenesFiscales as string[]).filter((c): c is string => typeof c === "string")
+    : [];
+
   try {
     const requestData: UpdateProfileRequest = {
       nombre,
       rfc,
       tipo_persona: tipoPersona,
+      regimenes_fiscales: regimenesFiscalesArray,
     };
 
     await updateProfile(profileId, requestData);

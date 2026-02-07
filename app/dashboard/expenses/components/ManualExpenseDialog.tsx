@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import {
@@ -23,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createManualExpense } from '@/lib/api/expenses.client';
+import { createAccruedExpenseClient } from '@/lib/api/accrued-expenses.client';
 import { ApiError } from '@/lib/api/client';
 import type { Subscription } from '@/lib/types/subscription';
 import type { Profile } from '@/lib/types/profiles';
@@ -36,7 +35,9 @@ import {
 interface ManualExpenseDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   profileId: string;
+  periodId: string;
   profiles: Profile[];
   subscription?: Subscription | null;
   expensesUsed?: number;
@@ -47,12 +48,13 @@ const CATEGORIES = ['Viáticos', 'Oficina', 'Servicios', 'Transporte', 'Alimenta
 export function ManualExpenseDialog({
   isOpen,
   onClose,
+  onSuccess,
   profileId,
+  periodId,
   profiles,
   subscription,
   expensesUsed = 0,
 }: ManualExpenseDialogProps) {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
@@ -160,46 +162,42 @@ export function ManualExpenseDialog({
       return;
     }
 
-    if (!total || !subtotal || !iva) {
-      setError('El total, subtotal e IVA son requeridos');
-      return;
-    }
-
-    const totalNum = parseFloat(total);
     const subtotalNum = parseFloat(subtotal);
-    const ivaNum = parseFloat(iva);
+    const ivaNum = parseFloat(iva) || 0;
 
-    if (totalNum <= 0 || subtotalNum <= 0 || ivaNum < 0) {
-      setError('Los montos deben ser válidos');
+    if (!Number.isFinite(subtotalNum) || subtotalNum < 0) {
+      setError('El subtotal debe ser un número mayor o igual a 0');
+      return;
+    }
+    if (!Number.isFinite(ivaNum) || ivaNum < 0) {
+      setError('El IVA debe ser un número mayor o igual a 0');
       return;
     }
 
-    // Validar coherencia
-    const calculatedTotal = subtotalNum + ivaNum;
-    if (Math.abs(calculatedTotal - totalNum) > 0.01) {
-      setError('Los montos no son coherentes (Total ≠ Subtotal + IVA)');
+    const concept = concepto.trim();
+    if (!concept) {
+      setError('El concepto es obligatorio');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Convertir fecha a ISO 8601
-      const fechaISO = new Date(fecha + 'T00:00:00.000Z').toISOString();
+      const fechaStr = fecha; // YYYY-MM-DD
 
-      await createManualExpense({
-        profileId: selectedProfileId,
-        fecha: fechaISO,
-        total: totalNum,
+      await createAccruedExpenseClient({
+        profile_id: selectedProfileId,
+        period_id: periodId,
+        concept,
         subtotal: subtotalNum,
-        iva: ivaNum,
-        concepto: concepto || undefined,
+        iva_amount: ivaNum,
+        fecha: fechaStr,
+        type: 'manual',
         categoria: categoria || undefined,
       });
 
-      // Éxito: cerrar modal y recargar página
+      onSuccess?.();
       onClose();
-      router.refresh();
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

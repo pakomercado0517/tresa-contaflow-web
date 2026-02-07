@@ -22,6 +22,9 @@ export interface Invoice {
   total: number;
   subtotal: number;
   iva: number;
+  iva_amount?: number; // IVA trasladado (impuesto trasladado)
+  retencion_iva_amount?: number;
+  retencion_isr_amount?: number;
   tipo: 'PUE' | 'PPD' | 'COMPLEMENTO_PAGO';
   rfc_emisor: string;
   nombre_emisor: string;

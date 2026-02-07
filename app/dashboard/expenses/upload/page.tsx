@@ -1,21 +1,19 @@
 import { getProfiles } from "@/lib/api/profiles";
 import { getSubscription } from "@/lib/api/subscription";
-import { getMetrics } from "@/lib/api/invoices";
+import { getExpenses } from "@/lib/api/expenses";
 import { UploadExpensesContent } from "./components/UploadExpensesContent";
 
 export default async function UploadExpensesPage() {
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
 
-  // Obtener perfiles, suscripción y métricas del mes actual
-  const [profiles, subscription, metrics] = await Promise.all([
+  const [profiles, subscription, expensesRes] = await Promise.all([
     getProfiles(),
     getSubscription().catch(() => null),
-    getMetrics(undefined, currentMonth, currentYear),
+    getExpenses({ mes: currentMonth, año: currentYear, limit: 1 }),
   ]);
 
-  // Calcular uso actual de gastos del mes
-  const expensesUsed = metrics.metrics.totalGastos || 0;
+  const expensesUsed = expensesRes.pagination?.total ?? 0;
 
   return (
     <main className="flex-1 p-4 md:p-6 lg:p-8">

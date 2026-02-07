@@ -11,7 +11,7 @@ interface EmptyStateProps {
   actionLabel?: string;
   actionHref?: string;
   onAction?: () => void;
-  variant?: "default" | "search";
+  variant?: "default" | "search" | "empty";
   compact?: boolean; // Para usar dentro de tablas
 }
 

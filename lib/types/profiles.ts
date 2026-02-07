@@ -4,7 +4,7 @@ export interface Profile {
   nombre: string;
   rfc: string;
   tipo_persona: 'FISICA' | 'MORAL';
-  regimen_fiscal: string | null;
+  regimenes_fiscales: string[];
   validaciones_habilitadas: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -26,7 +26,7 @@ export interface CreateProfileRequest {
   nombre: string;
   rfc: string;
   tipo_persona: 'FISICA' | 'MORAL';
-  regimen_fiscal?: string;
+  regimenes_fiscales?: string[];
   validaciones_habilitadas?: {
     validarRFCIngresos?: boolean;
     validarRFCGastos?: boolean;
@@ -46,7 +46,7 @@ export interface UpdateProfileRequest {
   nombre?: string;
   rfc?: string;
   tipo_persona?: 'FISICA' | 'MORAL';
-  regimen_fiscal?: string;
+  regimenes_fiscales?: string[];
   validaciones_habilitadas?: {
     validarRFCIngresos?: boolean;
     validarRFCGastos?: boolean;
