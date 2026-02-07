@@ -2,16 +2,16 @@ import { apiClient } from './client';
 import type {
   UploadInvoiceResponse,
   DeleteInvoiceResponse,
-  MetricsResponse,
   GetInvoicesResponse,
 } from '@/lib/types/invoices';
+import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import type { TrendPeriodView } from './invoices';
 
 export interface GetInvoicesClientParams {
   profileId?: string;
   mes?: number;
   año?: number;
-  tipo?: string;
+  regimen_fiscal?: string;
   page?: number;
   limit?: number;
   search?: string;
@@ -28,7 +28,7 @@ export async function getInvoicesClient(
   if (params?.profileId) queryParams.append('profileId', params.profileId);
   if (params?.mes) queryParams.append('mes', params.mes.toString());
   if (params?.año) queryParams.append('año', params.año.toString());
-  if (params?.tipo) queryParams.append('tipo', params.tipo);
+  if (params?.regimen_fiscal) queryParams.append('regimen_fiscal', params.regimen_fiscal);
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
   if (params?.search) queryParams.append('search', params.search);
@@ -55,17 +55,17 @@ export async function getMetricsClient(
   profileId?: string,
   mes?: number,
   año?: number
-): Promise<MetricsResponse> {
+): Promise<PeriodMetricsResponse> {
   const queryParams = new URLSearchParams();
 
-  if (profileId) queryParams.append('profileId', profileId);
+  if (profileId) queryParams.append('profile_id', profileId);
   if (mes) queryParams.append('mes', mes.toString());
   if (año) queryParams.append('año', año.toString());
 
   const queryString = queryParams.toString();
-  const endpoint = `/api/invoices/metrics${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/api/metrics${queryString ? `?${queryString}` : ''}`;
 
-  return apiClient<MetricsResponse>(endpoint, {
+  return apiClient<PeriodMetricsResponse>(endpoint, {
     requireAuth: true,
   });
 }
@@ -143,9 +143,8 @@ export async function getTrendDataClient(
     return months.map(({ mes, año }, index) => ({
       mes,
       año,
-      ingresos: results[index]?.metrics.totalPagado || 0,
-      gastos:
-        results[index]?.metrics.totalComprasPagadas ?? results[index]?.metrics.totalCompras ?? 0,
+      ingresos: results[index]?.flujo.ingresos_cobrados ?? 0,
+      gastos: results[index]?.flujo.egresos_pagados ?? 0,
     }));
   }
 
@@ -168,11 +167,8 @@ export async function getTrendDataClient(
     ? previousYearMonths.map((mes, index) => ({
         mes,
         año: previousYear,
-        ingresos: previousYearResults[index]?.metrics.totalPagado || 0,
-        gastos:
-          previousYearResults[index]?.metrics.totalComprasPagadas ??
-          previousYearResults[index]?.metrics.totalCompras ??
-          0,
+        ingresos: previousYearResults[index]?.flujo.ingresos_cobrados ?? 0,
+        gastos: previousYearResults[index]?.flujo.egresos_pagados ?? 0,
       }))
     : [];
 
@@ -182,11 +178,8 @@ export async function getTrendDataClient(
       return {
         mes,
         año: year,
-        ingresos: currentYearResults[i].metrics.totalPagado,
-        gastos:
-          currentYearResults[i].metrics.totalComprasPagadas ??
-          currentYearResults[i].metrics.totalCompras ??
-          0,
+        ingresos: currentYearResults[i].flujo.ingresos_cobrados,
+        gastos: currentYearResults[i].flujo.egresos_pagados,
       };
     }
     return {

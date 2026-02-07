@@ -52,7 +52,10 @@ export function CreateProfileForm({
     queryFn: () => getRegimenesFiscalesClient(tipoPersona),
   });
 
-  const regimenesOptions = regimenesData?.data ?? [];
+  const regimenesOptions = useMemo(
+    () => regimenesData?.data ?? [],
+    [regimenesData?.data]
+  );
   const availableToAdd = useMemo(
     () => regimenesOptions.filter((r) => !regimenesFiscales.includes(r.clave)),
     [regimenesOptions, regimenesFiscales]

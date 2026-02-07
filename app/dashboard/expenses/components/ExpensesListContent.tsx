@@ -522,9 +522,12 @@ export function ExpensesListContent({
                   <TableHead className="min-w-[150px]">CATEGORÍA</TableHead>
                   <TableHead className="min-w-[100px]">ORIGEN</TableHead>
                   <TableHead className="min-w-[150px]">UUID</TableHead>
-                  <TableHead className="min-w-[120px]">TOTAL</TableHead>
+                  <TableHead className="min-w-[110px] text-right">MONTO</TableHead>
+                  <TableHead className="min-w-[100px] text-right">IVA TRASL.</TableHead>
+                  <TableHead className="min-w-[95px] text-right">RET. IVA</TableHead>
+                  <TableHead className="min-w-[95px] text-right">RET. ISR</TableHead>
                   <TableHead className="min-w-[120px]">ESTADO PAGO</TableHead>
-                  <TableHead className="min-w-[120px] text-right">ACCIONES</TableHead>
+                  <TableHead className="min-w-[100px] text-right">ACCIONES</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -559,8 +562,17 @@ export function ExpensesListContent({
                             : '--'}
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">
-                        {formatCurrency(expense.total)}
+                      <TableCell className="text-right font-medium tabular-nums whitespace-nowrap">
+                        {formatCurrency(expense.subtotal)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                        {formatCurrency(expense.iva_amount ?? expense.iva ?? 0)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                        {formatCurrency(expense.retencion_iva_amount ?? 0)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                        {formatCurrency(expense.retencion_isr_amount ?? 0)}
                       </TableCell>
                       <TableCell>{getPaymentStatusBadge(expense)}</TableCell>
                       <TableCell className="text-right">
@@ -580,7 +592,7 @@ export function ExpensesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8">
+                    <TableCell colSpan={11} className="py-8">
                       <EmptyState
                         icon={FileX}
                         title={

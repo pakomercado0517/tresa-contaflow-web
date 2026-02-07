@@ -8,14 +8,14 @@ import { getProfilesClient } from '@/lib/api/profiles.client';
 import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
-import type { MetricsResponse } from '@/lib/types/invoices';
+import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import { InvoicesListContent } from './InvoicesListContent';
 
 interface NormalizedInvoiceParams {
   profileId?: string;
   mes: number;
   año: number;
-  tipo?: string;
+  regimen_fiscal?: string;
   page: number;
   search?: string;
 }
@@ -38,13 +38,13 @@ export function InvoicesPageClient() {
 
   const normalizedParams: NormalizedInvoiceParams = useMemo(() => {
     const profileIdParam = searchParams.get('profileId');
-    const tipoParam = searchParams.get('tipo');
+    const regimenParam = searchParams.get('regimen_fiscal');
 
     return {
       profileId: profileIdParam && profileIdParam !== 'all' ? profileIdParam : undefined,
       mes: toNumber(searchParams.get('mes'), getDefaultMes()),
       año: toNumber(searchParams.get('año'), getDefaultAño()),
-      tipo: tipoParam && tipoParam !== 'all' ? tipoParam : undefined,
+      regimen_fiscal: regimenParam && regimenParam !== 'all' ? regimenParam : undefined,
       page: toNumber(searchParams.get('page'), 1),
       search: searchParams.get('search') ?? undefined,
     };
@@ -62,7 +62,7 @@ export function InvoicesPageClient() {
       normalizedParams.profileId ?? null,
       normalizedParams.mes,
       normalizedParams.año,
-      normalizedParams.tipo ?? null,
+      normalizedParams.regimen_fiscal ?? null,
       normalizedParams.page,
       normalizedParams.search ?? null,
     ],
@@ -71,7 +71,7 @@ export function InvoicesPageClient() {
         profileId: normalizedParams.profileId,
         mes: normalizedParams.mes,
         año: normalizedParams.año,
-        tipo: normalizedParams.tipo,
+        regimen_fiscal: normalizedParams.regimen_fiscal,
         page: normalizedParams.page,
         limit: 10,
         search: normalizedParams.search,
@@ -79,7 +79,7 @@ export function InvoicesPageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const metricsQuery = useQuery<MetricsResponse, Error>({
+  const metricsQuery = useQuery<PeriodMetricsResponse, Error>({
     queryKey: [
       'invoice-metrics',
       normalizedParams.profileId ?? null,
@@ -109,25 +109,15 @@ export function InvoicesPageClient() {
     invoicesQuery.data?.pagination ??
     ({ total: 0, page: normalizedParams.page, limit: 10, totalPages: 1 } as const);
   const profiles = profilesQuery.data?.data ?? [];
-  const metrics = metricsQuery.data?.metrics ?? {
-    totalFacturado: 0,
-    totalPagado: 0,
-    totalCompras: 0,
-    totalComprasPagadas: 0,
-    totalPagadoMenosCompras: 0,
-    pendientePagar: 0,
-    gastosPendientes: 0,
-    totalFacturas: 0,
-    totalGastos: 0,
+  const periodMetrics = metricsQuery.data;
+  const facturasPendientesPago =
+    invoices.filter((inv) => inv.estadoPago?.estado !== 'PAGADO').length;
+  const metrics = {
+    totalFacturado: periodMetrics?.devengado.ingresos_devengados ?? 0,
+    totalFacturas: pagination.total,
+    facturasPendientesPago,
     facturasPUE: 0,
     facturasPPD: 0,
-    facturasPagadasCompletamente: 0,
-    facturasParcialmentePagadas: 0,
-    facturasPendientesPago: 0,
-    gastosPUE: 0,
-    gastosPPD: 0,
-    gastosPagadosCompletamente: 0,
-    gastosParcialmentePagados: 0,
   };
 
   const isInitialLoading =
@@ -154,7 +144,7 @@ export function InvoicesPageClient() {
       initialProfileId={normalizedParams.profileId}
       initialMes={normalizedParams.mes}
       initialAño={normalizedParams.año}
-      initialTipo={normalizedParams.tipo}
+      initialRegimenFiscal={normalizedParams.regimen_fiscal}
       initialSearch={normalizedParams.search}
       tableState={tableState}
     />

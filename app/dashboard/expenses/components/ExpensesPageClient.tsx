@@ -10,7 +10,7 @@ import { getMetricsClient } from '@/lib/api/invoices.client';
 import { useSubscription } from '@/lib/hooks/useSubscription';
 import type { GetExpensesResponse } from '@/lib/types/expenses';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
-import type { MetricsResponse } from '@/lib/types/invoices';
+import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import { ExpensesListContent } from './ExpensesListContent';
 
 interface NormalizedExpenseParams {
@@ -82,7 +82,7 @@ export function ExpensesPageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const metricsQuery = useQuery<MetricsResponse, Error>({
+  const metricsQuery = useQuery<PeriodMetricsResponse, Error>({
     queryKey: [
       'invoice-metrics',
       normalizedParams.profileId ?? null,
@@ -113,7 +113,7 @@ export function ExpensesPageClient() {
     ({ total: 0, page: normalizedParams.page, limit: 10, totalPages: 1 } as const);
   const profiles = profilesQuery.data?.data ?? [];
 
-  const expensesUsed = metricsQuery.data?.metrics.totalGastos ?? 0;
+  const expensesUsed = expensesQuery.data?.pagination?.total ?? 0;
 
   const isInitialLoading =
     (profilesQuery.isLoading && !profilesQuery.data) ||

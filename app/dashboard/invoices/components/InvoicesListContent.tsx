@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, X, FileX, Trash2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ import type { Invoice } from '@/lib/types/invoices';
 import type { Profile } from '@/lib/types/profiles';
 import { exportToPDF, normalizeInvoicesForExport } from '@/lib/utils/pdf-export';
 import { deleteInvoice } from '@/lib/api/invoices.client';
+import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { ApiError } from '@/lib/api/client';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
 
@@ -60,7 +62,7 @@ interface InvoicesListContentProps {
   initialProfileId?: string;
   initialMes?: number;
   initialAño?: number;
-  initialTipo?: string;
+  initialRegimenFiscal?: string;
   initialSearch?: string;
   tableState?: 'idle' | 'loading' | 'updating';
 }
@@ -80,12 +82,6 @@ const MONTHS = [
   'Diciembre',
 ];
 
-const CFDI_TYPES = [
-  { value: 'all', label: 'Todos' },
-  { value: 'PUE', label: 'Ingreso' },
-  { value: 'PPD', label: 'Egreso' },
-  { value: 'COMPLEMENTO_PAGO', label: 'Pago' },
-];
 
 export function InvoicesListContent({
   invoices,
@@ -95,18 +91,21 @@ export function InvoicesListContent({
   initialProfileId,
   initialMes,
   initialAño,
-  initialTipo,
+  initialRegimenFiscal,
   initialSearch,
   tableState = 'idle',
 }: InvoicesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
-  const [selectedTipo, setSelectedTipo] = useState(initialTipo || 'all');
+  const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(
+    initialRegimenFiscal || 'all'
+  );
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -114,31 +113,69 @@ export function InvoicesListContent({
   const [isDeleting, setIsDeleting] = useState(false);
   const [lastExportPayload, setLastExportPayload] = useState<Record<string, unknown> | null>(null);
 
+  const selectedProfile = useMemo(
+    () => profiles.find((p) => p.id === selectedProfileId),
+    [profiles, selectedProfileId]
+  );
+
+  const regimenesQuery = useQuery({
+    queryKey: ['regimenes-fiscales'],
+    queryFn: () => getRegimenesFiscalesClient(),
+    enabled: !!selectedProfile?.regimenes_fiscales?.length,
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
+
+  const regimenOptions = useMemo(() => {
+    const options = [{ value: 'all', label: 'Todos' }];
+    const profileRegimenes = selectedProfile?.regimenes_fiscales ?? [];
+    if (profileRegimenes.length === 0) return options;
+
+    const catalog = regimenesQuery.data?.data ?? [];
+    const descripcionMap = Object.fromEntries(
+      catalog.map((r) => [r.clave, r.descripcion])
+    );
+
+    for (const clave of profileRegimenes) {
+      const desc = descripcionMap[clave];
+      options.push({
+        value: clave,
+        label: desc ? `${clave} - ${desc}` : clave,
+      });
+    }
+    return options;
+  }, [selectedProfile?.regimenes_fiscales, regimenesQuery.data?.data]);
+
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
     if (selectedProfileId && selectedProfileId !== 'all')
       params.set('profileId', selectedProfileId);
     if (selectedMes) params.set('mes', selectedMes.toString());
     if (selectedAño) params.set('año', selectedAño.toString());
-    if (selectedTipo && selectedTipo !== 'all') params.set('tipo', selectedTipo);
+    if (
+      selectedProfileId &&
+      selectedProfileId !== 'all' &&
+      selectedRegimenFiscal &&
+      selectedRegimenFiscal !== 'all'
+    )
+      params.set('regimen_fiscal', selectedRegimenFiscal);
     if (search) params.set('search', search);
     params.set('page', '1');
     router.push(`/dashboard/invoices?${params.toString()}`);
-  }, [selectedProfileId, selectedMes, selectedAño, selectedTipo, search, router]);
+  }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
   // Sincronizar estado interno con URL (permite back/forward sin desalineación)
   useEffect(() => {
     const urlProfileId = searchParams.get('profileId') ?? 'all';
     const urlMes = Number(searchParams.get('mes') ?? new Date().getMonth() + 1);
     const urlAño = Number(searchParams.get('año') ?? new Date().getFullYear());
-    const urlTipo = searchParams.get('tipo') ?? 'all';
+    const urlRegimen = searchParams.get('regimen_fiscal') ?? 'all';
     const urlSearch = searchParams.get('search') ?? '';
 
     isSyncingFromUrlRef.current = true;
     setSelectedProfileId(urlProfileId);
     setSelectedMes(urlMes);
     setSelectedAño(urlAño);
-    setSelectedTipo(urlTipo);
+    setSelectedRegimenFiscal(urlRegimen);
     setSearch(urlSearch);
 
     const timeout = window.setTimeout(() => {
@@ -154,7 +191,7 @@ export function InvoicesListContent({
     if (isSyncingFromUrlRef.current) return;
     applyFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMes, selectedAño, selectedTipo]); // Solo estos filtros se aplican automáticamente
+  }, [selectedMes, selectedAño, selectedRegimenFiscal]); // Solo estos filtros se aplican automáticamente
 
   // Marcar que la carga inicial ya terminó
   useEffect(() => {
@@ -178,7 +215,7 @@ export function InvoicesListContent({
     setSearch('');
     setSelectedMes(new Date().getMonth() + 1);
     setSelectedAño(new Date().getFullYear());
-    setSelectedTipo('all');
+    setSelectedRegimenFiscal('all');
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
     if (selectedProfileId && selectedProfileId !== 'all')
@@ -191,12 +228,14 @@ export function InvoicesListContent({
 
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
+    setSelectedRegimenFiscal('all'); // Reset régimen al cambiar perfil
     const params = new URLSearchParams(searchParams.toString());
     if (profileId && profileId !== 'all') {
       params.set('profileId', profileId);
     } else {
       params.delete('profileId');
     }
+    params.delete('regimen_fiscal');
     params.set('page', '1');
     router.push(`/dashboard/invoices?${params.toString()}`);
   };
@@ -263,7 +302,10 @@ export function InvoicesListContent({
     try {
       await deleteInvoice(invoiceToDelete.id);
       setInvoiceToDelete(null);
-      router.refresh();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
+      ]);
     } catch (error) {
       setDeleteError(getDeleteErrorMessage(error));
     } finally {
@@ -314,21 +356,6 @@ export function InvoicesListContent({
     console.log('exportToPDF payload:', payload);
 
     await exportToPDF(payload);
-  };
-
-  const getTypeBadge = (tipo: string) => {
-    const typeMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> =
-      {
-        PUE: { label: 'Ingreso', variant: 'default' },
-        PPD: { label: 'Egreso', variant: 'secondary' },
-        COMPLEMENTO_PAGO: { label: 'Pago', variant: 'outline' },
-      };
-    const type = typeMap[tipo] || { label: tipo, variant: 'outline' as const };
-    return (
-      <Badge variant={type.variant} className="text-xs">
-        {type.label}
-      </Badge>
-    );
   };
 
   const getStatusBadge = (invoice: Invoice) => {
@@ -491,14 +518,18 @@ export function InvoicesListContent({
             ))}
           </SelectContent>
         </Select>
-        <Select value={selectedTipo} onValueChange={setSelectedTipo}>
-          <SelectTrigger className="w-full md:w-[160px]">
-            <SelectValue placeholder="Tipo CFDI: Todos" />
+        <Select
+          value={selectedRegimenFiscal}
+          onValueChange={setSelectedRegimenFiscal}
+          disabled={!selectedProfile?.regimenes_fiscales?.length}
+        >
+          <SelectTrigger className="w-full md:w-[200px]">
+            <SelectValue placeholder="Régimen: Todos" />
           </SelectTrigger>
           <SelectContent>
-            {CFDI_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                Tipo CFDI: {type.label}
+            {regimenOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.value === 'all' ? 'Régimen: Todos' : opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -520,10 +551,12 @@ export function InvoicesListContent({
                   <TableHead className="min-w-[150px]">FECHA</TableHead>
                   <TableHead className="min-w-[200px]">EMISOR</TableHead>
                   <TableHead className="min-w-[200px]">RECEPTOR</TableHead>
-                  <TableHead className="min-w-[120px]">TOTAL</TableHead>
-                  <TableHead className="min-w-[100px]">TIPO</TableHead>
+                  <TableHead className="min-w-[110px] text-right">MONTO</TableHead>
+                  <TableHead className="min-w-[100px] text-right">IVA TRASL.</TableHead>
+                  <TableHead className="min-w-[95px] text-right">RET. IVA</TableHead>
+                  <TableHead className="min-w-[95px] text-right">RET. ISR</TableHead>
                   <TableHead className="min-w-[100px]">ESTADO</TableHead>
-                  <TableHead className="min-w-[120px] text-right">ACCIONES</TableHead>
+                  <TableHead className="min-w-[100px] text-right">ACCIONES</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -557,10 +590,18 @@ export function InvoicesListContent({
                           <p className="text-muted-foreground text-xs">{invoice.rfc_receptor}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">
-                        {formatCurrency(invoice.total)}
+                      <TableCell className="text-right font-medium tabular-nums whitespace-nowrap">
+                        {formatCurrency(invoice.subtotal)}
                       </TableCell>
-                      <TableCell>{getTypeBadge(invoice.tipo)}</TableCell>
+                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                        {formatCurrency(invoice.iva_amount ?? invoice.iva ?? 0)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                        {formatCurrency(invoice.retencion_iva_amount ?? 0)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                        {formatCurrency(invoice.retencion_isr_amount ?? 0)}
+                      </TableCell>
                       <TableCell>{getStatusBadge(invoice)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -579,7 +620,7 @@ export function InvoicesListContent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8">
+                    <TableCell colSpan={10} className="py-8">
                       <EmptyState
                         icon={FileX}
                         title={

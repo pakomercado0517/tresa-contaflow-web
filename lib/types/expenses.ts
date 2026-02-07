@@ -10,6 +10,9 @@ export interface Expense {
   total: number;
   subtotal: number;
   iva: number;
+  iva_amount?: number; // IVA trasladado (impuesto trasladado)
+  retencion_iva_amount?: number;
+  retencion_isr_amount?: number;
   concepto: string | null;
   categoria: string | null;
   uuid: string | null;
