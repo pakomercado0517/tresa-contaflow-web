@@ -27,8 +27,11 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { getTrendDataClient } from '@/lib/api/invoices.client';
-import type { TrendDataPoint, TrendPeriodView } from '@/lib/api/invoices';
+import {
+  getTrendDataClient,
+  type TrendDataPoint,
+} from '@/lib/api/invoices.client';
+import type { TrendPeriodView } from '@/lib/api/invoices';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Filter } from 'lucide-react';
 
@@ -88,29 +91,26 @@ const formatCurrency = (value: number) =>
 export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendChartProps) {
   const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(DEFAULT_VISIBLE);
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
-  const [data, setData] = useState<TrendDataPoint[]>(initialData);
+  const [fetchedData, setFetchedData] = useState<TrendDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const selectedYear = año ?? new Date().getFullYear();
   const selectedMonth = mes;
   const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
 
-  const initialDataKey = JSON.stringify(initialData);
-
-  useEffect(() => {
-    if (shouldUseInitialData) {
-      setData(initialData);
-      setIsLoading(false);
-    }
-  }, [initialDataKey, shouldUseInitialData, profileId, año, mes]);
+  // Datos mostrados: en "año-actual" usamos props; en otros modos, estado del fetch
+  const data = shouldUseInitialData ? initialData : fetchedData;
+  const displayLoading = !shouldUseInitialData && isLoading;
 
   useEffect(() => {
     if (shouldUseInitialData) return;
 
     let cancelled = false;
-    setIsLoading(true);
+    const timeoutId = setTimeout(() => {
+      if (isMountedRef.current) setIsLoading(true);
+    }, 0);
 
-    const fetchData = async () => {
+    const runFetch = async () => {
       try {
         const newData = await getTrendDataClient(
           profileId,
@@ -119,7 +119,7 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
           selectedMonth
         );
         if (!cancelled && isMountedRef.current) {
-          setData(newData);
+          setFetchedData(newData);
           setIsLoading(false);
         }
       } catch (error) {
@@ -128,9 +128,11 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
       }
     };
 
-    fetchData();
+    runFetch();
+
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
   }, [periodView, profileId, selectedYear, selectedMonth, shouldUseInitialData]);
 
@@ -258,8 +260,8 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                   border: '1px solid #374151',
                   borderRadius: '8px',
                 }}
-                formatter={(value: number, name: string) => [
-                  formatCurrency(Number(value)),
+                formatter={(value, name) => [
+                  formatCurrency(Number(value ?? 0)),
                   name,
                 ]}
                 labelFormatter={(label) => label}
@@ -341,7 +343,7 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
             </div>
           )}
 
-          {isLoading && (
+          {displayLoading && (
             <div className="bg-background/60 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
               <LoadingSpinner message="Actualizando..." />
             </div>
