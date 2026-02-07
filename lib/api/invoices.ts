@@ -77,7 +77,16 @@ export async function getTrendData(
   año?: number,
   periodView: TrendPeriodView = 'año-actual',
   mesCorte?: number
-): Promise<Array<{ mes: number; año: number; ingresos: number; gastos: number }>> {
+): Promise<
+    Array<{
+      mes: number;
+      año: number;
+      ingresos_cobrados: number;
+      egresos_pagados: number;
+      ingresos_devengados: number;
+      egresos_devengados: number;
+    }>
+  > {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
@@ -141,8 +150,10 @@ export async function getTrendData(
     return months.map(({ mes, año }, index) => ({
       mes,
       año,
-      ingresos: results[index]?.flujo.ingresos_cobrados ?? 0,
-      gastos: results[index]?.flujo.egresos_pagados ?? 0,
+      ingresos_cobrados: results[index]?.flujo.ingresos_cobrados ?? 0,
+      egresos_pagados: results[index]?.flujo.egresos_pagados ?? 0,
+      ingresos_devengados: results[index]?.devengado.ingresos_devengados ?? 0,
+      egresos_devengados: results[index]?.devengado.egresos_devengados ?? 0,
     }));
   }
 
@@ -165,8 +176,10 @@ export async function getTrendData(
     ? previousYearMonths.map((mes, index) => ({
         mes,
         año: previousYear,
-        ingresos: previousYearResults[index]?.flujo.ingresos_cobrados ?? 0,
-        gastos: previousYearResults[index]?.flujo.egresos_pagados ?? 0,
+        ingresos_cobrados: previousYearResults[index]?.flujo.ingresos_cobrados ?? 0,
+        egresos_pagados: previousYearResults[index]?.flujo.egresos_pagados ?? 0,
+        ingresos_devengados: previousYearResults[index]?.devengado.ingresos_devengados ?? 0,
+        egresos_devengados: previousYearResults[index]?.devengado.egresos_devengados ?? 0,
       }))
     : [];
 
@@ -176,15 +189,19 @@ export async function getTrendData(
       return {
         mes,
         año: year,
-        ingresos: currentYearResults[i].flujo.ingresos_cobrados,
-        gastos: currentYearResults[i].flujo.egresos_pagados,
+        ingresos_cobrados: currentYearResults[i].flujo.ingresos_cobrados,
+        egresos_pagados: currentYearResults[i].flujo.egresos_pagados,
+        ingresos_devengados: currentYearResults[i].devengado.ingresos_devengados,
+        egresos_devengados: currentYearResults[i].devengado.egresos_devengados,
       };
     }
     return {
       mes,
       año: year,
-      ingresos: 0,
-      gastos: 0,
+      ingresos_cobrados: 0,
+      egresos_pagados: 0,
+      ingresos_devengados: 0,
+      egresos_devengados: 0,
     };
   });
 

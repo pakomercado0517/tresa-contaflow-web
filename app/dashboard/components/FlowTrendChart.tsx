@@ -11,6 +11,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import {
   Line,
   XAxis,
   YAxis,
@@ -21,8 +28,9 @@ import {
   AreaChart,
 } from 'recharts';
 import { getTrendDataClient } from '@/lib/api/invoices.client';
-import type { TrendPeriodView } from '@/lib/api/invoices';
+import type { TrendDataPoint, TrendPeriodView } from '@/lib/api/invoices';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Filter } from 'lucide-react';
 
 const MONTHS_SHORT = [
   'Ene',
@@ -39,11 +47,27 @@ const MONTHS_SHORT = [
   'Dic',
 ];
 
-type TrendDataPoint = {
-  mes: number;
-  año: number;
-  ingresos: number;
-  gastos: number;
+const SERIES_OPTIONS = [
+  { id: 'ingresos_cobrados' as const, label: 'Ingresos cobrados' },
+  { id: 'egresos_pagados' as const, label: 'Egresos pagados' },
+  { id: 'ingresos_devengados' as const, label: 'Ingresos devengados' },
+  { id: 'egresos_devengados' as const, label: 'Egresos devengados' },
+] as const;
+
+type SeriesId = (typeof SERIES_OPTIONS)[number]['id'];
+
+interface VisibleSeries {
+  ingresos_cobrados: boolean;
+  egresos_pagados: boolean;
+  ingresos_devengados: boolean;
+  egresos_devengados: boolean;
+}
+
+const DEFAULT_VISIBLE: VisibleSeries = {
+  ingresos_cobrados: true,
+  egresos_pagados: true,
+  ingresos_devengados: true,
+  egresos_devengados: true,
 };
 
 interface FlowTrendChartProps {
@@ -53,36 +77,36 @@ interface FlowTrendChartProps {
   mes?: number;
 }
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+
 export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendChartProps) {
-  const [filter, setFilter] = useState<'ingresos' | 'gastos' | 'ambos'>('ambos');
+  const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(DEFAULT_VISIBLE);
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [data, setData] = useState<TrendDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
-  const selectedYear = año || new Date().getFullYear();
+  const selectedYear = año ?? new Date().getFullYear();
   const selectedMonth = mes;
   const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
 
-  // Serializar initialData para comparación de contenido (no referencia)
   const initialDataKey = JSON.stringify(initialData);
 
-  // Actualizar datos cuando cambien las props iniciales y estemos en vista "año-actual"
   useEffect(() => {
     if (shouldUseInitialData) {
       setData(initialData);
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDataKey, shouldUseInitialData, profileId, año, mes]);
 
-  // Cargar datos cuando cambie el período, profileId o año (solo para modos que no sean "año-actual")
   useEffect(() => {
-    // Si estamos en vista "año-actual", no hacer fetch
-    if (shouldUseInitialData) {
-      return;
-    }
+    if (shouldUseInitialData) return;
 
-    // Para otros modos, hacer fetch de los datos
     let cancelled = false;
     setIsLoading(true);
 
@@ -100,47 +124,58 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
         }
       } catch (error) {
         console.error('Error al cargar datos de tendencia:', error);
-        if (!cancelled && isMountedRef.current) {
-          setIsLoading(false);
-        }
+        if (!cancelled && isMountedRef.current) setIsLoading(false);
       }
     };
 
     fetchData();
-
     return () => {
       cancelled = true;
     };
   }, [periodView, profileId, selectedYear, selectedMonth, shouldUseInitialData]);
 
-  // Limpiar al desmontar
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
     };
   }, []);
 
-  // Transformar datos de API (mes numérico) a formato de gráfico (nombre de mes)
   const currentYear = new Date().getFullYear();
   const chartData = data.map((item) => {
     const monthLabel = MONTHS_SHORT[item.mes - 1];
     const label = item.año === currentYear ? monthLabel : `${monthLabel} ${item.año}`;
-
     return {
       fecha: label,
-      ingresos: item.ingresos,
-      gastos: item.gastos,
+      ingresos_cobrados: item.ingresos_cobrados,
+      egresos_pagados: item.egresos_pagados,
+      ingresos_devengados: item.ingresos_devengados,
+      egresos_devengados: item.egresos_devengados,
     };
   });
 
-  // Verificar si hay datos
-  const hasData = data.some((item) => item.ingresos > 0 || item.gastos > 0);
+  const hasData = data.some(
+    (item) =>
+      item.ingresos_cobrados > 0 ||
+      item.egresos_pagados > 0 ||
+      item.ingresos_devengados > 0 ||
+      item.egresos_devengados > 0
+  );
+
+  const toggleSeries = (id: SeriesId) => {
+    setVisibleSeries((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const periodViewLabels: Record<TrendPeriodView, string> = {
     'año-actual': 'Año Actual',
     'últimos-12-meses': 'Últimos 12 Meses',
     'año-completo': 'Año Completo',
     'comparar-anterior': 'Comparar con Anterior',
+  };
+
+  const animationProps = {
+    isAnimationActive: true,
+    animationDuration: 450,
+    animationEasing: 'ease-out' as const,
   };
 
   return (
@@ -169,46 +204,49 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                 )}
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
-              <Button
-                variant={filter === 'ingresos' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('ingresos')}
-                className={filter === 'ingresos' ? 'bg-primary' : ''}
-              >
-                Ingresos (Total pagado)
-              </Button>
-              <Button
-                variant={filter === 'gastos' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('gastos')}
-                className={filter === 'gastos' ? 'bg-primary' : ''}
-              >
-                Gastos
-              </Button>
-              <Button
-                variant={filter === 'ambos' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('ambos')}
-                className={filter === 'ambos' ? 'bg-primary' : ''}
-              >
-                Ambos
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  Series visibles
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Activar / desactivar series</DropdownMenuLabel>
+                {SERIES_OPTIONS.map(({ id, label }) => (
+                  <DropdownMenuCheckboxItem
+                    key={id}
+                    checked={visibleSeries[id]}
+                    onCheckedChange={() => toggleSeries(id)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         <div className="relative h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
+            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                <linearGradient id="colorIngresosCobrados" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.35} />
                   <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
+                <linearGradient id="colorIngresosDevengados" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorEgresosPagados" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.12} />
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorEgresosDevengados" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.12} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -220,37 +258,61 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                   border: '1px solid #374151',
                   borderRadius: '8px',
                 }}
+                formatter={(value: number, name: string) => [
+                  formatCurrency(Number(value)),
+                  name,
+                ]}
+                labelFormatter={(label) => label}
               />
-              {(filter === 'ingresos' || filter === 'ambos') && (
-                <>
-                  <Area
-                    type="monotone"
-                    dataKey="ingresos"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                    fill="url(#colorIngresos)"
-                    isAnimationActive
-                    animationDuration={450}
-                    animationEasing="ease-out"
-                  />
-                </>
+              {visibleSeries.ingresos_cobrados && (
+                <Area
+                  type="monotone"
+                  dataKey="ingresos_cobrados"
+                  name="Ingresos cobrados"
+                  stroke="#22c55e"
+                  strokeWidth={2.5}
+                  fill="url(#colorIngresosCobrados)"
+                  {...animationProps}
+                />
               )}
-              {(filter === 'gastos' || filter === 'ambos') && (
+              {visibleSeries.egresos_pagados && (
                 <Line
                   type="monotone"
-                  dataKey="gastos"
+                  dataKey="egresos_pagados"
+                  name="Egresos pagados"
                   stroke="#ef4444"
                   strokeWidth={2}
                   strokeDasharray="5 5"
-                  isAnimationActive
-                  animationDuration={450}
-                  animationEasing="ease-out"
+                  dot={{ r: 3 }}
+                  {...animationProps}
+                />
+              )}
+              {visibleSeries.ingresos_devengados && (
+                <Area
+                  type="monotone"
+                  dataKey="ingresos_devengados"
+                  name="Ingresos devengados"
+                  stroke="#14b8a6"
+                  strokeWidth={2}
+                  fill="url(#colorIngresosDevengados)"
+                  {...animationProps}
+                />
+              )}
+              {visibleSeries.egresos_devengados && (
+                <Line
+                  type="monotone"
+                  dataKey="egresos_devengados"
+                  name="Egresos devengados"
+                  stroke="#f97316"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={{ r: 3 }}
+                  {...animationProps}
                 />
               )}
             </AreaChart>
           </ResponsiveContainer>
 
-          {/* Overlay con mensaje cuando no hay datos */}
           {!hasData && (
             <div className="bg-background/30 absolute inset-0 flex items-center justify-center rounded-lg">
               <div className="bg-card border-border mx-4 max-w-sm rounded-lg border-2 p-6 shadow-xl">
@@ -270,9 +332,7 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
                       />
                     </svg>
                   </div>
-                  <h3 className="text-foreground text-lg font-semibold">
-                    No hay datos disponibles
-                  </h3>
+                  <h3 className="text-foreground text-lg font-semibold">No hay datos disponibles</h3>
                   <p className="text-muted-foreground text-sm">
                     Sube tus primeras facturas y gastos para ver la tendencia de flujo.
                   </p>

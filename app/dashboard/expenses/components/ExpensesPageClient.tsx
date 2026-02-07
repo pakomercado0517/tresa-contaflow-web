@@ -6,12 +6,24 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
 import { getProfilesClient } from '@/lib/api/profiles.client';
 import { getExpensesClient } from '@/lib/api/expenses.client';
+import { getAccruedExpensesClient } from '@/lib/api/accrued-expenses.client';
 import { getMetricsClient } from '@/lib/api/invoices.client';
 import { useSubscription } from '@/lib/hooks/useSubscription';
-import type { GetExpensesResponse } from '@/lib/types/expenses';
+import type { GetExpensesResponse, GetAccruedExpensesResponse } from '@/lib/types/expenses';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import { ExpensesListContent } from './ExpensesListContent';
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function getPeriodIdFromMetrics(
+  profileId: string | undefined,
+  periodIdFromApi: string | undefined
+): string | null {
+  if (!profileId || !periodIdFromApi || periodIdFromApi === 'aggregated') return null;
+  return UUID_REGEX.test(periodIdFromApi) ? periodIdFromApi : null;
+}
 
 interface NormalizedExpenseParams {
   profileId?: string;
@@ -94,7 +106,23 @@ export function ExpensesPageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const fatalError = profilesQuery.error ?? expensesQuery.error ?? metricsQuery.error;
+  const periodId = useMemo(
+    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsQuery.data?.period?.id),
+    [normalizedParams.profileId, metricsQuery.data?.period?.id]
+  );
+
+  const accruedExpensesQuery = useQuery<GetAccruedExpensesResponse, Error>({
+    queryKey: ['accrued-expenses', periodId],
+    queryFn: () => getAccruedExpensesClient(periodId as string),
+    enabled: !!periodId,
+    placeholderData: keepPreviousData,
+  });
+
+  const fatalError =
+    profilesQuery.error ??
+    expensesQuery.error ??
+    metricsQuery.error ??
+    (periodId ? accruedExpensesQuery.error : null);
   if (fatalError) {
     return (
       <ErrorState
@@ -120,15 +148,34 @@ export function ExpensesPageClient() {
     (expensesQuery.isLoading && !expensesQuery.data) ||
     (metricsQuery.isLoading && !metricsQuery.data);
 
-  const isUpdating = !isInitialLoading && (expensesQuery.isFetching || metricsQuery.isFetching);
+  const isUpdating =
+    !isInitialLoading &&
+    (expensesQuery.isFetching || metricsQuery.isFetching || accruedExpensesQuery.isFetching);
 
   const tableState = isInitialLoading ? 'loading' : isUpdating ? 'updating' : 'idle';
+
+  const manualExpenses = accruedExpensesQuery.data?.data ?? [];
+  const manualExpenseDisabledReason =
+    !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
 
   return (
     <ExpensesListContent
       expenses={expenses}
       pagination={pagination}
       profiles={profiles}
+      manualExpenses={manualExpenses}
+      manualExpensesState={
+        periodId
+          ? accruedExpensesQuery.isPending && !accruedExpensesQuery.data
+            ? 'loading'
+            : accruedExpensesQuery.isFetching
+              ? 'updating'
+              : 'idle'
+          : 'disabled'
+      }
+      manualExpenseDisabledReason={manualExpenseDisabledReason}
+      periodId={periodId}
+      profileId={normalizedParams.profileId}
       subscription={subscription}
       expensesUsed={expensesUsed}
       initialProfileId={normalizedParams.profileId}

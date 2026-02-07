@@ -6,10 +6,28 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
 import { getProfilesClient } from '@/lib/api/profiles.client';
 import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
+import { getManualIncomesClient } from '@/lib/api/manual-incomes.client';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
+import type { GetManualIncomesResponse } from '@/lib/types/manual-incomes';
 import { InvoicesListContent } from './InvoicesListContent';
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * period_id se obtiene de GET /api/metrics (con profile_id, mes, año).
+ * Si el backend devuelve period.id = "aggregated" no podemos listar/crear ingresos manuales.
+ * Aceptamos cualquier id que sea UUID; si el backend devuelve otro formato, la API fallará al crear.
+ */
+function getPeriodIdFromMetrics(
+  profileId: string | undefined,
+  periodIdFromApi: string | undefined
+): string | null {
+  if (!profileId || !periodIdFromApi || periodIdFromApi === 'aggregated') return null;
+  return UUID_REGEX.test(periodIdFromApi) ? periodIdFromApi : null;
+}
 
 interface NormalizedInvoiceParams {
   profileId?: string;
@@ -91,7 +109,23 @@ export function InvoicesPageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const fatalError = profilesQuery.error ?? invoicesQuery.error ?? metricsQuery.error;
+  const periodId = useMemo(
+    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsQuery.data?.period?.id),
+    [normalizedParams.profileId, metricsQuery.data?.period?.id]
+  );
+
+  const manualIncomesQuery = useQuery<GetManualIncomesResponse, Error>({
+    queryKey: ['manual-incomes', periodId],
+    queryFn: () => getManualIncomesClient(periodId as string),
+    enabled: !!periodId,
+    placeholderData: keepPreviousData,
+  });
+
+  const fatalError =
+    profilesQuery.error ??
+    invoicesQuery.error ??
+    metricsQuery.error ??
+    (periodId ? manualIncomesQuery.error : null);
   if (fatalError) {
     return (
       <ErrorState
@@ -129,11 +163,28 @@ export function InvoicesPageClient() {
 
   const tableState = isInitialLoading ? 'loading' : isUpdating ? 'updating' : 'idle';
 
+  const manualIncomes = manualIncomesQuery.data?.data ?? [];
+  const manualIncomeDisabledReason =
+    !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
+
   return (
     <InvoicesListContent
       invoices={invoices}
       pagination={pagination}
       profiles={profiles}
+      manualIncomes={manualIncomes}
+      manualIncomesState={
+        periodId
+          ? manualIncomesQuery.isPending && !manualIncomesQuery.data
+            ? 'loading'
+            : manualIncomesQuery.isFetching
+              ? 'updating'
+              : 'idle'
+          : 'disabled'
+      }
+      manualIncomeDisabledReason={manualIncomeDisabledReason}
+      periodId={periodId}
+      profileId={normalizedParams.profileId}
       metrics={{
         totalFacturado: metrics.totalFacturado,
         totalFacturas: metrics.totalFacturas,

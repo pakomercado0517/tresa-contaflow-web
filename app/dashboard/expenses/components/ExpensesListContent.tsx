@@ -3,7 +3,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Search, FileText, X, FileX, Trash2, Download } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, FileText, X, FileX, Trash2, Download, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,6 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -40,6 +43,10 @@ import type { Profile } from '@/lib/types/profiles';
 import type { Subscription } from '@/lib/types/subscription';
 import { exportToPDF, normalizeExpensesForExport } from '@/lib/utils/pdf-export';
 import { deleteExpense } from '@/lib/api/expenses.client';
+import {
+  deleteAccruedExpenseClient,
+  updateAccruedExpenseClient,
+} from '@/lib/api/accrued-expenses.client';
 import { ApiError } from '@/lib/api/client';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
 
@@ -52,6 +59,11 @@ interface ExpensesListContentProps {
     totalPages: number;
   };
   profiles: Profile[];
+  manualExpenses: Expense[];
+  manualExpensesState: 'idle' | 'loading' | 'updating' | 'disabled';
+  manualExpenseDisabledReason: 'no_profile' | 'no_period' | null;
+  periodId: string | null;
+  profileId: string | undefined;
   subscription?: Subscription | null;
   expensesUsed?: number;
   initialProfileId?: string;
@@ -121,6 +133,11 @@ export function ExpensesListContent({
   expenses,
   pagination,
   profiles,
+  manualExpenses: manualExpensesFromPeriod,
+  manualExpensesState,
+  manualExpenseDisabledReason,
+  periodId,
+  profileId,
   subscription,
   expensesUsed = 0,
   initialProfileId,
@@ -132,6 +149,7 @@ export function ExpensesListContent({
 }: ExpensesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
@@ -145,6 +163,15 @@ export function ExpensesListContent({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingManualExpense, setEditingManualExpense] = useState<Expense | null>(null);
+  const [editConcept, setEditConcept] = useState('');
+  const [editSubtotal, setEditSubtotal] = useState('');
+  const [editIva, setEditIva] = useState('');
+  const [editIsPaid, setEditIsPaid] = useState(false);
+  const [editPaymentDate, setEditPaymentDate] = useState('');
+  const [editCategoria, setEditCategoria] = useState('');
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isUpdatingManual, setIsUpdatingManual] = useState(false);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -314,9 +341,21 @@ export function ExpensesListContent({
     setDeleteError(null);
 
     try {
-      await deleteExpense(expenseToDelete.id);
+      if (expenseToDelete.tipo_origen === 'MANUAL') {
+        await deleteAccruedExpenseClient(expenseToDelete.id);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['accrued-expenses'] }),
+          queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
+          queryClient.invalidateQueries({ queryKey: ['expenses'] }),
+        ]);
+      } else {
+        await deleteExpense(expenseToDelete.id);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['expenses'] }),
+          queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
+        ]);
+      }
       setExpenseToDelete(null);
-      router.refresh();
     } catch (error) {
       setDeleteError(getDeleteErrorMessage(error));
     } finally {
@@ -326,6 +365,65 @@ export function ExpensesListContent({
 
   const deleteKeyword = 'ELIMINAR';
   const isDeleteBlocked = isDeleting || deleteConfirmation.trim() !== deleteKeyword;
+
+  const handleOpenEditManual = (expense: Expense) => {
+    setEditingManualExpense(expense);
+    setEditConcept(expense.concepto ?? '');
+    setEditSubtotal(expense.subtotal.toString());
+    setEditIva((expense.iva_amount ?? expense.iva ?? 0).toString());
+    setEditIsPaid(expense.is_paid ?? false);
+    setEditPaymentDate(expense.payment_date ?? '');
+    setEditCategoria(expense.categoria ?? '');
+    setEditError(null);
+  };
+
+  const handleCloseEditManual = () => {
+    if (!isUpdatingManual) {
+      setEditingManualExpense(null);
+      setEditError(null);
+    }
+  };
+
+  const handleSubmitEditManual = async () => {
+    if (!editingManualExpense) return;
+    setEditError(null);
+    const concept = editConcept.trim();
+    const subtotalNum = Number(editSubtotal.replace(/,/g, '.'));
+    const ivaNum = Number(editIva.replace(/,/g, '.')) || 0;
+    if (!concept) {
+      setEditError('El concepto es obligatorio.');
+      return;
+    }
+    if (!Number.isFinite(subtotalNum) || subtotalNum < 0) {
+      setEditError('El subtotal debe ser un número ≥ 0.');
+      return;
+    }
+    if (!Number.isFinite(ivaNum) || ivaNum < 0) {
+      setEditError('El IVA debe ser un número ≥ 0.');
+      return;
+    }
+    setIsUpdatingManual(true);
+    try {
+      await updateAccruedExpenseClient(editingManualExpense.id, {
+        concept,
+        subtotal: subtotalNum,
+        iva_amount: ivaNum,
+        is_paid: editIsPaid,
+        payment_date: editIsPaid ? (editPaymentDate || null) : null,
+        categoria: editCategoria || null,
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['accrued-expenses'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
+        queryClient.invalidateQueries({ queryKey: ['expenses'] }),
+      ]);
+      setEditingManualExpense(null);
+    } catch (err) {
+      setEditError(err instanceof ApiError ? err.message : 'Error al actualizar el gasto.');
+    } finally {
+      setIsUpdatingManual(false);
+    }
+  };
 
   const getPaymentStatusBadge = (expense: Expense) => {
     // Solo mostrar estado de pago para gastos XML con tipo PUE o PPD
@@ -378,8 +476,10 @@ export function ExpensesListContent({
 
   // Calcular métricas desde los gastos filtrados
   const xmlExpenses = expenses.filter((e) => e.tipo_origen === 'XML');
-  const manualExpenses = expenses.filter((e) => e.tipo_origen === 'MANUAL');
+  const manualExpenses =
+    periodId != null ? manualExpensesFromPeriod : expenses.filter((e) => e.tipo_origen === 'MANUAL');
   const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
+  const canAddManualExpense = !!profileId && !!periodId;
 
   // Calcular el total sumando todos los gastos (en pesos)
   const totalExpensesAmount = expenses.reduce((sum, expense) => {
@@ -418,13 +518,15 @@ export function ExpensesListContent({
             data-tour="expenses-manual-button"
             variant="outline"
             className="border-primary/20 hover:bg-primary/10"
-            onClick={() => {
-              if (!selectedProfileId) {
-                setShowProfileWarning(true);
-                return;
-              }
-              setIsManualExpenseDialogOpen(true);
-            }}
+            disabled={!canAddManualExpense}
+            title={
+              canAddManualExpense
+                ? 'Registrar un gasto sin factura CFDI'
+                : manualExpenseDisabledReason === 'no_profile'
+                  ? 'Selecciona un perfil (no «Todos») para agregar gastos manuales'
+                  : 'El backend debe devolver el ID del período en métricas para habilitar gastos manuales'
+            }
+            onClick={() => setIsManualExpenseDialogOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
             Gasto Manual
@@ -509,6 +611,111 @@ export function ExpensesListContent({
           Limpiar
         </Button>
       </div>
+
+      {/* Gastos manuales del período */}
+      {canAddManualExpense ? (
+        <div className="bg-card overflow-hidden rounded-lg border">
+          <div className="border-b px-4 py-3">
+            <h2 className="text-muted-foreground text-sm font-medium">
+              Gastos manuales (sin factura CFDI)
+            </h2>
+          </div>
+          <div className="relative overflow-x-auto">
+            {manualExpensesState === 'loading' ? (
+              <div className="p-6">
+                <TableRowsSkeleton rows={3} />
+              </div>
+            ) : manualExpensesFromPeriod.length === 0 ? (
+              <div className="p-6">
+                <EmptyState
+                  icon={Receipt}
+                  title="Sin gastos manuales"
+                  description="Los gastos que registres aquí no tienen factura CFDI. Usa el botón «Gasto manual» para agregar uno."
+                  actionLabel="Agregar gasto manual"
+                  onAction={() => setIsManualExpenseDialogOpen(true)}
+                  variant="empty"
+                  compact
+                />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[180px]">Concepto</TableHead>
+                    <TableHead className="min-w-[100px]">Fecha</TableHead>
+                    <TableHead className="min-w-[100px] text-right">Subtotal</TableHead>
+                    <TableHead className="min-w-[80px] text-right">IVA</TableHead>
+                    <TableHead className="min-w-[100px] text-right">Total</TableHead>
+                    <TableHead className="min-w-[90px]">Pagado</TableHead>
+                    <TableHead className="min-w-[80px] text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {manualExpensesFromPeriod.map((expense) => {
+                    const total = expense.subtotal + (expense.iva_amount ?? expense.iva ?? 0);
+                    return (
+                      <TableRow key={expense.id}>
+                        <TableCell className="font-medium">
+                          {expense.concepto || 'Sin concepto'}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatDate(expense.fecha)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatCurrency(expense.subtotal)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {formatCurrency(expense.iva_amount ?? expense.iva ?? 0)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {formatCurrency(total)}
+                        </TableCell>
+                        <TableCell>
+                          {expense.is_paid ? (
+                            <Badge className="bg-green-500/10 text-green-600">Sí</Badge>
+                          ) : (
+                            <Badge variant="outline">No</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenEditManual(expense)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteClick(expense)}
+                            >
+                              Eliminar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+            {manualExpensesState === 'updating' && manualExpensesFromPeriod.length > 0 && (
+              <div className="bg-background/80 absolute inset-0 backdrop-blur-[1px]" />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-muted/30 rounded-lg border border-dashed p-4 text-center">
+          <p className="text-muted-foreground text-sm">
+            {manualExpenseDisabledReason === 'no_profile'
+              ? 'Selecciona un perfil en el selector de arriba (no «Todos») para ver y agregar gastos manuales.'
+              : 'No se obtuvo un período para este perfil y mes/año. El backend debe devolver el ID del período en métricas.'}
+          </p>
+        </div>
+      )}
 
       {/* Expenses Table */}
       <div data-tour="expenses-table" className="bg-card overflow-hidden rounded-lg border">
@@ -689,16 +896,126 @@ export function ExpensesListContent({
       )}
 
       {/* Manual Expense Dialog */}
-      {selectedProfileId && (
+      {selectedProfileId && periodId && (
         <ManualExpenseDialog
           isOpen={isManualExpenseDialogOpen}
           onClose={() => setIsManualExpenseDialogOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['accrued-expenses'] });
+            queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] });
+            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+          }}
+          profileId={selectedProfileId}
+          periodId={periodId}
+          profiles={profiles}
           subscription={subscription}
           expensesUsed={expensesUsed}
-          profileId={selectedProfileId}
-          profiles={profiles}
         />
       )}
+
+      {/* Edit Manual Expense Dialog */}
+      <Dialog open={!!editingManualExpense} onOpenChange={(open) => !open && handleCloseEditManual()}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Editar gasto manual</DialogTitle>
+            <DialogDescription>
+              Actualiza concepto, montos o estado de pago. No incluye factura CFDI.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-concept">Concepto</Label>
+              <Input
+                id="edit-concept"
+                value={editConcept}
+                onChange={(e) => setEditConcept(e.target.value)}
+                placeholder="Ej. Viáticos marzo"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-subtotal">Subtotal (MXN)</Label>
+                <Input
+                  id="edit-subtotal"
+                  type="text"
+                  inputMode="decimal"
+                  value={editSubtotal}
+                  onChange={(e) => setEditSubtotal(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-iva">IVA (MXN)</Label>
+                <Input
+                  id="edit-iva"
+                  type="text"
+                  inputMode="decimal"
+                  value={editIva}
+                  onChange={(e) => setEditIva(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div>
+                <Label htmlFor="edit-paid">Pagado</Label>
+                <p className="text-muted-foreground text-sm">
+                  Marca si ya pagaste este gasto.
+                </p>
+              </div>
+              <Switch
+                id="edit-paid"
+                checked={editIsPaid}
+                onCheckedChange={setEditIsPaid}
+              />
+            </div>
+            {editIsPaid && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-payment-date">Fecha de pago</Label>
+                <Input
+                  id="edit-payment-date"
+                  type="date"
+                  value={editPaymentDate}
+                  onChange={(e) => setEditPaymentDate(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="grid gap-2">
+              <Label>Categoría</Label>
+              <Select value={editCategoria || 'none'} onValueChange={(v) => setEditCategoria(v === 'none' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin categoría</SelectItem>
+                  {CATEGORIES.filter((c) => c.value !== 'all').map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {editError && (
+              <Alert variant="destructive">
+                <AlertDescription>{editError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseEditManual}
+              disabled={isUpdatingManual}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmitEditManual} disabled={isUpdatingManual}>
+              {isUpdatingManual ? 'Guardando...' : 'Actualizar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Profile Warning Dialog */}
       <Dialog open={showProfileWarning} onOpenChange={setShowProfileWarning}>

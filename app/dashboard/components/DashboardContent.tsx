@@ -97,7 +97,12 @@ export async function DashboardContent({ profileId, mes, año }: DashboardConten
             }}
           />
         </div>
-        <MetricsCards metrics={metrics} />
+        <MetricsCards
+          metrics={metrics}
+          profileId={profileId}
+          mes={mes}
+          año={año}
+        />
         <Suspense
           fallback={
             <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
