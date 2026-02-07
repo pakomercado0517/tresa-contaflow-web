@@ -90,3 +90,16 @@ export interface SATSearchResults {
   aiExplanation?: string;
   confidence?: "high" | "medium" | "low";
 }
+
+// Tipos para regímenes fiscales (catálogo SAT c_RegimenFiscal)
+// GET /api/sat/regimenes-fiscales
+export interface RegimenFiscalItem {
+  clave: string;
+  descripcion: string;
+  aplica_persona_fisica: boolean;
+  aplica_persona_moral: boolean;
+}
+
+export interface GetRegimenesFiscalesResponse {
+  data: RegimenFiscalItem[];
+}

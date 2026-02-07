@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/lib/utils/logger';
 import Link from 'next/link';
 import {
@@ -40,6 +41,7 @@ import {
 import { ApiError } from '@/lib/api/client';
 import { apiClient } from '@/lib/api/client';
 import { deleteProfile } from '@/lib/api/profiles.client';
+import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { exportProfilesToPDF, type ProfileStats } from '@/lib/utils/pdf-export';
 import type { Profile } from '@/lib/types/profiles';
 import type { Plan, SubscriptionStatus } from '@/lib/types/subscription';
@@ -55,38 +57,51 @@ interface ProfilesTableProps {
   subscriptionStatus: SubscriptionStatus;
 }
 
-interface SubscriptionStatusInfo {
-  label: string;
-  color: string;
-}
+function RegimenFiscalCell({
+  regimenesFiscales,
+  descripcionMap,
+}: {
+  regimenesFiscales: string[];
+  descripcionMap: Record<string, string>;
+}) {
+  const MAX_VISIBLE = 3;
+  const visible = regimenesFiscales.slice(0, MAX_VISIBLE);
+  const remaining = regimenesFiscales.length - MAX_VISIBLE;
 
-// Función para obtener la información del estatus de suscripción
-function getSubscriptionStatusInfo(status: SubscriptionStatus): SubscriptionStatusInfo {
-  switch (status) {
-    case 'ACTIVE':
-      return { label: 'Vigente', color: 'bg-green-500' };
-    case 'TRIALING':
-      return { label: 'En Prueba', color: 'bg-blue-500' };
-    case 'PAST_DUE':
-      return { label: 'Pago Retrasado', color: 'bg-yellow-500' };
-    case 'CANCELLED':
-      return { label: 'Cancelada', color: 'bg-orange-500' };
-    case 'EXPIRED':
-      return { label: 'Expirada', color: 'bg-red-500' };
-    case 'UNPAID':
-      return { label: 'Sin Pago', color: 'bg-red-600' };
-    default:
-      return { label: 'Desconocido', color: 'bg-gray-500' };
+  const getTooltip = (clave: string) => {
+    const desc = descripcionMap[clave];
+    return desc ? `${clave} - ${desc}` : clave;
+  };
+
+  if (!regimenesFiscales.length) {
+    return (
+      <span className="text-muted-foreground text-sm">Sin definir</span>
+    );
   }
-}
-
-function SubscriptionStatusBadge({ status }: { status: SubscriptionStatus }) {
-  const statusInfo = getSubscriptionStatusInfo(status);
 
   return (
-    <div className="flex items-center gap-2">
-      <div className={`h-2 w-2 rounded-full ${statusInfo.color}`} />
-      <span className="text-sm">{statusInfo.label}</span>
+    <div className="flex flex-wrap items-center gap-1.5 min-w-0 max-w-[200px]">
+      {visible.map((clave) => (
+        <Badge
+          key={clave}
+          variant="outline"
+          className="font-mono text-xs border-primary/30 text-foreground shrink-0 cursor-help"
+          title={getTooltip(clave)}
+        >
+          {clave}
+        </Badge>
+      ))}
+      {remaining > 0 && (
+        <span
+          className="text-muted-foreground text-xs shrink-0"
+          title={regimenesFiscales
+            .slice(MAX_VISIBLE)
+            .map((c) => getTooltip(c))
+            .join("\n")}
+        >
+          +{remaining}
+        </span>
+      )}
     </div>
   );
 }
@@ -112,8 +127,17 @@ function getDeleteErrorMessage(error: unknown): string {
   return 'No se pudo eliminar el perfil. Intenta nuevamente.';
 }
 
-export function ProfilesTable({ profiles, subscriptionStatus }: ProfilesTableProps) {
+export function ProfilesTable({ profiles }: ProfilesTableProps) {
   const router = useRouter();
+
+  const { data: regimenesData } = useQuery({
+    queryKey: ['regimenes-fiscales'],
+    queryFn: () => getRegimenesFiscalesClient(),
+  });
+  const descripcionMap = useMemo(() => {
+    const items = regimenesData?.data ?? [];
+    return Object.fromEntries(items.map((r) => [r.clave, r.descripcion]));
+  }, [regimenesData]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
@@ -320,7 +344,7 @@ export function ProfilesTable({ profiles, subscriptionStatus }: ProfilesTablePro
             <TableRow>
               <TableHead>ENTIDAD / RFC</TableHead>
               <TableHead>TIPO DE PERSONA</TableHead>
-              <TableHead>ESTATUS DE SUSCRIPCIÓN</TableHead>
+              <TableHead>RÉGIMEN FISCAL</TableHead>
               <TableHead className="text-right">ACCIONES</TableHead>
             </TableRow>
           </TableHeader>
@@ -354,14 +378,17 @@ export function ProfilesTable({ profiles, subscriptionStatus }: ProfilesTablePro
                       className={
                         profile.tipo_persona === 'FISICA'
                           ? 'border-purple-500/50 text-purple-600 dark:text-purple-400'
-                          : 'border-purple-500/50 text-purple-600 dark:text-purple-400'
+                          : 'border-blue-500/50 text-blue-600 dark:text-blue-400'
                       }
                     >
                       {profile.tipo_persona === 'FISICA' ? 'Persona Física' : 'Persona Moral'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <SubscriptionStatusBadge status={subscriptionStatus} />
+                  <TableCell className="align-top">
+                    <RegimenFiscalCell
+                      regimenesFiscales={profile.regimenes_fiscales ?? []}
+                      descripcionMap={descripcionMap}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

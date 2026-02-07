@@ -13,7 +13,7 @@ interface Profile {
   nombre: string;
   rfc: string;
   tipo_persona: "FISICA" | "MORAL";
-  regimen_fiscal: string | null;
+  regimenes_fiscales: string[];
 }
 
 interface ProfilesListProps {
@@ -74,12 +74,12 @@ export function ProfilesList({
                 <p className="text-xs text-muted-foreground mb-1">RFC</p>
                 <p className="font-mono text-sm">{profile.rfc}</p>
               </div>
-              {profile.regimen_fiscal && (
+              {profile.regimenes_fiscales?.length > 0 && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">
-                    Régimen Fiscal
+                    Régimen{profile.regimenes_fiscales.length > 1 ? "es" : ""} Fiscal{profile.regimenes_fiscales.length > 1 ? "es" : ""}
                   </p>
-                  <p className="text-sm">{profile.regimen_fiscal}</p>
+                  <p className="text-sm">{profile.regimenes_fiscales.join(", ")}</p>
                 </div>
               )}
               <div className="flex gap-2 pt-2">

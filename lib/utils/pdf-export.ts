@@ -881,8 +881,12 @@ function addProfileDetail(
   const tipoPersona = profile.tipo_persona === "FISICA" ? "Persona Física" : "Persona Moral";
   doc.text(`Tipo: ${tipoPersona}`, margin + 10, currentY);
   
-  if (profile.regimen_fiscal) {
-    doc.text(`Régimen Fiscal: ${profile.regimen_fiscal}`, margin + 200, currentY);
+  if (profile.regimenes_fiscales?.length > 0) {
+    const regimenesText =
+      profile.regimenes_fiscales.length > 1
+        ? profile.regimenes_fiscales.join(", ")
+        : profile.regimenes_fiscales[0];
+    doc.text(`Régimen${profile.regimenes_fiscales.length > 1 ? "es" : ""} Fiscal${profile.regimenes_fiscales.length > 1 ? "es" : ""}: ${regimenesText}`, margin + 200, currentY);
   }
   currentY += 15;
   
