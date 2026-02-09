@@ -8,6 +8,22 @@ export const SHEET_NAMES = {
   perfiles: "Perfiles",
 } as const;
 
+/** Colores corporativos para tablas tipo imagen (encabezado teal, total verde, estado) */
+export const CORPORATE = {
+  /** Encabezado de tabla - verde teal oscuro #0F766E */
+  headerTeal: "FF0F766E" as const,
+  /** Total CFDI - verde destacado #22C55E */
+  totalCfdiGreen: "FF22C55E" as const,
+  /** Estado VIGENTE - verde */
+  estadoVigente: "FF22C55E" as const,
+  /** Estado CANCELADO / con errores - rojo */
+  estadoCancelado: "FFEF4444" as const,
+  /** Fondo filas alternas claro */
+  rowAlternate: "FFF8FAFA" as const,
+  /** Borde gris suave */
+  borderGray: "FFE5E7EB" as const,
+} as const;
+
 /** Colores RGB para Excel (consistentes con PDF) */
 export const COLORS = {
   headerBg: "FF2563EB" as const, // blue-600
@@ -46,16 +62,20 @@ export const COLORS = {
 /** Anchos de columna sugeridos (en caracteres aproximados) */
 export const COLUMN_WIDTHS = {
   uuid: 18,
-  fecha: 12,
+  fecha: 16,
+  fechaEmision: 18,
   rfc: 14,
   nombre: 25,
-  concepto: 30,
+  concepto: 38,
   categoria: 15,
   tipo: 10,
-  subtotal: 12,
-  iva: 10,
-  total: 12,
+  subtotal: 14,
+  iva: 12,
+  total: 14,
   estadoPago: 14,
+  estadoSat: 12,
+  metodo: 8,
+  cuentaContable: 22,
   origen: 8,
 } as const;
 

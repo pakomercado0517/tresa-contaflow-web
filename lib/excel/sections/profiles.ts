@@ -1,7 +1,7 @@
 import type { Worksheet } from "exceljs";
 import type { Profile } from "@/lib/types/profiles";
 import type { ProfileStats } from "../core/types";
-import { tableHeaderStyle, dataStyle, dataAlternateStyle } from "../core/styles";
+import { tableHeaderStyle, dataStyle, dataAlternateStyle, NUM_FMT_ACCOUNTING } from "../core/styles";
 import { COLORS, COLUMN_WIDTHS, ROW_HEIGHT_DATA } from "../constants";
 import { formatDate } from "../utils/formatters";
 
@@ -72,10 +72,10 @@ export function addProfilesSection(
     row.getCell(3).value = tipoPersona;
     row.getCell(3).style = style;
     row.getCell(4).value = s.totalInvoiced;
-    row.getCell(4).numFmt = '"$"#,##0.00';
+    row.getCell(4).numFmt = NUM_FMT_ACCOUNTING;
     row.getCell(4).style = style;
     row.getCell(5).value = s.totalSpent;
-    row.getCell(5).numFmt = '"$"#,##0.00';
+    row.getCell(5).numFmt = NUM_FMT_ACCOUNTING;
     row.getCell(5).style = style;
     row.getCell(6).value = s.totalInvoices;
     row.getCell(6).style = style;

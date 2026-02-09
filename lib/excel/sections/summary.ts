@@ -1,11 +1,11 @@
 import type { Worksheet } from "exceljs";
 import type { ExcelMetrics } from "../core/types";
-import { totalStyle } from "../core/styles";
+import { totalStyle, resumenFinancieroValueStyle, NUM_FMT_ACCOUNTING } from "../core/styles";
 import { COLORS } from "../constants";
 
 /**
  * Añade la sección de resumen financiero (métricas).
- * Devuelve la siguiente fila disponible después del resumen.
+ * Para facturas y gastos usa cajas con color y borde negro fino como en la referencia.
  */
 export function addSummary(
   worksheet: Worksheet,
@@ -48,13 +48,19 @@ export function addSummary(
     });
   }
 
+  worksheet.getColumn(1).width = 28;
+  worksheet.getColumn(2).width = 22;
+
+  const useResumenStyle = tipo === "facturas" || tipo === "gastos";
+
   for (const m of metricsToShow) {
     const r = worksheet.getRow(row);
+    r.height = 22;
     r.getCell(1).value = m.label;
-    r.getCell(1).style = { font: { size: 10 } };
+    r.getCell(1).style = { font: { size: 11 } };
     r.getCell(2).value = m.value;
-    r.getCell(2).style = totalStyle(m.color);
-    r.getCell(2).numFmt = '"$"#,##0.00';
+    r.getCell(2).style = useResumenStyle ? resumenFinancieroValueStyle(m.color) : totalStyle(m.color);
+    r.getCell(2).numFmt = NUM_FMT_ACCOUNTING;
     row += 1;
   }
 

@@ -9,7 +9,7 @@ import { createWorkbook, addWorksheet } from "./core/workbook";
 import { SHEET_NAMES, MESES } from "./constants";
 import { addHeader } from "./sections/header";
 import { addSummary } from "./sections/summary";
-import { addInvoicesSection, setInvoicesColumnWidths } from "./sections/invoices";
+import { addInvoicesSection } from "./sections/invoices";
 import { addExpensesSection } from "./sections/expenses";
 import { addProfilesSection } from "./sections/profiles";
 
@@ -43,6 +43,18 @@ export async function exportToExcel(options: ExcelOptions): Promise<void> {
   if (tipo === "facturas") titulo = "Reporte de Facturas";
   if (tipo === "gastos") titulo = "Reporte de Gastos";
 
+  if (tipo === "gastos") {
+    const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
+    addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
+    addExpensesSection(sheetGastos, expenses, 6);
+  }
+
+  if (tipo === "facturas") {
+    const sheetTodasFirst = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
+    addHeader(sheetTodasFirst, titulo, profileName, rfc, mes, año);
+    addInvoicesSection(sheetTodasFirst, invoices, "todas", 6);
+  }
+
   const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
   let nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
   if (metrics) {
@@ -53,25 +65,22 @@ export async function exportToExcel(options: ExcelOptions): Promise<void> {
     const sheetPend = addWorksheet(workbook, SHEET_NAMES.facturasPendientes);
     addHeader(sheetPend, titulo, profileName, rfc, mes, año);
     addInvoicesSection(sheetPend, invoices, "pendientes", 6);
-    setInvoicesColumnWidths(sheetPend, "pendientes");
 
     const sheetPag = addWorksheet(workbook, SHEET_NAMES.facturasPagadas);
     addHeader(sheetPag, titulo, profileName, rfc, mes, año);
     addInvoicesSection(sheetPag, invoices, "pagadas", 6);
-    setInvoicesColumnWidths(sheetPag, "pagadas");
   }
 
-  if (tipo === "completo" || tipo === "gastos") {
+  if (tipo === "completo") {
     const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
     addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
     addExpensesSection(sheetGastos, expenses, 6);
   }
 
-  if (tipo === "completo" || tipo === "facturas") {
+  if (tipo === "completo") {
     const sheetTodas = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
     addHeader(sheetTodas, titulo, profileName, rfc, mes, año);
     addInvoicesSection(sheetTodas, invoices, "todas", 6);
-    setInvoicesColumnWidths(sheetTodas, "todas");
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
@@ -108,6 +117,18 @@ export async function exportToExcelBlob(options: ExcelOptions): Promise<Blob> {
   if (tipo === "facturas") titulo = "Reporte de Facturas";
   if (tipo === "gastos") titulo = "Reporte de Gastos";
 
+  if (tipo === "gastos") {
+    const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
+    addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
+    addExpensesSection(sheetGastos, expenses, 6);
+  }
+
+  if (tipo === "facturas") {
+    const sheetTodasFirst = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
+    addHeader(sheetTodasFirst, titulo, profileName, rfc, mes, año);
+    addInvoicesSection(sheetTodasFirst, invoices, "todas", 6);
+  }
+
   const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
   let nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
   if (metrics) {
@@ -118,25 +139,22 @@ export async function exportToExcelBlob(options: ExcelOptions): Promise<Blob> {
     const sheetPend = addWorksheet(workbook, SHEET_NAMES.facturasPendientes);
     addHeader(sheetPend, titulo, profileName, rfc, mes, año);
     addInvoicesSection(sheetPend, invoices, "pendientes", 6);
-    setInvoicesColumnWidths(sheetPend, "pendientes");
 
     const sheetPag = addWorksheet(workbook, SHEET_NAMES.facturasPagadas);
     addHeader(sheetPag, titulo, profileName, rfc, mes, año);
     addInvoicesSection(sheetPag, invoices, "pagadas", 6);
-    setInvoicesColumnWidths(sheetPag, "pagadas");
   }
 
-  if (tipo === "completo" || tipo === "gastos") {
+  if (tipo === "completo") {
     const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
     addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
     addExpensesSection(sheetGastos, expenses, 6);
   }
 
-  if (tipo === "completo" || tipo === "facturas") {
+  if (tipo === "completo") {
     const sheetTodas = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
     addHeader(sheetTodas, titulo, profileName, rfc, mes, año);
     addInvoicesSection(sheetTodas, invoices, "todas", 6);
-    setInvoicesColumnWidths(sheetTodas, "todas");
   }
 
   const buffer = await workbook.xlsx.writeBuffer();

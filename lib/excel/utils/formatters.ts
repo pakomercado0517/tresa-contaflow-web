@@ -24,6 +24,26 @@ export function formatDate(dateString: string): string {
   });
 }
 
+/** Fecha y hora para columna "Fecha emisión" (dd/mm/yyyy HH:mm) */
+export function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  const hasTime = dateString.includes("T") || /^\d{4}-\d{2}-\d{2}\s\d{2}/.test(dateString);
+  if (hasTime && !Number.isNaN(date.getTime())) {
+    return date.toLocaleString("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  return date.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 export function formatPercentage(value: number | string): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
   if (typeof num !== "number" || Number.isNaN(num)) {

@@ -1,9 +1,17 @@
 import type { Worksheet } from "exceljs";
 import type { Invoice } from "@/lib/types/invoices";
 import type { InvoiceSectionType } from "../core/types";
-import { tableHeaderStyle, dataStyle, dataAlternateStyle, totalStyle } from "../core/styles";
-import { COLORS, COLUMN_WIDTHS, ROW_HEIGHT_DATA } from "../constants";
-import { formatDate } from "../utils/formatters";
+import {
+  corporateTableHeaderStyle,
+  corporateDataRowStyle,
+  totalCfdiCellStyle,
+  estadoVigenteStyle,
+  estadoCanceladoStyle,
+  totalStyle,
+  NUM_FMT_ACCOUNTING,
+} from "../core/styles";
+import { COLUMN_WIDTHS, ROW_HEIGHT_DATA, CORPORATE } from "../constants";
+import { formatDateTime } from "../utils/formatters";
 
 function getPaidAmount(invoice: Invoice): number {
   if (invoice.tipo === "PUE") return invoice.total;
@@ -52,48 +60,35 @@ function filterInvoices(
   );
 }
 
-function getSectionColors(sectionType: InvoiceSectionType) {
-  if (sectionType === "pendientes") return COLORS.facturasPendientes;
-  if (sectionType === "pagadas") return COLORS.facturasPagadas;
-  return COLORS.todasFacturas;
+/** Estado SAT: VIGENTE si validación ok, CANCELADO si tiene errores o no válido */
+function getEstadoSat(invoice: Invoice): "VIGENTE" | "CANCELADO" {
+  if (invoice.validacion?.valido === true && !(invoice.validacion?.errores?.length)) {
+    return "VIGENTE";
+  }
+  return "CANCELADO";
 }
 
-const HEADERS_PENDIENTES = [
+/** Columnas estilo corporativo (como referencia de imagen) */
+const CORPORATE_HEADERS = [
+  "Fecha emisión",
+  "RFC emisor",
+  "Concepto",
   "UUID",
-  "Fecha",
-  "Total",
+  "Subtotal",
+  "IVA (16%)",
+  "Total CFDI",
+  "Método",
+  "Estado SAT",
+  "Cuenta contable",
   "Pagado",
   "Pendiente",
-  "RFC Emisor",
-];
-const HEADERS_PAGADAS = [
-  "UUID",
-  "Fecha",
-  "Tipo",
-  "Total",
-  "Pagado",
-  "RFC Emisor",
-];
-const HEADERS_TODAS = [
-  "UUID",
-  "Fecha",
-  "Tipo",
-  "Total",
-  "Pagado",
-  "Pendiente",
-  "RFC Emisor",
-  "RFC Receptor",
-];
+] as const;
 
-function getHeaders(sectionType: InvoiceSectionType): string[] {
-  if (sectionType === "pendientes") return HEADERS_PENDIENTES;
-  if (sectionType === "pagadas") return HEADERS_PAGADAS;
-  return HEADERS_TODAS;
-}
 
 /**
- * Añade una sección de facturas a la hoja (pendientes, pagadas o todas).
- * Devuelve la siguiente fila disponible después de la tabla.
+ * Añade una sección de facturas con diseño corporativo: encabezado teal,
+ * columnas detalladas (fecha, RFC, concepto, UUID, subtotal, IVA, total CFDI,
+ * método, estado SAT, cuenta contable, pagado, pendiente) y estilos tipo imagen.
  */
 export function addInvoicesSection(
   worksheet: Worksheet,
@@ -102,91 +97,110 @@ export function addInvoicesSection(
   startRow: number
 ): number {
   const filtered = filterInvoices(invoices, sectionType);
-  const colors = getSectionColors(sectionType);
-  const headers = getHeaders(sectionType);
 
   const headerRow = worksheet.getRow(startRow);
-  headerRow.height = ROW_HEIGHT_DATA;
-  headers.forEach((h, i) => {
+  headerRow.height = ROW_HEIGHT_DATA + 4;
+  CORPORATE_HEADERS.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
-    cell.style = tableHeaderStyle(colors.header);
+    cell.style = { ...corporateTableHeaderStyle };
   });
 
   let currentRow = startRow + 1;
   filtered.forEach((inv, idx) => {
     const row = worksheet.getRow(currentRow);
-    row.height = ROW_HEIGHT_DATA;
+    row.height = 28;
+    const alternate = idx % 2 === 1;
+    const baseStyle = corporateDataRowStyle(alternate);
     const paid = getPaidAmount(inv);
     const pending = getPendingAmount(inv);
-    const style = idx % 2 === 1 ? dataAlternateStyle(colors.alternate) : dataStyle;
+    const estado = getEstadoSat(inv);
+    const subtotal = typeof inv.subtotal === "number" ? inv.subtotal : Number(inv.subtotal) || 0;
+    const iva = typeof inv.iva_amount === "number" ? inv.iva_amount : (typeof inv.iva === "number" ? inv.iva : Number(inv.iva) || 0);
 
-    if (sectionType === "pendientes") {
-      row.getCell(1).value = inv.uuid ? inv.uuid.substring(0, 8) + "..." : "N/A";
-      row.getCell(2).value = formatDate(inv.fecha);
-      row.getCell(3).value = inv.total;
-      row.getCell(3).numFmt = '"$"#,##0.00';
-      row.getCell(4).value = paid;
-      row.getCell(4).numFmt = '"$"#,##0.00';
-      row.getCell(5).value = pending;
-      row.getCell(5).numFmt = '"$"#,##0.00';
-      row.getCell(6).value = inv.rfc_emisor ?? "N/A";
-      [1, 2, 3, 4, 5, 6].forEach((c) => {
-        row.getCell(c).style = style;
-      });
-    } else if (sectionType === "pagadas") {
-      row.getCell(1).value = inv.uuid ? inv.uuid.substring(0, 8) + "..." : "N/A";
-      row.getCell(2).value = formatDate(inv.fecha);
-      row.getCell(3).value = inv.tipo ?? "N/A";
-      row.getCell(4).value = inv.total;
-      row.getCell(4).numFmt = '"$"#,##0.00';
-      row.getCell(5).value = paid;
-      row.getCell(5).numFmt = '"$"#,##0.00';
-      row.getCell(6).value = inv.rfc_emisor ?? "N/A";
-      [1, 2, 3, 4, 5, 6].forEach((c) => {
-        row.getCell(c).style = style;
-      });
-    } else {
-      row.getCell(1).value = inv.uuid ? inv.uuid.substring(0, 8) + "..." : "N/A";
-      row.getCell(2).value = formatDate(inv.fecha);
-      row.getCell(3).value = inv.tipo ?? "N/A";
-      row.getCell(4).value = inv.total;
-      row.getCell(4).numFmt = '"$"#,##0.00';
-      row.getCell(5).value = inv.tipo !== "COMPLEMENTO_PAGO" ? paid : "";
-      row.getCell(5).numFmt = '"$"#,##0.00';
-      row.getCell(6).value = inv.tipo !== "COMPLEMENTO_PAGO" ? pending : "";
-      row.getCell(6).numFmt = '"$"#,##0.00';
-      row.getCell(7).value = inv.rfc_emisor ?? "N/A";
-      row.getCell(8).value = inv.rfc_receptor ?? "N/A";
-      [1, 2, 3, 4, 5, 6, 7, 8].forEach((c) => {
-        row.getCell(c).style = style;
-      });
-    }
+    row.getCell(1).value = formatDateTime(inv.fecha);
+    row.getCell(1).style = baseStyle;
+
+    row.getCell(2).value = inv.rfc_emisor ?? "—";
+    row.getCell(2).style = baseStyle;
+
+    row.getCell(3).value = (inv.concepto ?? "—").toString().substring(0, 200);
+    row.getCell(3).style = { ...baseStyle, alignment: { ...baseStyle.alignment, wrapText: true } };
+
+    row.getCell(4).value = inv.uuid ?? "—";
+    row.getCell(4).style = baseStyle;
+
+    row.getCell(5).value = subtotal;
+    row.getCell(5).numFmt = NUM_FMT_ACCOUNTING;
+    row.getCell(5).style = baseStyle;
+
+    row.getCell(6).value = iva;
+    row.getCell(6).numFmt = NUM_FMT_ACCOUNTING;
+    row.getCell(6).style = baseStyle;
+
+    row.getCell(7).value = inv.total;
+    row.getCell(7).numFmt = NUM_FMT_ACCOUNTING;
+    row.getCell(7).style = totalCfdiCellStyle;
+
+    row.getCell(8).value = inv.tipo ?? "—";
+    row.getCell(8).style = baseStyle;
+
+    row.getCell(9).value = estado;
+    row.getCell(9).style = estado === "VIGENTE" ? estadoVigenteStyle : estadoCanceladoStyle;
+
+    row.getCell(10).value = "—";
+    row.getCell(10).style = baseStyle;
+
+    row.getCell(11).value = inv.tipo !== "COMPLEMENTO_PAGO" ? paid : "";
+    row.getCell(11).numFmt = NUM_FMT_ACCOUNTING;
+    row.getCell(11).style = baseStyle;
+
+    row.getCell(12).value = inv.tipo !== "COMPLEMENTO_PAGO" ? pending : "";
+    row.getCell(12).numFmt = NUM_FMT_ACCOUNTING;
+    row.getCell(12).style = baseStyle;
+
     currentRow += 1;
   });
 
-  if (filtered.length > 0 && sectionType === "todas") {
+  if (filtered.length > 0) {
     const totalRow = worksheet.getRow(currentRow);
     const total = filtered.reduce((s, i) => s + i.total, 0);
+    totalRow.height = ROW_HEIGHT_DATA;
     totalRow.getCell(1).value = "TOTAL";
-    totalRow.getCell(1).style = totalStyle(colors.header);
-    totalRow.getCell(4).value = total;
-    totalRow.getCell(4).numFmt = '"$"#,##0.00';
-    totalRow.getCell(4).style = totalStyle(colors.header);
+    totalRow.getCell(1).style = totalStyle(CORPORATE.headerTeal);
+    for (let c = 2; c <= 6; c++) {
+      totalRow.getCell(c).style = totalStyle(CORPORATE.headerTeal);
+    }
+    totalRow.getCell(7).value = total;
+    totalRow.getCell(7).numFmt = NUM_FMT_ACCOUNTING;
+    totalRow.getCell(7).style = { ...totalCfdiCellStyle, font: { bold: true, size: 11, color: { argb: "FFFFFFFF" } } };
+    for (let c = 8; c <= 12; c++) {
+      totalRow.getCell(c).style = totalStyle(CORPORATE.headerTeal);
+    }
     currentRow += 1;
   }
 
+  setInvoicesColumnWidths(worksheet);
   return currentRow + 1;
 }
 
-export function setInvoicesColumnWidths(worksheet: Worksheet, sectionType: InvoiceSectionType): void {
-  const headers = getHeaders(sectionType);
-  headers.forEach((_, i) => {
-    const col = worksheet.getColumn(i + 1);
-    if (sectionType === "todas" && i >= 6) {
-      col.width = COLUMN_WIDTHS.rfc;
-    } else {
-      col.width = [COLUMN_WIDTHS.uuid, COLUMN_WIDTHS.fecha, COLUMN_WIDTHS.tipo, COLUMN_WIDTHS.total, COLUMN_WIDTHS.total, COLUMN_WIDTHS.total, COLUMN_WIDTHS.rfc, COLUMN_WIDTHS.rfc][i] ?? 12;
-    }
+/** Ajusta anchos de columna para la tabla corporativa de facturas */
+export function setInvoicesColumnWidths(worksheet: Worksheet): void {
+  const widths = [
+    COLUMN_WIDTHS.fechaEmision,
+    COLUMN_WIDTHS.rfc,
+    COLUMN_WIDTHS.concepto,
+    COLUMN_WIDTHS.uuid,
+    COLUMN_WIDTHS.subtotal,
+    COLUMN_WIDTHS.iva,
+    COLUMN_WIDTHS.total,
+    COLUMN_WIDTHS.metodo,
+    COLUMN_WIDTHS.estadoSat,
+    COLUMN_WIDTHS.cuentaContable,
+    COLUMN_WIDTHS.total,
+    COLUMN_WIDTHS.total,
+  ];
+  widths.forEach((w, i) => {
+    worksheet.getColumn(i + 1).width = w;
   });
 }
