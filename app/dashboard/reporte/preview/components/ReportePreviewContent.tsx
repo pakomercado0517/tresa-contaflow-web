@@ -63,12 +63,7 @@ export function ReportePreviewContent({
       await new Promise((r) => setTimeout(r, 300));
 
       const fileName = `contaflow-reporte-${MESES[data.mes - 1].toLowerCase()}-${data.año}.pdf`;
-      const periodo = `${MESES[data.mes - 1]} ${data.año}`;
-      await exportReportElementToPDF(el, fileName, {
-        rfc: data.rfc,
-        periodo,
-        profileName: data.profileName,
-      });
+      await exportReportElementToPDF(el, fileName);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error al exportar PDF", error);
@@ -108,15 +103,9 @@ export function ReportePreviewContent({
       el.scrollIntoView({ behavior: "instant", block: "start" });
       await new Promise((r) => setTimeout(r, 300));
 
-      const periodo = `${MESES[data.mes - 1]} ${data.año}`;
-
       // Generar el PDF pero en lugar de descargarlo, abrirlo en nueva ventana para imprimir
       const { exportReportElementToPDFBlob } = await import('@/lib/pdf');
-      const pdfBlob = await exportReportElementToPDFBlob(el, {
-        rfc: data.rfc,
-        periodo,
-        profileName: data.profileName,
-      });
+      const pdfBlob = await exportReportElementToPDFBlob(el);
 
       // Crear URL del blob y abrir en nueva ventana para imprimir
       const pdfUrl = URL.createObjectURL(pdfBlob);
