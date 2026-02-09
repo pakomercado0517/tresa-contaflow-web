@@ -6,6 +6,7 @@ interface GetExpensesParams {
   profileId?: string;
   mes?: number;
   año?: number;
+  regimen_fiscal?: string;
   tipo?: string;
   categoria?: string;
   page?: number;
@@ -25,6 +26,7 @@ export async function getExpenses(
   if (params?.profileId) queryParams.append("profileId", params.profileId);
   if (params?.mes) queryParams.append("mes", params.mes.toString());
   if (params?.año) queryParams.append("año", params.año.toString());
+  if (params?.regimen_fiscal) queryParams.append("regimen_fiscal", params.regimen_fiscal);
   if (params?.tipo) queryParams.append("tipo", params.tipo);
   if (params?.categoria) queryParams.append("categoria", params.categoria);
   if (params?.page) queryParams.append("page", params.page.toString());

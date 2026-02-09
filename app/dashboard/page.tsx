@@ -9,6 +9,7 @@ interface DashboardPageProps {
     profileId?: string;
     mes?: string;
     año?: string;
+    regimen_fiscal?: string;
   }>;
 }
 
@@ -19,6 +20,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const profileId = params?.profileId;
   const mesParam = params?.mes;
   const añoParam = params?.['año'];
+  const regimenFiscal =
+    params?.regimen_fiscal && params.regimen_fiscal !== 'all'
+      ? params.regimen_fiscal
+      : undefined;
 
   const mesNumber = mesParam ? Number(mesParam) : currentDate.getMonth() + 1;
   const añoNumber = añoParam ? Number(añoParam) : currentDate.getFullYear();
@@ -26,5 +31,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const mes = Number.isFinite(mesNumber) ? mesNumber : currentDate.getMonth() + 1;
   const año = Number.isFinite(añoNumber) ? añoNumber : currentDate.getFullYear();
 
-  return <DashboardContent profileId={profileId} mes={mes} año={año} />;
+  return (
+    <DashboardContent
+      profileId={profileId}
+      mes={mes}
+      año={año}
+      regimenFiscal={regimenFiscal}
+    />
+  );
 }

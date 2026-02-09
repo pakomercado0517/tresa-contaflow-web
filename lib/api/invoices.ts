@@ -43,13 +43,15 @@ export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoic
 export async function getMetrics(
   profileId?: string,
   mes?: number,
-  año?: number
+  año?: number,
+  regimenFiscal?: string
 ): Promise<PeriodMetricsResponse> {
   const queryParams = new URLSearchParams();
 
   if (profileId) queryParams.append('profile_id', profileId);
   if (mes) queryParams.append('mes', mes.toString());
   if (año) queryParams.append('año', año.toString());
+  if (regimenFiscal) queryParams.append('regimen_fiscal', regimenFiscal);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/metrics${queryString ? `?${queryString}` : ''}`;
@@ -76,7 +78,8 @@ export async function getTrendData(
   profileId?: string,
   año?: number,
   periodView: TrendPeriodView = 'año-actual',
-  mesCorte?: number
+  mesCorte?: number,
+  regimenFiscal?: string
 ): Promise<
     Array<{
       mes: number;
@@ -144,7 +147,9 @@ export async function getTrendData(
       });
     }
 
-    const promises = months.map(({ mes, año }) => getMetrics(profileId, mes, año));
+    const promises = months.map(({ mes, año }) =>
+      getMetrics(profileId, mes, año, regimenFiscal)
+    );
     const results = await Promise.all(promises);
 
     return months.map(({ mes, año }, index) => ({
@@ -159,12 +164,14 @@ export async function getTrendData(
 
   // Para los otros modos
   const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
-    getMetrics(profileId, i + 1, year)
+    getMetrics(profileId, i + 1, year, regimenFiscal)
   );
 
   const previousYearMonths = [10, 11, 12];
   const previousYearPromises = shouldIncludePrevYearTail
-    ? previousYearMonths.map((mes) => getMetrics(profileId, mes, previousYear))
+    ? previousYearMonths.map((mes) =>
+        getMetrics(profileId, mes, previousYear, regimenFiscal)
+      )
     : [];
 
   const [currentYearResults, previousYearResults] = await Promise.all([
