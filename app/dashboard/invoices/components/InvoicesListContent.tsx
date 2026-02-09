@@ -41,6 +41,8 @@ import type { Invoice } from '@/lib/types/invoices';
 import type { Profile } from '@/lib/types/profiles';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
 import { exportToPDF, normalizeInvoicesForExport } from '@/lib/utils/pdf-export';
+import { exportToExcel } from '@/lib/excel';
+import { useSubscription, hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import { deleteInvoice } from '@/lib/api/invoices.client';
 import { createManualIncomeClient, updateManualIncomeClient } from '@/lib/api/manual-incomes.client';
 import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
@@ -112,6 +114,8 @@ export function InvoicesListContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { subscription } = useSubscription();
+  const canExportExcel = hasFeatureAccess(subscription, "excel_export");
   const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
@@ -525,6 +529,38 @@ export function InvoicesListContent({
     await exportToPDF(payload);
   };
 
+  const handleExportExcel = async () => {
+    const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+    const normalizedInvoices = normalizeInvoicesForExport(invoices);
+    const facturasPagadas = normalizedInvoices.filter(
+      (inv) => inv.tipo === "PUE" || (inv.tipo === "PPD" && (inv.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0) >= inv.total)
+    );
+    const totalFacturado = normalizedInvoices
+      .filter((inv) => inv.tipo !== "COMPLEMENTO_PAGO")
+      .reduce((sum, inv) => sum + inv.total, 0);
+    const totalPagado = facturasPagadas.reduce((sum, inv) => sum + inv.total, 0);
+    const pendientePorPagar = totalFacturado - totalPagado;
+
+    await exportToExcel({
+      tipo: "facturas",
+      invoices: normalizedInvoices,
+      profileName: selectedProfile?.nombre || "Todos los perfiles",
+      rfc: selectedProfile?.rfc || "",
+      mes: selectedMes,
+      año: selectedAño,
+      metrics: {
+        totalFacturado,
+        totalPagado,
+        totalCompras: 0,
+        pendientePorPagar,
+        diferencia: 0,
+        totalFacturas: normalizedInvoices.length,
+        facturasPUE: normalizedInvoices.filter((inv) => inv.tipo === "PUE").length,
+        facturasPPD: normalizedInvoices.filter((inv) => inv.tipo === "PPD").length,
+      },
+    });
+  };
+
   const getStatusBadge = (invoice: Invoice) => {
     // Primero mostrar estado de validación
     if (!invoice.validacion?.valido) {
@@ -610,6 +646,16 @@ export function InvoicesListContent({
           >
             <Download className="mr-2 h-4 w-4" />
             Exportar PDF
+          </Button>
+          <Button
+            onClick={handleExportExcel}
+            variant="outline"
+            disabled={!canExportExcel}
+            title={!canExportExcel ? "Disponible en plan Pro" : undefined}
+            className="border-primary text-primary hover:bg-primary/10 disabled:opacity-60"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar Excel
           </Button>
           <Button
             variant="outline"

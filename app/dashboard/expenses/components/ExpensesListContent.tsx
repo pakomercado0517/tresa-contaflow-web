@@ -42,6 +42,8 @@ import type { Expense } from '@/lib/types/expenses';
 import type { Profile } from '@/lib/types/profiles';
 import type { Subscription } from '@/lib/types/subscription';
 import { exportToPDF, normalizeExpensesForExport } from '@/lib/utils/pdf-export';
+import { exportToExcel } from '@/lib/excel';
+import { hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import { deleteExpense } from '@/lib/api/expenses.client';
 import {
   deleteAccruedExpenseClient,
@@ -255,12 +257,36 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
+  const canExportExcel = hasFeatureAccess(subscription ?? null, 'excel_export');
+
   const handleExportPDF = async () => {
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
     const normalizedExpenses = normalizeExpensesForExport(expenses);
     const totalGastos = normalizedExpenses.reduce((sum, exp) => sum + exp.total, 0);
 
     await exportToPDF({
+      tipo: 'gastos',
+      expenses: normalizedExpenses,
+      profileName: selectedProfile?.nombre || 'Todos los perfiles',
+      rfc: selectedProfile?.rfc || '',
+      mes: selectedMes,
+      año: selectedAño,
+      metrics: {
+        totalFacturado: 0,
+        totalPagado: 0,
+        totalCompras: totalGastos,
+        pendientePorPagar: 0,
+        diferencia: 0,
+      },
+    });
+  };
+
+  const handleExportExcel = async () => {
+    const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+    const normalizedExpenses = normalizeExpensesForExport(expenses);
+    const totalGastos = normalizedExpenses.reduce((sum, exp) => sum + exp.total, 0);
+
+    await exportToExcel({
       tipo: 'gastos',
       expenses: normalizedExpenses,
       profileName: selectedProfile?.nombre || 'Todos los perfiles',
@@ -513,6 +539,16 @@ export function ExpensesListContent({
           >
             <Download className="mr-2 h-4 w-4" />
             Exportar PDF
+          </Button>
+          <Button
+            onClick={handleExportExcel}
+            variant="outline"
+            disabled={!canExportExcel}
+            title={!canExportExcel ? 'Disponible en plan Pro' : undefined}
+            className="border-primary text-primary hover:bg-primary/10 disabled:opacity-60"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar Excel
           </Button>
           <Button
             data-tour="expenses-manual-button"
