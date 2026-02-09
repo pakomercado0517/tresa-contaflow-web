@@ -1,9 +1,5 @@
 import { PAGE, REPORT } from '../layout/constants';
-import {
-  drawReportHeader,
-  drawReportFooter,
-  type ExportReportOptions,
-} from '../layout/reportHeaderFooter';
+import { drawReportFooter } from '../layout/reportHeaderFooter';
 
 /**
  * Recorta una franja horizontal del canvas original.
@@ -18,20 +14,14 @@ function sliceCanvas(
   slice.height = srcHeight;
   const ctx = slice.getContext('2d');
   if (ctx) {
-    ctx.drawImage(
-      source,
-      0, srcY, source.width, srcHeight,
-      0, 0,  source.width, srcHeight
-    );
+    ctx.drawImage(source, 0, srcY, source.width, srcHeight, 0, 0, source.width, srcHeight);
   }
   return slice;
 }
 
 function getReportSections(root: HTMLElement): HTMLElement[] {
   const sections = Array.from(
-    root.querySelectorAll<HTMLElement>(
-      '[data-reporte-contenido], [data-reporte-pagina-2]'
-    )
+    root.querySelectorAll<HTMLElement>('[data-reporte-contenido], [data-reporte-pagina-2]')
   );
   return sections.length > 0 ? sections : [root];
 }
@@ -48,8 +38,7 @@ function getReportSections(root: HTMLElement): HTMLElement[] {
  */
 export async function exportReportElementToPDF(
   element: HTMLElement,
-  fileName: string,
-  options: ExportReportOptions = {}
+  fileName: string
 ): Promise<void> {
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
     import('html2canvas-pro'),
@@ -117,16 +106,7 @@ export async function exportReportElementToPDF(
       const actualImageHeight = Math.min(sliceHeightMm, safeContentHeightMm);
 
       // Dibujar la imagen del contenido desde el inicio de la página
-      pdf.addImage(
-        sliceDataUrl,
-        'PNG',
-        0,
-        0,
-        pageWidth,
-        actualImageHeight,
-        undefined,
-        'FAST'
-      );
+      pdf.addImage(sliceDataUrl, 'PNG', 0, 0, pageWidth, actualImageHeight, undefined, 'FAST');
 
       // Dibujar solo el footer (header deshabilitado)
       drawReportFooter(pdf, globalPage, totalPages);
@@ -142,10 +122,7 @@ export async function exportReportElementToPDF(
  * Igual que exportReportElementToPDF pero devuelve un Blob en lugar de descargar.
  * Útil para abrir el PDF en una nueva ventana (ej. para imprimir).
  */
-export async function exportReportElementToPDFBlob(
-  element: HTMLElement,
-  options: ExportReportOptions = {}
-): Promise<Blob> {
+export async function exportReportElementToPDFBlob(element: HTMLElement): Promise<Blob> {
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
     import('html2canvas-pro'),
     import('jspdf'),
@@ -207,16 +184,7 @@ export async function exportReportElementToPDFBlob(
 
       const actualImageHeight = Math.min(sliceHeightMm, safeContentHeightMm);
 
-      pdf.addImage(
-        sliceDataUrl,
-        'PNG',
-        0,
-        0,
-        pageWidth,
-        actualImageHeight,
-        undefined,
-        'FAST'
-      );
+      pdf.addImage(sliceDataUrl, 'PNG', 0, 0, pageWidth, actualImageHeight, undefined, 'FAST');
 
       drawReportFooter(pdf, globalPage, totalPages);
 
