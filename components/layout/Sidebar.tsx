@@ -90,7 +90,7 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside
       data-tour="sidebar"
-      className="bg-card border-border hidden border-r md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col"
+      className="bg-card border-border hidden border-r md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col print:hidden"
     >
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-border flex h-16 items-center gap-2 border-b px-6">

@@ -4,7 +4,7 @@ export function DashboardFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-background mt-auto">
+    <footer className="bg-background mt-auto print:hidden">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 md:py-8 lg:px-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
