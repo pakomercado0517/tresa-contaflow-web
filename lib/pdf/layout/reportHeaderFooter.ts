@@ -7,7 +7,13 @@ export interface ExportReportOptions {
   profileName?: string;
 }
 
-export function drawReportHeader(doc: jsPDF, options: ExportReportOptions): void {
+// Firma mantenida para compatibilidad; implementación deshabilitada (evita traslapes).
+export function drawReportHeader(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parámetros requeridos por la interfaz
+  doc: jsPDF,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parámetros requeridos por la interfaz
+  options: ExportReportOptions
+): void {
   // Header deshabilitado - causa traslapes entre páginas
   return;
 }
