@@ -14,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <DashboardTour user={currentUser.user}>
         <div className="bg-background flex min-h-screen">
           <Sidebar user={currentUser.user} />
-          <div className="flex min-w-0 flex-1 flex-col md:ml-64">
+          <div className="flex min-w-0 flex-1 flex-col md:ml-64 print:ml-0">
             <DashboardRouteTransition>{children}</DashboardRouteTransition>
             <DashboardFooter />
           </div>

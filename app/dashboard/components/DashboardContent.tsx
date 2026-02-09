@@ -68,13 +68,6 @@ export async function DashboardContent({
   // Obtener el nombre del usuario para mostrar
   const userName = currentUser.user.nombre || currentUser.user.email.split('@')[0];
 
-  // Métricas para el PDF (mapeo desde PeriodMetricsResponse)
-  const totalFacturado = metrics.devengado.ingresos_devengados ?? 0;
-  const totalPagado = metrics.flujo.ingresos_cobrados ?? 0;
-  const totalCompras = metrics.flujo.egresos_pagados ?? 0;
-  const pendientePorPagar = metrics.pendientes.por_cobrar ?? 0;
-  const diferencia = metrics.flujo.flujo_neto ?? 0;
-
   return (
     <>
       <DashboardHeader
@@ -94,17 +87,8 @@ export async function DashboardContent({
           <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
           <ExportPDFButton
             profileId={profileId}
-            profileName={activeProfile?.nombre}
-            rfc={activeProfile?.rfc}
             mes={mes}
             año={año}
-            metrics={{
-              totalFacturado,
-              totalPagado,
-              totalCompras,
-              pendientePorPagar,
-              diferencia,
-            }}
           />
         </div>
         <MetricsCards
