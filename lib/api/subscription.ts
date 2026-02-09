@@ -47,10 +47,12 @@ export async function getAvailablePlans(
   );
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 /**
- * Obtiene los planes públicos sin autenticación (Server Component only)
+ * Obtiene los planes públicos sin autenticación (Server Component only).
+ * Usa fetch directo sin cookies para permitir pre-render estático de la landing (/).
  * @param billing - Tipo de facturación: "monthly" o "annual" (default: "monthly")
- * Este endpoint no requiere autenticación
  */
 export async function getPublicPlans(
   billing: 'monthly' | 'annual' = 'monthly'
@@ -58,7 +60,17 @@ export async function getPublicPlans(
   const queryParams = new URLSearchParams();
   queryParams.append('billing', billing);
 
-  return serverApiClient<PublicPlansResponse>(
-    `/api/subscription/public-plans?${queryParams.toString()}`
+  const response = await fetch(
+    `${API_URL}/api/subscription/public-plans?${queryParams.toString()}`,
+    {
+      headers: { 'Content-Type': 'application/json' },
+      next: { revalidate: 300 }, // cache 5 min
+    }
   );
+
+  if (!response.ok) {
+    throw new Error(`Public plans: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<PublicPlansResponse>;
 }

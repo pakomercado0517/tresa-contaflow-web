@@ -56,9 +56,9 @@ export async function exportToExcel(options: ExcelOptions): Promise<void> {
   }
 
   const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
-  let nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
+  const nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
   if (metrics) {
-    nextRow = addSummary(sheetResumen, metrics, nextRow, tipo);
+    addSummary(sheetResumen, metrics, nextRow, tipo);
   }
 
   if (tipo === "completo" || tipo === "facturas") {
@@ -130,9 +130,9 @@ export async function exportToExcelBlob(options: ExcelOptions): Promise<Blob> {
   }
 
   const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
-  let nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
+  const nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
   if (metrics) {
-    nextRow = addSummary(sheetResumen, metrics, nextRow, tipo);
+    addSummary(sheetResumen, metrics, nextRow, tipo);
   }
 
   if (tipo === "completo" || tipo === "facturas") {
