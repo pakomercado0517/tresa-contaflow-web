@@ -43,8 +43,10 @@ import { apiClient } from '@/lib/api/client';
 import { deleteProfile } from '@/lib/api/profiles.client';
 import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { exportProfilesToPDF, type ProfileStats } from '@/lib/utils/pdf-export';
+import { exportProfilesToExcel } from '@/lib/excel';
+import { hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import type { Profile } from '@/lib/types/profiles';
-import type { Plan, SubscriptionStatus } from '@/lib/types/subscription';
+import type { Plan, Subscription, SubscriptionStatus } from '@/lib/types/subscription';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Expense } from '@/lib/types/expenses';
 
@@ -55,6 +57,7 @@ interface ProfilesTableProps {
   plan: Plan;
   currentCount: number;
   subscriptionStatus: SubscriptionStatus;
+  subscription?: Subscription | null;
 }
 
 function RegimenFiscalCell({
@@ -127,8 +130,12 @@ function getDeleteErrorMessage(error: unknown): string {
   return 'No se pudo eliminar el perfil. Intenta nuevamente.';
 }
 
-export function ProfilesTable({ profiles }: ProfilesTableProps) {
+export function ProfilesTable({
+  profiles,
+  subscription,
+}: ProfilesTableProps) {
   const router = useRouter();
+  const canExportExcel = hasFeatureAccess(subscription ?? null, 'excel_export');
 
   const { data: regimenesData } = useQuery({
     queryKey: ['regimenes-fiscales'],
@@ -164,6 +171,7 @@ export function ProfilesTable({ profiles }: ProfilesTableProps) {
   const paginatedProfiles = filteredProfiles.slice(startIndex, endIndex);
 
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   const calculateProfileStats = (
     invoices: Invoice[],
@@ -227,7 +235,6 @@ export function ProfilesTable({ profiles }: ProfilesTableProps) {
         calculateProfileStats(invoices, expenses, profile.id)
       );
 
-      // Exportar a PDF
       await exportProfilesToPDF({
         profiles,
         profilesStats,
@@ -241,6 +248,38 @@ export function ProfilesTable({ profiles }: ProfilesTableProps) {
       }
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true);
+    try {
+      const [invoicesResponse, expensesResponse] = await Promise.all([
+        apiClient<{ data: Invoice[] }>('/api/invoices?limit=10000', {
+          requireAuth: true,
+        }),
+        apiClient<{ data: Expense[] }>('/api/expenses?limit=10000', {
+          requireAuth: true,
+        }),
+      ]);
+      const invoices = invoicesResponse.data || [];
+      const expenses = expensesResponse.data || [];
+      const profilesStats: ProfileStats[] = profiles.map((profile) =>
+        calculateProfileStats(invoices, expenses, profile.id)
+      );
+      await exportProfilesToExcel({
+        profiles,
+        profilesStats,
+      });
+    } catch (error) {
+      logger.error('Error al exportar perfiles a Excel', error);
+      if (error instanceof ApiError) {
+        alert(`Error al generar el Excel: ${error.message}`);
+      } else {
+        alert('Error al generar el Excel. Por favor intenta nuevamente.');
+      }
+    } finally {
+      setIsExportingExcel(false);
     }
   };
 
@@ -330,7 +369,26 @@ export function ProfilesTable({ profiles }: ProfilesTableProps) {
             ) : (
               <>
                 <Download className="mr-2 h-4 w-4" />
-                Exportar
+                Exportar PDF
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={!canExportExcel || isExportingExcel}
+            title={!canExportExcel ? 'Disponible en plan Pro' : undefined}
+          >
+            {isExportingExcel ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar Excel
               </>
             )}
           </Button>

@@ -158,6 +158,7 @@ export async function ProfilesSection() {
         plan={plan}
         currentCount={currentCount}
         subscriptionStatus={subscription?.status || "ACTIVE"}
+        subscription={subscription}
       />
     </div>
   );
