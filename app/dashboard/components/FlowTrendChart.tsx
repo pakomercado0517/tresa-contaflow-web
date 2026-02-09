@@ -78,6 +78,7 @@ interface FlowTrendChartProps {
   profileId?: string;
   año?: number;
   mes?: number;
+  regimenFiscal?: string;
 }
 
 const formatCurrency = (value: number) =>
@@ -88,7 +89,13 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendChartProps) {
+export function FlowTrendChart({
+  initialData,
+  profileId,
+  año,
+  mes,
+  regimenFiscal,
+}: FlowTrendChartProps) {
   const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(DEFAULT_VISIBLE);
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [fetchedData, setFetchedData] = useState<TrendDataPoint[]>([]);
@@ -116,7 +123,8 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
           profileId,
           selectedYear,
           periodView,
-          selectedMonth
+          selectedMonth,
+          regimenFiscal
         );
         if (!cancelled && isMountedRef.current) {
           setFetchedData(newData);
@@ -134,7 +142,7 @@ export function FlowTrendChart({ initialData, profileId, año, mes }: FlowTrendC
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [periodView, profileId, selectedYear, selectedMonth, shouldUseInitialData]);
+  }, [periodView, profileId, selectedYear, selectedMonth, regimenFiscal, shouldUseInitialData]);
 
   useEffect(() => {
     return () => {

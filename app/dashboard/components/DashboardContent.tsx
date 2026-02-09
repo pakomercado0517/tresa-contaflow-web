@@ -36,21 +36,29 @@ interface DashboardContentProps {
   profileId?: string;
   mes: number;
   año: number;
+  regimenFiscal?: string;
 }
 
-export async function DashboardContent({ profileId, mes, año }: DashboardContentProps) {
+export async function DashboardContent({
+  profileId,
+  mes,
+  año,
+  regimenFiscal,
+}: DashboardContentProps) {
   // No usar .catch() aquí porque captura los errores de redirect()
   // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
   const [metrics, invoices, expenses, profiles, trendData, currentUser] = await Promise.all([
-    getMetrics(profileId, mes, año),
-    getInvoices({ profileId, mes, año, limit: 3 }),
-    getExpenses({ profileId, mes, año, limit: 3 }),
+    getMetrics(profileId, mes, año, regimenFiscal),
+    getInvoices({ profileId, mes, año, regimen_fiscal: regimenFiscal, limit: 3 }),
+    getExpenses({ profileId, mes, año, regimen_fiscal: regimenFiscal, limit: 3 }),
     getProfiles(),
-    getTrendData(profileId, año, 'año-actual', mes),
+    getTrendData(profileId, año, 'año-actual', mes, regimenFiscal),
     getCurrentUser(),
   ]);
 
-  const activeProfile = profiles.data.find((p) => p.id === profileId) || profiles.data[0];
+  const activeProfile = profileId
+    ? profiles.data.find((p) => p.id === profileId) ?? null
+    : null;
   const selectedCompanyName = profileId
     ? activeProfile?.nombre
     : profiles.data.length > 0
@@ -74,6 +82,8 @@ export async function DashboardContent({ profileId, mes, año }: DashboardConten
         selectedProfileId={profileId}
         selectedMonth={mes}
         selectedYear={año}
+        selectedRegimenFiscal={regimenFiscal ?? 'all'}
+        activeProfile={activeProfile}
         companyName={selectedCompanyName}
       />
       <main className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -110,7 +120,13 @@ export async function DashboardContent({ profileId, mes, año }: DashboardConten
             </div>
           }
         >
-          <FlowTrendChart initialData={trendData} profileId={profileId} año={año} mes={mes} />
+          <FlowTrendChart
+          initialData={trendData}
+          profileId={profileId}
+          año={año}
+          mes={mes}
+          regimenFiscal={regimenFiscal}
+        />
         </Suspense>
         <div className="grid gap-6 md:grid-cols-2">
           <RecentInvoicesTable invoices={invoices.data} />

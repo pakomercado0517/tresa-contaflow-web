@@ -56,13 +56,15 @@ export type TrendDataPoint = {
 export async function getMetricsClient(
   profileId?: string,
   mes?: number,
-  año?: number
+  año?: number,
+  regimenFiscal?: string
 ): Promise<PeriodMetricsResponse> {
   const queryParams = new URLSearchParams();
 
   if (profileId) queryParams.append('profile_id', profileId);
   if (mes) queryParams.append('mes', mes.toString());
   if (año) queryParams.append('año', año.toString());
+  if (regimenFiscal) queryParams.append('regimen_fiscal', regimenFiscal);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/metrics${queryString ? `?${queryString}` : ''}`;
@@ -80,7 +82,8 @@ export async function getTrendDataClient(
   profileId?: string,
   año?: number,
   periodView: TrendPeriodView = 'año-actual',
-  mesCorte?: number
+  mesCorte?: number,
+  regimenFiscal?: string
 ): Promise<TrendDataPoint[]> {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
@@ -139,7 +142,9 @@ export async function getTrendDataClient(
       });
     }
 
-    const promises = months.map(({ mes, año }) => getMetricsClient(profileId, mes, año));
+    const promises = months.map(({ mes, año }) =>
+      getMetricsClient(profileId, mes, año, regimenFiscal)
+    );
     const results = await Promise.all(promises);
 
     return months.map(({ mes, año }, index) => ({
@@ -154,12 +159,14 @@ export async function getTrendDataClient(
 
   // Para los otros modos
   const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
-    getMetricsClient(profileId, i + 1, year)
+    getMetricsClient(profileId, i + 1, year, regimenFiscal)
   );
 
   const previousYearMonths = [10, 11, 12];
   const previousYearPromises = shouldIncludePrevYearTail
-    ? previousYearMonths.map((mes) => getMetricsClient(profileId, mes, previousYear))
+    ? previousYearMonths.map((mes) =>
+        getMetricsClient(profileId, mes, previousYear, regimenFiscal)
+      )
     : [];
 
   const [currentYearResults, previousYearResults] = await Promise.all([

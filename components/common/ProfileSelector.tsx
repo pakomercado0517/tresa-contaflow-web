@@ -14,9 +14,15 @@ import type { Profile } from '@/lib/types/profiles';
 interface ProfileSelectorProps {
   profiles: Profile[];
   selectedProfileId?: string;
+  /** Params a eliminar de la URL al cambiar de perfil (ej: regimen_fiscal) */
+  clearParamsOnChange?: string[];
 }
 
-export function ProfileSelector({ profiles, selectedProfileId }: ProfileSelectorProps) {
+export function ProfileSelector({
+  profiles,
+  selectedProfileId,
+  clearParamsOnChange = [],
+}: ProfileSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -34,6 +40,9 @@ export function ProfileSelector({ profiles, selectedProfileId }: ProfileSelector
       params.set('profileId', profileId);
     } else {
       params.delete('profileId');
+    }
+    for (const param of clearParamsOnChange) {
+      params.delete(param);
     }
     router.push(`/dashboard?${params.toString()}`, { scroll: false });
     router.refresh();
