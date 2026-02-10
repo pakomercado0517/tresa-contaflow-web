@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Wallet, Check, ArrowUpRight, FileText, BarChart3 } from 'lucide-react';

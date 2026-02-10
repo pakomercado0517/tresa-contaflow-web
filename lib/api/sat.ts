@@ -11,6 +11,7 @@ import type {
   SATSimilarityResponse,
   SATSuggestionsResponse,
   SATStatsResponse,
+  GetRegimenesFiscalesResponse,
 } from "@/lib/types/sat";
 
 const BASE_PATH = "/api/sat";
@@ -110,4 +111,23 @@ export async function getSATStats(): Promise<SATStatsResponse> {
     method: "GET",
     redirectOnAuthError: true,
   });
+}
+
+/**
+ * Obtiene el catálogo de regímenes fiscales (server-side).
+ * Opcionalmente filtra por tipo de persona.
+ */
+export async function getRegimenesFiscales(
+  tipoPersona?: "FISICA" | "MORAL"
+): Promise<GetRegimenesFiscalesResponse> {
+  const params = tipoPersona
+    ? `?tipo_persona=${tipoPersona}`
+    : "";
+  return serverApiClient<GetRegimenesFiscalesResponse>(
+    `${BASE_PATH}/regimenes-fiscales${params}`,
+    {
+      method: "GET",
+      redirectOnAuthError: true,
+    }
+  );
 }

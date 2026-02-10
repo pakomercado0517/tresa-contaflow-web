@@ -1,8 +1,9 @@
 import { getMetrics, getInvoices } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
+import { getRegimenesFiscales } from "@/lib/api/sat";
 import { ReportePreviewContent } from "./components/ReportePreviewContent";
-import type { ReporteMensualData } from "./components/ReporteMensualTemplate";
+import type { ReporteMensualData, EstadoPorRegimen } from "./components/ReporteMensualTemplate";
 import type {
   DetalleOperacionesDevengadasData,
   FilaIngresoDevengado,
@@ -71,17 +72,59 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
   const añoValid =
     Number.isFinite(año) && año >= 2000 && año <= 2100 ? año : currentDate.getFullYear();
 
-  const [metrics, profiles, invoicesRes, expensesRes] = await Promise.all([
+  const [metrics, profiles, invoicesRes, expensesRes, regimenesCatalog] = await Promise.all([
     getMetrics(profileId, mesValid, añoValid),
     getProfiles(),
     getInvoices({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
     getExpenses({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
+    getRegimenesFiscales(),
   ]);
 
   const activeProfile = profileId
     ? profiles.data.find((p) => p.id === profileId) ?? null
     : null;
   const profileRfc = activeProfile?.rfc;
+  const regimenesClaves = activeProfile?.regimenes_fiscales ?? [];
+
+  const catalogByClave = new Map(
+    (regimenesCatalog?.data ?? []).map((r) => [r.clave, r.descripcion])
+  );
+
+  let estadoPorRegimen: EstadoPorRegimen[] | undefined;
+  if (regimenesClaves.length > 0) {
+    const metricsPorRegimen = await Promise.all(
+      regimenesClaves.map((clave) =>
+        getMetrics(profileId, mesValid, añoValid, clave)
+      )
+    );
+    estadoPorRegimen = regimenesClaves.map((clave, i) => {
+      const m = metricsPorRegimen[i];
+      const devengado = m?.devengado ?? {
+        ingresos_devengados: 0,
+        egresos_devengados: 0,
+        resultado_devengado: 0,
+      };
+      const imp = m?.impuestos ?? {
+        iva_trasladado: {},
+        iva_acreditable: {},
+        retenciones_iva: {},
+        retenciones_isr: {},
+      };
+      const retIva = imp.retenciones_iva?.devengado ?? imp.retenciones_iva?.cobrado ?? 0;
+      const retIsr = imp.retenciones_isr?.devengado ?? imp.retenciones_isr?.cobrado ?? 0;
+      const ivaTrasladado =
+        imp.iva_trasladado?.devengado ?? imp.iva_trasladado?.cobrado ?? 0;
+      const nombreRegimen = catalogByClave.get(clave) ?? `Régimen ${clave}`;
+      return {
+        nombreRegimen,
+        ingresos: devengado.ingresos_devengados ?? 0,
+        egresos: devengado.egresos_devengados ?? 0,
+        retenciones: retIva + retIsr,
+        impuestoTrasladado: ivaTrasladado,
+        utilidadNeta: devengado.resultado_devengado ?? 0,
+      };
+    });
+  }
 
   const reportData: ReporteMensualData = {
     profileName: activeProfile?.nombre ?? "Todos los perfiles",
@@ -97,6 +140,7 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
     ingresosDevengados: metrics.devengado?.ingresos_devengados ?? 0,
     egresosDevengados: metrics.devengado?.egresos_devengados ?? 0,
     utilidadOperativa: metrics.devengado?.resultado_devengado ?? 0,
+    estadoPorRegimen,
   };
 
   const allProfileRfcs = (profiles.data ?? []).map((p) => p.rfc).filter(Boolean);

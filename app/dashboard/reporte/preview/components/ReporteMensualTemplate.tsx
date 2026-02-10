@@ -18,6 +18,22 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
+/** Estado de resultados por régimen fiscal (una fila por régimen del perfil) */
+export interface EstadoPorRegimen {
+  /** Nombre o descripción del régimen (ej. "Régimen de Actividades Profesionales") */
+  nombreRegimen: string;
+  /** Ingresos devengados del régimen */
+  ingresos: number;
+  /** Egresos devengados del régimen (valor positivo; en pantalla se muestran entre paréntesis) */
+  egresos: number;
+  /** Total retenciones (ISR + IVA) aplicadas en el régimen */
+  retenciones: number;
+  /** Impuesto trasladado (IVA trasladado) del régimen */
+  impuestoTrasladado: number;
+  /** Utilidad neta del régimen */
+  utilidadNeta: number;
+}
+
 export interface ReporteMensualData {
   profileName: string;
   rfc: string;
@@ -45,6 +61,8 @@ export interface ReporteMensualData {
   variacionIngresos?: number;
   /** Variación % egresos vs mes anterior (opcional) */
   variacionEgresos?: number;
+  /** Estado de resultados desglosado por régimen fiscal (si existe, se muestra esta sección en lugar del bloque único) */
+  estadoPorRegimen?: EstadoPorRegimen[];
 }
 
 function formatCurrency(amount: number): string {
@@ -290,45 +308,109 @@ export function ReporteMensualTemplate({
         </div>
       </section>
 
-      {/* ESTADO DE RESULTADOS (MODELO DEVENGADO) */}
-      <section className="px-6 pb-8">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+      {/* ESTADO DE RESULTADOS POR REGIMEN (si hay datos por régimen) */}
+      {data.estadoPorRegimen && data.estadoPorRegimen.length > 0 && (
+        <section className="px-6 pb-6">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
             <BarChart3 className="h-4 w-4" />
-            Estado de resultados (modelo devengado)
+            Estado de resultados por régimen
           </h3>
-          <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+          <span className="mb-4 block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
             Basado en fecha de emisión CFDI
           </span>
-        </div>
-        <div className="mt-4 space-y-2 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Ingresos devengados (ventas totales)</span>
-            <span className="font-medium text-gray-900">
-              {formatCurrency(data.ingresosDevengados)}
+          <div className="space-y-6">
+            {data.estadoPorRegimen.map((regimen, index) => (
+              <div
+                key={index}
+                className="rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden"
+              >
+                <div className="border-b border-gray-200 bg-gray-100 px-4 py-2.5">
+                  <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                  <h4 className="text-sm font-bold text-gray-900">
+                    {regimen.nombreRegimen}
+                  </h4>
+                </div>
+                <div className="space-y-2 p-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Ingresos (cobrados / devengados)</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(regimen.ingresos)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Egresos (pagados / deducidos)</span>
+                    <span className="font-medium text-red-600">
+                      ({formatCurrency(regimen.egresos)})
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total retenciones de terceros (ISR / IVA)</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(regimen.retenciones)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Impuesto trasladado</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(regimen.impuestoTrasladado)}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-3 flex justify-between">
+                    <span className="font-bold text-emerald-700">
+                      Utilidad neta del régimen
+                    </span>
+                    <span className="text-lg font-bold text-emerald-700">
+                      {formatCurrency(regimen.utilidadNeta)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ESTADO DE RESULTADOS (MODELO DEVENGADO) - bloque único cuando no hay desglose por régimen */}
+      {(!data.estadoPorRegimen || data.estadoPorRegimen.length === 0) && (
+        <section className="px-6 pb-8">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+              <BarChart3 className="h-4 w-4" />
+              Estado de resultados (modelo devengado)
+            </h3>
+            <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+              Basado en fecha de emisión CFDI
             </span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Egresos devengados (costos y gastos)</span>
-            <span className="font-medium text-gray-900">
-              ({formatCurrency(data.egresosDevengados)})
-            </span>
-          </div>
-          <div className="border-t border-gray-200 pt-3">
-            <div className="flex justify-between">
-              <span className="font-bold text-emerald-700">
-                Utilidad operativa
-              </span>
-              <span className="text-xl font-bold text-emerald-700">
-                {formatCurrency(data.utilidadOperativa)}
+          <div className="mt-4 space-y-2 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Ingresos devengados (ventas totales)</span>
+              <span className="font-medium text-gray-900">
+                {formatCurrency(data.ingresosDevengados)}
               </span>
             </div>
-            <p className="mt-1 text-right text-sm text-gray-500">
-              Margen de operación: {margen.toFixed(1)}%
-            </p>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Egresos devengados (costos y gastos)</span>
+              <span className="font-medium text-gray-900">
+                ({formatCurrency(data.egresosDevengados)})
+              </span>
+            </div>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="flex justify-between">
+                <span className="font-bold text-emerald-700">
+                  Utilidad operativa
+                </span>
+                <span className="text-xl font-bold text-emerald-700">
+                  {formatCurrency(data.utilidadOperativa)}
+                </span>
+              </div>
+              <p className="mt-1 text-right text-sm text-gray-500">
+                Margen de operación: {margen.toFixed(1)}%
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Footer: oculto durante captura PDF (jsPDF dibuja footer en cada página) */}
       {!hideFooterForCapture && (
