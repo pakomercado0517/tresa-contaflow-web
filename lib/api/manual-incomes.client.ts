@@ -58,3 +58,13 @@ export async function updateManualIncomeClient(
     requireAuth: true,
   });
 }
+
+/**
+ * Elimina un ingreso manual (Client Component only)
+ */
+export async function deleteManualIncomeClient(id: string): Promise<{ data: { id: string } }> {
+  return apiClient<{ data: { id: string } }>(`/api/manual-incomes/${id}`, {
+    method: 'DELETE',
+    requireAuth: true,
+  });
+}
