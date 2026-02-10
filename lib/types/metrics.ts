@@ -46,3 +46,17 @@ export interface PeriodMetricsResponse {
   impuestos: ImpuestosMetrics;
   pendientes: PendientesMetrics;
 }
+
+/** Respuesta por defecto cuando el backend devuelve 404 (ej. usuario sin suscripción o sin período) */
+export const DEFAULT_PERIOD_METRICS: PeriodMetricsResponse = {
+  period: { id: '', start: '', end: '' },
+  flujo: { ingresos_cobrados: 0, egresos_pagados: 0, flujo_neto: 0 },
+  devengado: { ingresos_devengados: 0, egresos_devengados: 0, resultado_devengado: 0 },
+  impuestos: {
+    iva_trasladado: {},
+    iva_acreditable: {},
+    retenciones_iva: {},
+    retenciones_isr: {},
+  },
+  pendientes: { por_cobrar: 0, por_pagar: 0 },
+};

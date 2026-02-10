@@ -22,6 +22,8 @@ export class ServerApiError extends Error {
 
 interface ServerApiClientOptions extends RequestInit {
   redirectOnAuthError?: boolean; // Si debe redirigir a login cuando falla la autenticación (default: true)
+  /** Si el servidor responde 404, devolver este valor en lugar de lanzar (ej. métricas vacías para usuarios sin suscripción) */
+  notFoundDefault?: unknown;
 }
 
 /**
@@ -65,6 +67,11 @@ export async function serverApiClient<T>(
       401,
       data
     );
+  }
+
+  // 404 con valor por defecto (ej. métricas vacías para usuarios sin suscripción)
+  if (response.status === 404 && options?.notFoundDefault !== undefined) {
+    return options.notFoundDefault as T;
   }
 
   if (!response.ok) {

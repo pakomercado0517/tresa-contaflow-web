@@ -1,7 +1,7 @@
 import { serverApiClient } from './server-client';
 import { apiClient } from './client';
 import type { GetInvoicesResponse, UploadInvoiceResponse } from '@/lib/types/invoices';
-import type { PeriodMetricsResponse } from '@/lib/types/metrics';
+import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 
 interface GetInvoicesParams {
   profileId?: string;
@@ -38,7 +38,8 @@ export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoic
 
 /**
  * Obtiene las métricas del usuario (Server Component only)
- * Maneja automáticamente el refresh de tokens cuando recibe 401
+ * Maneja automáticamente el refresh de tokens cuando recibe 401.
+ * Si el backend devuelve 404 (usuario sin suscripción o sin período), devuelve métricas en cero para que el dashboard renderice sin error.
  */
 export async function getMetrics(
   profileId?: string,
@@ -58,6 +59,7 @@ export async function getMetrics(
 
   return serverApiClient<PeriodMetricsResponse>(endpoint, {
     redirectOnAuthError: true,
+    notFoundDefault: DEFAULT_PERIOD_METRICS,
   });
 }
 
