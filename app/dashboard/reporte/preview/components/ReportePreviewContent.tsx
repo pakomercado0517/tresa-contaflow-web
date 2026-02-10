@@ -153,10 +153,11 @@ export function ReportePreviewContent({
   return (
     <div className="relative min-h-screen bg-gray-100 print:bg-white">
       {/* Contenedor del reporte capturado por html2canvas para generar el PDF.
-          min-h-[267mm] = área de contenido por página (297mm - 12mm header - 18mm footer).
-          Esto asegura que la primera plantilla ocupe una página completa. */}
+          Antes se forzaba una altura mínima de una página completa (min-h-[267mm]),
+          lo que podía generar cortes inconsistentes cuando el contenido real
+          ocupaba más de una página (por ejemplo, con varios regímenes). */}
       <div ref={reportRef} className="w-full max-w-[210mm] mx-auto">
-        <div className="min-h-[267mm]">
+        <div>
           <ReporteMensualTemplate
             data={data}
             pageNumber={1}
