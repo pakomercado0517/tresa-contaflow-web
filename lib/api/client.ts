@@ -3,6 +3,8 @@ import { logger } from "@/lib/utils/logger";
 interface ApiClientOptions extends RequestInit {
   requireAuth?: boolean;
   skipAuthRetry?: boolean; // Para evitar loops infinitos en el refresh
+  /** Si el servidor responde 404, devolver este valor en lugar de lanzar (ej. métricas vacías para usuarios sin suscripción) */
+  notFoundDefault?: unknown;
 }
 
 export class ApiError extends Error {
@@ -165,6 +167,11 @@ export async function apiClient<T>(
         data
       );
     }
+  }
+
+  // 404 con valor por defecto (ej. métricas vacías para usuarios sin suscripción)
+  if (response.status === 404 && options?.notFoundDefault !== undefined) {
+    return options.notFoundDefault as T;
   }
 
   if (!response.ok) {

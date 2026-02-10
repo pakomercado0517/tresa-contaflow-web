@@ -4,7 +4,7 @@ import type {
   DeleteInvoiceResponse,
   GetInvoicesResponse,
 } from '@/lib/types/invoices';
-import type { PeriodMetricsResponse } from '@/lib/types/metrics';
+import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 import type { TrendPeriodView } from './invoices';
 
 export interface GetInvoicesClientParams {
@@ -51,7 +51,8 @@ export type TrendDataPoint = {
 };
 
 /**
- * Obtiene las métricas del usuario (Client Component only)
+ * Obtiene las métricas del usuario (Client Component only).
+ * Si el backend devuelve 404 (usuario sin suscripción o sin período), devuelve métricas en cero.
  */
 export async function getMetricsClient(
   profileId?: string,
@@ -71,6 +72,7 @@ export async function getMetricsClient(
 
   return apiClient<PeriodMetricsResponse>(endpoint, {
     requireAuth: true,
+    notFoundDefault: DEFAULT_PERIOD_METRICS,
   });
 }
 

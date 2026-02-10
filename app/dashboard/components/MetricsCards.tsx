@@ -58,7 +58,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
       <section className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/20">
+            <div className="bg-primary/20 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
               <Wallet className="text-primary h-5 w-5" />
             </div>
             <div>
@@ -68,21 +68,16 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
               </p>
             </div>
           </div>
-          <Link href={`/dashboard/invoices${invoicesQuery}`}>
-            <Button variant="secondary" size="sm" className="shrink-0">
-              Detalle de Flujo
-            </Button>
-          </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm">
             <CardContent className="relative pt-6">
-              <div className="absolute right-4 top-4">
+              <div className="absolute top-4 right-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-green-500/20">
                   <Check className="h-4 w-4 text-green-500" />
                 </div>
               </div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Ingresos cobrados
               </p>
               <p className="text-2xl font-bold tabular-nums md:text-3xl">
@@ -92,12 +87,12 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
           </Card>
           <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm">
             <CardContent className="relative pt-6">
-              <div className="absolute right-4 top-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/20">
-                  <ArrowUpRight className="h-4 w-4 text-destructive" />
+              <div className="absolute top-4 right-4">
+                <div className="bg-destructive/20 flex h-8 w-8 items-center justify-center rounded-md">
+                  <ArrowUpRight className="text-destructive h-4 w-4" />
                 </div>
               </div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Egresos pagados
               </p>
               <p className="text-2xl font-bold tabular-nums md:text-3xl">
@@ -107,7 +102,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
           </Card>
           <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm lg:col-span-1">
             <CardContent className="relative pt-6">
-              <div className="absolute right-4 top-4">
+              <div className="absolute top-4 right-4">
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-md ${
                     isFlujoNegativo ? 'bg-destructive/20' : 'bg-primary/20'
@@ -118,7 +113,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
                   />
                 </div>
               </div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Flujo neto
               </p>
               <p
@@ -145,10 +140,10 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
       <section className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
-            <FileText className="text-amber-500 h-5 w-5" />
+            <FileText className="h-5 w-5 text-amber-500" />
           </div>
           <h2 className="text-lg font-semibold tracking-tight">Pendientes de Realización</h2>
-          <Badge variant="secondary" className="bg-amber-500/15 text-amber-600 font-medium">
+          <Badge variant="secondary" className="bg-amber-500/15 font-medium text-amber-600">
             Por conciliar
           </Badge>
         </div>
@@ -160,7 +155,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
                   <Check className="h-4 w-4 text-green-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                  <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                     Ingresos por cobrar
                   </p>
                   <p className="text-2xl font-bold tabular-nums md:text-3xl">
@@ -180,17 +175,19 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
           <Card className="border-amber-500/20 bg-[hsl(38,35%,14%)] shadow-sm">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-destructive/20">
-                  <ArrowUpRight className="h-4 w-4 text-destructive" />
+                <div className="bg-destructive/20 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
+                  <ArrowUpRight className="text-destructive h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                  <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                     Egresos por pagar
                   </p>
                   <p className="text-2xl font-bold tabular-nums md:text-3xl">
                     {formatCurrency(pendientes.por_pagar)}
                   </p>
-                  <p className="text-muted-foreground mt-2 text-sm">Gastos autorizados pendientes</p>
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Gastos autorizados pendientes
+                  </p>
                   <Link
                     href={`/dashboard/expenses${expensesQuery}`}
                     className="text-primary mt-2 inline-block text-sm font-medium hover:underline"
@@ -208,7 +205,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
       <section className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
-            <BarChart3 className="text-blue-500 h-5 w-5" />
+            <BarChart3 className="h-5 w-5 text-blue-500" />
           </div>
           <div>
             <h2 className="text-lg font-semibold tracking-tight uppercase">
@@ -223,7 +220,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
           <CardContent className="p-6">
             <div className="grid gap-6 sm:grid-cols-3">
               <div>
-                <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                   Ingresos devengados
                 </p>
                 <p className="text-2xl font-bold tabular-nums md:text-3xl">
@@ -234,21 +231,19 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                   Egresos devengados
                 </p>
                 <p className="text-2xl font-bold tabular-nums md:text-3xl">
                   {formatCurrency(devengado.egresos_devengados)}
                 </p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Suma total de gastos recibidos
-                </p>
+                <p className="text-muted-foreground mt-1 text-sm">Suma total de gastos recibidos</p>
               </div>
               <div>
-                <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                   Resultado devengado
                 </p>
-                <p className="text-2xl font-bold tabular-nums text-blue-400 md:text-3xl">
+                <p className="text-2xl font-bold text-blue-400 tabular-nums md:text-3xl">
                   {formatCurrency(devengado.resultado_devengado)}
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">
