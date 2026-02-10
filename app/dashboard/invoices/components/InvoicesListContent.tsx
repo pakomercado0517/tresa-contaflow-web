@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, X, FileX, Trash2, Download, HandCoins } from 'lucide-react';
+import { Plus, Search, X, FileX, Trash2, Download, HandCoins, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,7 +44,11 @@ import { exportToPDF, normalizeInvoicesForExport } from '@/lib/utils/pdf-export'
 import { exportToExcel } from '@/lib/excel';
 import { useSubscription, hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import { deleteInvoice } from '@/lib/api/invoices.client';
-import { createManualIncomeClient, updateManualIncomeClient } from '@/lib/api/manual-incomes.client';
+import {
+  createManualIncomeClient,
+  updateManualIncomeClient,
+  deleteManualIncomeClient,
+} from '@/lib/api/manual-incomes.client';
 import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { ApiError } from '@/lib/api/client';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
@@ -141,6 +145,10 @@ export function InvoicesListContent({
   const [editingManualIncome, setEditingManualIncome] = useState<ManualIncome | null>(null);
   const [manualIncomeIsPaid, setManualIncomeIsPaid] = useState(false);
   const [manualIncomePaymentDate, setManualIncomePaymentDate] = useState('');
+  const [manualIncomeToDelete, setManualIncomeToDelete] = useState<ManualIncome | null>(null);
+  const [manualIncomeDeleteConfirmation, setManualIncomeDeleteConfirmation] = useState('');
+  const [manualIncomeDeleteError, setManualIncomeDeleteError] = useState<string | null>(null);
+  const [isDeletingManualIncome, setIsDeletingManualIncome] = useState(false);
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.id === selectedProfileId),
@@ -194,6 +202,53 @@ export function InvoicesListContent({
       resetManualIncomeForm();
     },
   });
+
+  const handleDeleteManualIncomeClick = (income: ManualIncome) => {
+    setManualIncomeToDelete(income);
+    setManualIncomeDeleteError(null);
+    setManualIncomeDeleteConfirmation('');
+  };
+
+  const handleCloseManualIncomeDeleteDialog = (open: boolean) => {
+    if (!open && !isDeletingManualIncome) {
+      setManualIncomeToDelete(null);
+      setManualIncomeDeleteError(null);
+      setManualIncomeDeleteConfirmation('');
+    }
+  };
+
+  const getManualIncomeDeleteErrorMessage = (error: unknown): string => {
+    if (error instanceof ApiError) {
+      if (error.status === 403) return 'No tienes permisos para eliminar este ingreso.';
+      if (error.status === 404) return 'El ingreso ya no existe o fue eliminado.';
+      if (error.status === 400) return error.message || 'No se puede eliminar este ingreso.';
+      return error.message || 'Error al eliminar el ingreso.';
+    }
+    return 'Error inesperado al eliminar el ingreso. Por favor intenta nuevamente.';
+  };
+
+  const handleConfirmDeleteManualIncome = async () => {
+    if (!manualIncomeToDelete) return;
+    setIsDeletingManualIncome(true);
+    setManualIncomeDeleteError(null);
+    try {
+      await deleteManualIncomeClient(manualIncomeToDelete.id);
+      setManualIncomeToDelete(null);
+      setManualIncomeDeleteConfirmation('');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['manual-incomes'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
+      ]);
+    } catch (error) {
+      setManualIncomeDeleteError(getManualIncomeDeleteErrorMessage(error));
+    } finally {
+      setIsDeletingManualIncome(false);
+    }
+  };
+
+  const manualIncomeDeleteKeyword = 'ELIMINAR';
+  const isManualIncomeDeleteBlocked =
+    isDeletingManualIncome || manualIncomeDeleteConfirmation.trim() !== manualIncomeDeleteKeyword;
 
   function resetManualIncomeForm() {
     setManualIncomeConcept('');
@@ -835,13 +890,25 @@ export function InvoicesListContent({
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEditManualIncome(income)}
-                          >
-                            Editar
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar ingreso manual"
+                              onClick={() => handleOpenEditManualIncome(income)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Eliminar ingreso manual"
+                              onClick={() => handleDeleteManualIncomeClick(income)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -1091,6 +1158,65 @@ export function InvoicesListContent({
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleteBlocked}>
               {isDeleting ? 'Eliminando...' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Manual Income Dialog */}
+      <Dialog open={!!manualIncomeToDelete} onOpenChange={handleCloseManualIncomeDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar ingreso manual</DialogTitle>
+            <DialogDescription>
+              Esta acción eliminará el ingreso seleccionado y no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          {manualIncomeToDelete && (
+            <div className="rounded-lg border p-4 text-sm">
+              <p className="font-medium">{manualIncomeToDelete.concept}</p>
+              <p className="text-muted-foreground mt-1">
+                Total: {formatCurrency(manualIncomeToDelete.subtotal + manualIncomeToDelete.iva_amount)}
+              </p>
+              <p className="text-muted-foreground text-xs mt-1">
+                Fecha: {new Date(manualIncomeToDelete.fecha).toLocaleDateString('es-MX')}
+              </p>
+            </div>
+          )}
+          {manualIncomeToDelete && (
+            <div className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Para confirmar, escribe{' '}
+                <span className="text-foreground font-mono font-medium">{manualIncomeDeleteKeyword}</span>.
+              </p>
+              <Input
+                value={manualIncomeDeleteConfirmation}
+                onChange={(e) => setManualIncomeDeleteConfirmation(e.target.value)}
+                placeholder={manualIncomeDeleteKeyword}
+                autoComplete="off"
+              />
+            </div>
+          )}
+          {manualIncomeDeleteError && (
+            <Alert variant="destructive">
+              <AlertTitle>No se pudo eliminar</AlertTitle>
+              <AlertDescription>{manualIncomeDeleteError}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleCloseManualIncomeDeleteDialog(false)}
+              disabled={isDeletingManualIncome}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDeleteManualIncome}
+              disabled={isManualIncomeDeleteBlocked}
+            >
+              {isDeletingManualIncome ? 'Eliminando...' : 'Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>
