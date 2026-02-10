@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, FileX, Trash2, HandCoins, Pencil } from 'lucide-react';
+import { FileX, Trash2, HandCoins, Pencil } from 'lucide-react';
 import { InvoicesHeader } from './InvoicesHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
