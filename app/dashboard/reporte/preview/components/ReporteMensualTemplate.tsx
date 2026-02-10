@@ -123,22 +123,22 @@ export function ReporteMensualTemplate({
       )}
       data-reporte-contenido
     >
-      {/* Header: oculto durante captura PDF para que no aparezca en el documento */}
-      {!hideHeaderForCapture && (
-        <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4" data-html-header>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <Building2 className="h-5 w-5" />
+        {/* Header: oculto durante captura PDF para que no aparezca en el documento */}
+        {!hideHeaderForCapture && (
+          <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4" data-html-header>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <span className="text-lg font-semibold text-gray-900">
+                Portal de Reportes Contaflow
+              </span>
             </div>
-            <span className="text-lg font-semibold text-gray-900">
-              Portal de Reportes Contaflow
-            </span>
-          </div>
-          {headerAction}
-        </header>
-      )}
+            {headerAction}
+          </header>
+        )}
 
-      {/* Bloque superior: tarjeta empresa + tarjeta reporte */}
+        {/* Bloque superior: tarjeta empresa + tarjeta reporte */}
       <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
         <Card className="overflow-visible border border-gray-200 bg-gray-50/80 shadow-sm">
           <CardHeader className="pb-2">
@@ -308,7 +308,7 @@ export function ReporteMensualTemplate({
         </div>
       </section>
 
-      {/* ESTADO DE RESULTADOS POR REGIMEN (si hay datos por régimen) */}
+      {/* ESTADO DE RESULTADOS POR REGIMEN: regímenes en flujo continuo dentro del article */}
       {data.estadoPorRegimen && data.estadoPorRegimen.length > 0 && (
         <section className="px-6 pb-6">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
@@ -322,6 +322,7 @@ export function ReporteMensualTemplate({
             {data.estadoPorRegimen.map((regimen, index) => (
               <div
                 key={index}
+                data-reporte-regimen
                 className="rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden"
               >
                 <div className="border-b border-gray-200 bg-gray-100 px-4 py-2.5">
