@@ -1,22 +1,15 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, X, FileX, Trash2, Download, HandCoins, Pencil } from 'lucide-react';
+import { X, FileX, Trash2, HandCoins, Pencil } from 'lucide-react';
+import { InvoicesHeader } from './InvoicesHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -26,7 +19,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { SummaryCards } from './SummaryCards';
-import { ProfileSelector } from './ProfileSelector';
 import { EmptyState } from '@/components/common/EmptyState';
 import {
   Dialog,
@@ -40,9 +32,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Profile } from '@/lib/types/profiles';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
+import { useSubscription, hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import { exportToPDF, normalizeInvoicesForExport } from '@/lib/utils/pdf-export';
 import { exportToExcel } from '@/lib/excel';
-import { useSubscription, hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import { deleteInvoice } from '@/lib/api/invoices.client';
 import {
   createManualIncomeClient,
@@ -82,22 +74,6 @@ interface InvoicesListContentProps {
   tableState?: 'idle' | 'loading' | 'updating';
 }
 
-const MONTHS = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
-
-
 export function InvoicesListContent({
   invoices,
   pagination,
@@ -119,21 +95,18 @@ export function InvoicesListContent({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { subscription } = useSubscription();
-  const canExportExcel = hasFeatureAccess(subscription, "excel_export");
+  const canExportExcel = hasFeatureAccess(subscription, 'excel_export');
   const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
-  const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(
-    initialRegimenFiscal || 'all'
-  );
+  const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(initialRegimenFiscal || 'all');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [lastExportPayload, setLastExportPayload] = useState<Record<string, unknown> | null>(null);
 
   const [addManualIncomeOpen, setAddManualIncomeOpen] = useState(false);
   const [manualIncomeConcept, setManualIncomeConcept] = useState('');
@@ -168,9 +141,7 @@ export function InvoicesListContent({
     if (profileRegimenes.length === 0) return options;
 
     const catalog = regimenesQuery.data?.data ?? [];
-    const descripcionMap = Object.fromEntries(
-      catalog.map((r) => [r.clave, r.descripcion])
-    );
+    const descripcionMap = Object.fromEntries(catalog.map((r) => [r.clave, r.descripcion]));
 
     for (const clave of profileRegimenes) {
       const desc = descripcionMap[clave];
@@ -193,8 +164,13 @@ export function InvoicesListContent({
   });
 
   const updateManualIncomeMutation = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: Parameters<typeof updateManualIncomeClient>[1] }) =>
-      updateManualIncomeClient(id, body),
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: Parameters<typeof updateManualIncomeClient>[1];
+    }) => updateManualIncomeClient(id, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['manual-incomes'] });
       queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] });
@@ -425,7 +401,9 @@ export function InvoicesListContent({
     const fechaStr = manualIncomeFecha;
 
     if (!profileId || !periodId) {
-      setManualIncomeFormError('Faltan perfil o período. Selecciona un perfil y vuelve a intentar.');
+      setManualIncomeFormError(
+        'Faltan perfil o período. Selecciona un perfil y vuelve a intentar.'
+      );
       return;
     }
 
@@ -439,7 +417,7 @@ export function InvoicesListContent({
             iva_amount: ivaNum,
             notes: manualIncomeNotes.trim() || null,
             is_paid: manualIncomeIsPaid,
-            payment_date: manualIncomeIsPaid ? (manualIncomePaymentDate || null) : null,
+            payment_date: manualIncomeIsPaid ? manualIncomePaymentDate || null : null,
           },
         },
         {
@@ -578,9 +556,6 @@ export function InvoicesListContent({
       },
     } as const;
 
-    setLastExportPayload(payload as Record<string, unknown>);
-    console.log('exportToPDF payload:', payload);
-
     await exportToPDF(payload);
   };
 
@@ -588,19 +563,21 @@ export function InvoicesListContent({
     const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
     const normalizedInvoices = normalizeInvoicesForExport(invoices);
     const facturasPagadas = normalizedInvoices.filter(
-      (inv) => inv.tipo === "PUE" || (inv.tipo === "PPD" && (inv.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0) >= inv.total)
+      (inv) =>
+        inv.tipo === 'PUE' ||
+        (inv.tipo === 'PPD' && (inv.pagos?.reduce((s, p) => s + p.monto, 0) ?? 0) >= inv.total)
     );
     const totalFacturado = normalizedInvoices
-      .filter((inv) => inv.tipo !== "COMPLEMENTO_PAGO")
+      .filter((inv) => inv.tipo !== 'COMPLEMENTO_PAGO')
       .reduce((sum, inv) => sum + inv.total, 0);
     const totalPagado = facturasPagadas.reduce((sum, inv) => sum + inv.total, 0);
     const pendientePorPagar = totalFacturado - totalPagado;
 
     await exportToExcel({
-      tipo: "facturas",
+      tipo: 'facturas',
       invoices: normalizedInvoices,
-      profileName: selectedProfile?.nombre || "Todos los perfiles",
-      rfc: selectedProfile?.rfc || "",
+      profileName: selectedProfile?.nombre || 'Todos los perfiles',
+      rfc: selectedProfile?.rfc || '',
       mes: selectedMes,
       año: selectedAño,
       metrics: {
@@ -610,8 +587,8 @@ export function InvoicesListContent({
         pendientePorPagar,
         diferencia: 0,
         totalFacturas: normalizedInvoices.length,
-        facturasPUE: normalizedInvoices.filter((inv) => inv.tipo === "PUE").length,
-        facturasPPD: normalizedInvoices.filter((inv) => inv.tipo === "PPD").length,
+        facturasPUE: normalizedInvoices.filter((inv) => inv.tipo === 'PUE').length,
+        facturasPPD: normalizedInvoices.filter((inv) => inv.tipo === 'PPD').length,
       },
     });
   };
@@ -677,233 +654,220 @@ export function InvoicesListContent({
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de Facturas</h1>
-          <p className="text-muted-foreground mt-2">
-            Administra y monitorea el estado de todos tus CFDI emitidos y recibidos.
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div data-tour="invoices-profile-selector">
-            <ProfileSelector
-              profiles={profiles}
-              selectedProfileId={selectedProfileId}
-              onProfileChange={handleProfileChange}
-            />
-          </div>
-          <Button
-            onClick={handleExportPDF}
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary/10"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Exportar PDF
-          </Button>
-          <Button
-            onClick={handleExportExcel}
-            variant="outline"
-            disabled={!canExportExcel}
-            title={!canExportExcel ? "Disponible en plan Pro" : undefined}
-            className="border-primary text-primary hover:bg-primary/10 disabled:opacity-60"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Exportar Excel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleOpenAddManualIncome}
-            disabled={!canAddManualIncome}
-            title={
-              canAddManualIncome
-                ? 'Registrar un ingreso sin factura CFDI'
-                : manualIncomeDisabledReason === 'no_profile'
-                  ? 'Selecciona un perfil (no «Todos») para agregar ingresos manuales'
-                  : 'El backend debe devolver el ID del período en GET /api/metrics (con profile_id, mes y año) para habilitar ingresos manuales'
-            }
-            className="border-primary/70 text-primary hover:bg-primary/10"
-          >
-            <HandCoins className="mr-2 h-4 w-4" />
-            Ingreso manual
-          </Button>
-          <Link href="/dashboard/invoices/upload">
-            <Button data-tour="invoices-upload-button" className="bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Subir Facturas
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Visual log del payload de exportación (temporal) */}
-      {lastExportPayload && (
-        <div className="bg-card border-border rounded-lg border p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-medium">Último payload para exportación PDF</p>
-            <Button variant="ghost" onClick={() => setLastExportPayload(null)}>
-              Ocultar
-            </Button>
-          </div>
-          <pre className="max-h-48 overflow-auto text-xs whitespace-pre-wrap">
-            {JSON.stringify(lastExportPayload, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {/* Summary Cards */}
-      <SummaryCards
-        totalCount={metrics.totalFacturas}
-        pendingPaymentCount={metrics.facturasPendientesPago}
-        totalIncome={metrics.totalFacturado}
+    <div className="w-full">
+      <InvoicesHeader
+        profiles={profiles}
+        selectedProfileId={selectedProfileId}
+        onProfileChange={handleProfileChange}
+        selectedMes={selectedMes}
+        onMesChange={setSelectedMes}
+        selectedAño={selectedAño}
+        onAñoChange={setSelectedAño}
+        selectedRegimenFiscal={selectedRegimenFiscal}
+        onRegimenFiscalChange={setSelectedRegimenFiscal}
+        regimenOptions={regimenOptions}
+        isRegimenDisabled={!selectedProfile?.regimenes_fiscales?.length}
+        search={search}
+        onSearchChange={setSearch}
+        onClearFilters={handleClearFilters}
+        onExportPDF={handleExportPDF}
+        onExportExcel={handleExportExcel}
+        canExportExcel={canExportExcel}
+        onAddManualIncome={handleOpenAddManualIncome}
+        canAddManualIncome={canAddManualIncome}
+        manualIncomeDisabledReason={manualIncomeDisabledReason}
       />
 
-      {/* Search and Filters */}
-      <div className="bg-card flex flex-col gap-4 rounded-lg border p-4 md:flex-row">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            placeholder="Buscar por RFC, Nombre o UUID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pr-9 pl-9"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <Select value={selectedMes.toString()} onValueChange={(v) => setSelectedMes(Number(v))}>
-          <SelectTrigger className="w-full md:w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {MONTHS.map((month, index) => (
-              <SelectItem key={index} value={(index + 1).toString()}>
-                {month}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedAño.toString()} onValueChange={(v) => setSelectedAño(Number(v))}>
-          <SelectTrigger className="w-full md:w-[100px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={selectedRegimenFiscal}
-          onValueChange={setSelectedRegimenFiscal}
-          disabled={!selectedProfile?.regimenes_fiscales?.length}
-        >
-          <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Régimen: Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            {regimenOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.value === 'all' ? 'Régimen: Todos' : opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={handleClearFilters} variant="outline" className="w-full md:w-auto">
-          <X className="mr-2 h-4 w-4" />
-          Limpiar
-        </Button>
-      </div>
+      <div className="space-y-6 p-4 md:p-6 lg:p-8">
+        {/* Summary Cards */}
+        <SummaryCards
+          totalCount={metrics.totalFacturas}
+          pendingPaymentCount={metrics.facturasPendientesPago}
+          totalIncome={metrics.totalFacturado}
+        />
 
-      {/* Ingresos manuales */}
-      {canAddManualIncome ? (
-        <div className="bg-card overflow-hidden rounded-lg border">
-          <div className="border-b px-4 py-3">
-            <h2 className="text-muted-foreground text-sm font-medium">Ingresos manuales (sin factura CFDI)</h2>
+        {/* Ingresos manuales */}
+        {canAddManualIncome ? (
+          <div className="bg-card overflow-hidden rounded-lg border">
+            <div className="border-b px-4 py-3">
+              <h2 className="text-muted-foreground text-sm font-medium">
+                Ingresos manuales (sin factura CFDI)
+              </h2>
+            </div>
+            <div className="relative overflow-x-auto">
+              {manualIncomesState === 'loading' ? (
+                <div className="p-6">
+                  <TableRowsSkeleton rows={3} />
+                </div>
+              ) : manualIncomes.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState
+                    icon={HandCoins}
+                    title="Sin ingresos manuales"
+                    description="Los ingresos que registres aquí no tienen factura CFDI. Usa el botón «Ingreso manual» para agregar uno."
+                    actionLabel="Agregar ingreso manual"
+                    onAction={handleOpenAddManualIncome}
+                    variant="empty"
+                    compact
+                  />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[180px]">Concepto</TableHead>
+                      <TableHead className="min-w-[100px]">Fecha</TableHead>
+                      <TableHead className="min-w-[100px] text-right">Subtotal</TableHead>
+                      <TableHead className="min-w-[80px] text-right">IVA</TableHead>
+                      <TableHead className="min-w-[100px] text-right">Total</TableHead>
+                      <TableHead className="min-w-[90px]">Cobrado</TableHead>
+                      <TableHead className="min-w-[80px] text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {manualIncomes.map((income) => {
+                      const total = income.subtotal + income.iva_amount;
+                      return (
+                        <TableRow key={income.id}>
+                          <TableCell className="font-medium">{income.concept}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(income.fecha).toLocaleDateString('es-MX', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatCurrency(income.subtotal)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-right tabular-nums">
+                            {formatCurrency(income.iva_amount)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">
+                            {formatCurrency(total)}
+                          </TableCell>
+                          <TableCell>
+                            {income.is_paid ? (
+                              <Badge className="bg-green-500/10 text-green-600">Sí</Badge>
+                            ) : (
+                              <Badge variant="outline">No</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Editar ingreso manual"
+                                onClick={() => handleOpenEditManualIncome(income)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Eliminar ingreso manual"
+                                onClick={() => handleDeleteManualIncomeClick(income)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+              {manualIncomesState === 'updating' && manualIncomes.length > 0 && (
+                <div className="bg-background/80 absolute inset-0 backdrop-blur-[1px]" />
+              )}
+            </div>
           </div>
-          <div className="relative overflow-x-auto">
-            {manualIncomesState === 'loading' ? (
-              <div className="p-6">
-                <TableRowsSkeleton rows={3} />
-              </div>
-            ) : manualIncomes.length === 0 ? (
-              <div className="p-6">
-                <EmptyState
-                  icon={HandCoins}
-                  title="Sin ingresos manuales"
-                  description="Los ingresos que registres aquí no tienen factura CFDI. Usa el botón «Ingreso manual» para agregar uno."
-                  actionLabel="Agregar ingreso manual"
-                  onAction={handleOpenAddManualIncome}
-                  variant="empty"
-                  compact
-                />
-              </div>
-            ) : (
+        ) : (
+          <div className="bg-muted/30 rounded-lg border border-dashed p-4 text-center">
+            <p className="text-muted-foreground text-sm">
+              {manualIncomeDisabledReason === 'no_profile'
+                ? 'Selecciona un perfil en el selector de arriba (no «Todos») para ver y agregar ingresos manuales.'
+                : 'No se obtuvo un período para este perfil y mes/año. El backend debe devolver el ID del período en GET /api/metrics cuando se envía profile_id, mes y año.'}
+            </p>
+          </div>
+        )}
+
+        {/* Invoices Table */}
+        <div data-tour="invoices-table" className="bg-card overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto">
+            <div className="relative max-h-[600px] overflow-y-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                   <TableRow>
-                    <TableHead className="min-w-[180px]">Concepto</TableHead>
-                    <TableHead className="min-w-[100px]">Fecha</TableHead>
-                    <TableHead className="min-w-[100px] text-right">Subtotal</TableHead>
-                    <TableHead className="min-w-[80px] text-right">IVA</TableHead>
-                    <TableHead className="min-w-[100px] text-right">Total</TableHead>
-                    <TableHead className="min-w-[90px]">Cobrado</TableHead>
-                    <TableHead className="min-w-[80px] text-right">Acciones</TableHead>
+                    <TableHead className="min-w-[200px]">UUID / FOLIO</TableHead>
+                    <TableHead className="min-w-[150px]">FECHA</TableHead>
+                    <TableHead className="min-w-[200px]">EMISOR</TableHead>
+                    <TableHead className="min-w-[200px]">RECEPTOR</TableHead>
+                    <TableHead className="min-w-[110px] text-right">MONTO</TableHead>
+                    <TableHead className="min-w-[100px] text-right">IVA TRASL.</TableHead>
+                    <TableHead className="min-w-[95px] text-right">RET. IVA</TableHead>
+                    <TableHead className="min-w-[95px] text-right">RET. ISR</TableHead>
+                    <TableHead className="min-w-[100px]">ESTADO</TableHead>
+                    <TableHead className="min-w-[100px] text-right">ACCIONES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {manualIncomes.map((income) => {
-                    const total = income.subtotal + income.iva_amount;
-                    return (
-                      <TableRow key={income.id}>
-                        <TableCell className="font-medium">{income.concept}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {new Date(income.fecha).toLocaleDateString('es-MX', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
+                  {invoices.length > 0 ? (
+                    invoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-mono text-sm">
+                          <div className="max-w-[200px] truncate" title={invoice.uuid}>
+                            {invoice.uuid || `F-${invoice.id.slice(-4)}`}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatCurrency(income.subtotal)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {formatCurrency(income.iva_amount)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium tabular-nums">
-                          {formatCurrency(total)}
+                        <TableCell className="text-sm whitespace-nowrap">
+                          {formatDate(invoice.fecha)}
                         </TableCell>
                         <TableCell>
-                          {income.is_paid ? (
-                            <Badge className="bg-green-500/10 text-green-600">Sí</Badge>
-                          ) : (
-                            <Badge variant="outline">No</Badge>
-                          )}
+                          <div className="max-w-[200px]">
+                            <p
+                              className="truncate text-sm font-medium"
+                              title={invoice.nombre_emisor}
+                            >
+                              {invoice.nombre_emisor}
+                            </p>
+                            <p className="text-muted-foreground text-xs">{invoice.rfc_emisor}</p>
+                          </div>
                         </TableCell>
+                        <TableCell>
+                          <div className="max-w-[200px]">
+                            <p
+                              className="truncate text-sm font-medium"
+                              title={invoice.nombre_receptor}
+                            >
+                              {invoice.nombre_receptor}
+                            </p>
+                            <p className="text-muted-foreground text-xs">{invoice.rfc_receptor}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
+                          {formatCurrency(invoice.subtotal)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
+                          {formatCurrency(invoice.iva_amount ?? invoice.iva ?? 0)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
+                          {formatCurrency(invoice.retencion_iva_amount ?? 0)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
+                          {formatCurrency(invoice.retencion_isr_amount ?? 0)}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(invoice)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              title="Editar ingreso manual"
-                              onClick={() => handleOpenEditManualIncome(income)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Eliminar ingreso manual"
-                              onClick={() => handleDeleteManualIncomeClick(income)}
+                              title="Eliminar factura"
+                              onClick={() => handleDeleteClick(invoice)}
                               className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -911,201 +875,106 @@ export function InvoicesListContent({
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-            {manualIncomesState === 'updating' && manualIncomes.length > 0 && (
-              <div className="bg-background/80 absolute inset-0 backdrop-blur-[1px]" />
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="bg-muted/30 rounded-lg border border-dashed p-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            {manualIncomeDisabledReason === 'no_profile'
-              ? 'Selecciona un perfil en el selector de arriba (no «Todos») para ver y agregar ingresos manuales.'
-              : 'No se obtuvo un período para este perfil y mes/año. El backend debe devolver el ID del período en GET /api/metrics cuando se envía profile_id, mes y año.'}
-          </p>
-        </div>
-      )}
-
-      {/* Invoices Table */}
-      <div data-tour="invoices-table" className="bg-card overflow-hidden rounded-lg border">
-        <div className="overflow-x-auto">
-          <div className="relative max-h-[600px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-                <TableRow>
-                  <TableHead className="min-w-[200px]">UUID / FOLIO</TableHead>
-                  <TableHead className="min-w-[150px]">FECHA</TableHead>
-                  <TableHead className="min-w-[200px]">EMISOR</TableHead>
-                  <TableHead className="min-w-[200px]">RECEPTOR</TableHead>
-                  <TableHead className="min-w-[110px] text-right">MONTO</TableHead>
-                  <TableHead className="min-w-[100px] text-right">IVA TRASL.</TableHead>
-                  <TableHead className="min-w-[95px] text-right">RET. IVA</TableHead>
-                  <TableHead className="min-w-[95px] text-right">RET. ISR</TableHead>
-                  <TableHead className="min-w-[100px]">ESTADO</TableHead>
-                  <TableHead className="min-w-[100px] text-right">ACCIONES</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.length > 0 ? (
-                  invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-mono text-sm">
-                        <div className="max-w-[200px] truncate" title={invoice.uuid}>
-                          {invoice.uuid || `F-${invoice.id.slice(-4)}`}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm whitespace-nowrap">
-                        {formatDate(invoice.fecha)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[200px]">
-                          <p className="truncate text-sm font-medium" title={invoice.nombre_emisor}>
-                            {invoice.nombre_emisor}
-                          </p>
-                          <p className="text-muted-foreground text-xs">{invoice.rfc_emisor}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[200px]">
-                          <p
-                            className="truncate text-sm font-medium"
-                            title={invoice.nombre_receptor}
-                          >
-                            {invoice.nombre_receptor}
-                          </p>
-                          <p className="text-muted-foreground text-xs">{invoice.rfc_receptor}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums whitespace-nowrap">
-                        {formatCurrency(invoice.subtotal)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        {formatCurrency(invoice.iva_amount ?? invoice.iva ?? 0)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        {formatCurrency(invoice.retencion_iva_amount ?? 0)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        {formatCurrency(invoice.retencion_isr_amount ?? 0)}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(invoice)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Eliminar factura"
-                            onClick={() => handleDeleteClick(invoice)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={10} className="py-8">
+                        <EmptyState
+                          icon={FileX}
+                          title={
+                            search
+                              ? `No se encontraron facturas que coincidan con "${search}"`
+                              : 'No se encontraron facturas'
+                          }
+                          description={
+                            search
+                              ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
+                              : 'Comienza subiendo archivos XML de facturas'
+                          }
+                          actionLabel={search ? undefined : 'Subir Facturas'}
+                          actionHref={search ? undefined : '/dashboard/invoices/upload'}
+                          variant="search"
+                          compact
+                        />
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={10} className="py-8">
-                      <EmptyState
-                        icon={FileX}
-                        title={
-                          search
-                            ? `No se encontraron facturas que coincidan con "${search}"`
-                            : 'No se encontraron facturas'
-                        }
-                        description={
-                          search
-                            ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
-                            : 'Comienza subiendo archivos XML de facturas'
-                        }
-                        actionLabel={search ? undefined : 'Subir Facturas'}
-                        actionHref={search ? undefined : '/dashboard/invoices/upload'}
-                        variant="search"
-                        compact
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
 
-            {tableState !== 'idle' && (
-              <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
-                <TableRowsSkeleton rows={10} />
-              </div>
-            )}
+              {tableState !== 'idle' && (
+                <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
+                  <TableRowsSkeleton rows={10} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">
-            Mostrando {(pagination.page - 1) * pagination.limit + 1}-
-            {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}{' '}
-            facturas
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              ←
-            </Button>
-            {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
-              let pageNum;
-              if (pagination.totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (pagination.page <= 3) {
-                pageNum = i + 1;
-              } else if (pagination.page >= pagination.totalPages - 2) {
-                pageNum = pagination.totalPages - 4 + i;
-              } else {
-                pageNum = pagination.page - 2 + i;
-              }
-              return (
-                <Button
-                  key={pageNum}
-                  variant={pagination.page === pageNum ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-            {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
-              <span className="text-muted-foreground px-2">...</span>
-            )}
-            {pagination.totalPages > 5 && (
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Mostrando {(pagination.page - 1) * pagination.limit + 1}-
+              {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}{' '}
+              facturas
+            </p>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(pagination.totalPages)}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
               >
-                {pagination.totalPages}
+                ←
               </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
-            >
-              →
-            </Button>
+              {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pagination.page === pageNum ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+              {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
+                <span className="text-muted-foreground px-2">...</span>
+              )}
+              {pagination.totalPages > 5 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.totalPages)}
+                >
+                  {pagination.totalPages}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.totalPages}
+              >
+                →
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      {/* end space-y-6 content wrapper */}
 
       {/* Delete Invoice Dialog */}
       <Dialog open={!!invoiceToDelete} onOpenChange={handleCloseDeleteDialog}>
@@ -1176,9 +1045,10 @@ export function InvoicesListContent({
             <div className="rounded-lg border p-4 text-sm">
               <p className="font-medium">{manualIncomeToDelete.concept}</p>
               <p className="text-muted-foreground mt-1">
-                Total: {formatCurrency(manualIncomeToDelete.subtotal + manualIncomeToDelete.iva_amount)}
+                Total:{' '}
+                {formatCurrency(manualIncomeToDelete.subtotal + manualIncomeToDelete.iva_amount)}
               </p>
-              <p className="text-muted-foreground text-xs mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Fecha: {new Date(manualIncomeToDelete.fecha).toLocaleDateString('es-MX')}
               </p>
             </div>
@@ -1187,7 +1057,10 @@ export function InvoicesListContent({
             <div className="space-y-2 text-sm">
               <p className="text-muted-foreground">
                 Para confirmar, escribe{' '}
-                <span className="text-foreground font-mono font-medium">{manualIncomeDeleteKeyword}</span>.
+                <span className="text-foreground font-mono font-medium">
+                  {manualIncomeDeleteKeyword}
+                </span>
+                .
               </p>
               <Input
                 value={manualIncomeDeleteConfirmation}

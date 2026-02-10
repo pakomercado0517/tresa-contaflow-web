@@ -1,10 +1,9 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, FileText, X, FileX, Trash2, Download, Receipt } from 'lucide-react';
+import { FileX, Trash2, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,7 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ExpensesSummaryCards } from './ExpensesSummaryCards';
-import { ProfileSelector } from './ProfileSelector';
+import { ExpensesHeader } from './ExpensesHeader';
 import { ManualExpenseDialog } from './ManualExpenseDialog';
 import { EmptyState } from '@/components/common/EmptyState';
 import {
@@ -75,21 +74,6 @@ interface ExpensesListContentProps {
   initialSearch?: string;
   tableState?: 'idle' | 'loading' | 'updating';
 }
-
-const MONTHS = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
 
 const CATEGORIES = [
   { value: 'all', label: 'Todas las categorías' },
@@ -435,7 +419,7 @@ export function ExpensesListContent({
         subtotal: subtotalNum,
         iva_amount: ivaNum,
         is_paid: editIsPaid,
-        payment_date: editIsPaid ? (editPaymentDate || null) : null,
+        payment_date: editIsPaid ? editPaymentDate || null : null,
         categoria: editCategoria || null,
       });
       await Promise.all([
@@ -503,7 +487,9 @@ export function ExpensesListContent({
   // Calcular métricas desde los gastos filtrados
   const xmlExpenses = expenses.filter((e) => e.tipo_origen === 'XML');
   const manualExpenses =
-    periodId != null ? manualExpensesFromPeriod : expenses.filter((e) => e.tipo_origen === 'MANUAL');
+    periodId != null
+      ? manualExpensesFromPeriod
+      : expenses.filter((e) => e.tipo_origen === 'MANUAL');
   const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
   const canAddManualExpense = !!profileId && !!periodId;
 
@@ -515,616 +501,521 @@ export function ExpensesListContent({
   }, 0);
 
   return (
-    <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de Gastos</h1>
-          <p className="text-muted-foreground mt-2">
-            Administra y monitorea todos tus gastos y egresos fiscales.
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div data-tour="expenses-profile-selector">
-            <ProfileSelector
-              profiles={profiles}
-              selectedProfileId={selectedProfileId}
-              onProfileChange={handleProfileChange}
-            />
-          </div>
-          <Button
-            onClick={handleExportPDF}
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary/10"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Exportar PDF
-          </Button>
-          <Button
-            onClick={handleExportExcel}
-            variant="outline"
-            disabled={!canExportExcel}
-            title={!canExportExcel ? 'Disponible en plan Pro' : undefined}
-            className="border-primary text-primary hover:bg-primary/10 disabled:opacity-60"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Exportar Excel
-          </Button>
-          <Button
-            data-tour="expenses-manual-button"
-            variant="outline"
-            className="border-primary/20 hover:bg-primary/10"
-            disabled={!canAddManualExpense}
-            title={
-              canAddManualExpense
-                ? 'Registrar un gasto sin factura CFDI'
-                : manualExpenseDisabledReason === 'no_profile'
-                  ? 'Selecciona un perfil (no «Todos») para agregar gastos manuales'
-                  : 'El backend debe devolver el ID del período en métricas para habilitar gastos manuales'
-            }
-            onClick={() => setIsManualExpenseDialogOpen(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Gasto Manual
-          </Button>
-          <Link href="/dashboard/expenses/upload">
-            <Button data-tour="expenses-upload-button" className="bg-primary hover:bg-primary/90">
-              <FileText className="mr-2 h-4 w-4" />
-              Cargar Gastos XML
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <ExpensesSummaryCards
-        totalExpenses={totalExpensesAmount}
-        xmlProcessed={xmlExpenses.length}
-        validXmlPercentage={
-          xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0
-        }
-        manualExpenses={manualExpenses.length}
-        selectedMonth={selectedMes}
+    <>
+      <ExpensesHeader
+        profiles={profiles}
+        selectedProfileId={selectedProfileId}
+        onProfileChange={handleProfileChange}
+        selectedMes={selectedMes}
+        onMesChange={(m) => setSelectedMes(m)}
+        selectedAño={selectedAño}
+        onAñoChange={(a) => setSelectedAño(a)}
+        selectedCategoria={selectedCategoria}
+        onCategoriaChange={setSelectedCategoria}
+        categories={CATEGORIES}
+        search={search}
+        onSearchChange={setSearch}
+        onClearFilters={handleClearFilters}
+        onExportPDF={handleExportPDF}
+        onExportExcel={handleExportExcel}
+        canExportExcel={canExportExcel}
+        onAddManualExpense={() => setIsManualExpenseDialogOpen(true)}
+        canAddManualExpense={canAddManualExpense}
+        manualExpenseDisabledReason={manualExpenseDisabledReason}
       />
 
-      {/* Search and Filters */}
-      <div className="bg-card flex flex-col gap-4 rounded-lg border p-4 md:flex-row">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            placeholder="Concepto, Emisor o UUID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pr-9 pl-9"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
-          <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="CATEGORÍA" />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedMes.toString()} onValueChange={(v) => setSelectedMes(Number(v))}>
-          <SelectTrigger className="w-full md:w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {MONTHS.map((month, index) => (
-              <SelectItem key={index} value={(index + 1).toString()}>
-                {month}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedAño.toString()} onValueChange={(v) => setSelectedAño(Number(v))}>
-          <SelectTrigger className="w-full md:w-[100px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={handleClearFilters} variant="outline" className="w-full md:w-auto">
-          <X className="mr-2 h-4 w-4" />
-          Limpiar
-        </Button>
-      </div>
+      <div className="space-y-6 p-4 md:p-6 lg:p-8">
+        {/* Summary Cards */}
+        <ExpensesSummaryCards
+          totalExpenses={totalExpensesAmount}
+          xmlProcessed={xmlExpenses.length}
+          validXmlPercentage={
+            xmlExpenses.length > 0 ? (validXmlExpenses.length / xmlExpenses.length) * 100 : 0
+          }
+          manualExpenses={manualExpenses.length}
+          selectedMonth={selectedMes}
+        />
 
-      {/* Gastos manuales del período */}
-      {canAddManualExpense ? (
-        <div className="bg-card overflow-hidden rounded-lg border">
-          <div className="border-b px-4 py-3">
-            <h2 className="text-muted-foreground text-sm font-medium">
-              Gastos manuales (sin factura CFDI)
-            </h2>
+        {/* Gastos manuales del período */}
+        {canAddManualExpense ? (
+          <div className="bg-card overflow-hidden rounded-lg border">
+            <div className="border-b px-4 py-3">
+              <h2 className="text-muted-foreground text-sm font-medium">
+                Gastos manuales (sin factura CFDI)
+              </h2>
+            </div>
+            <div className="relative overflow-x-auto">
+              {manualExpensesState === 'loading' ? (
+                <div className="p-6">
+                  <TableRowsSkeleton rows={3} />
+                </div>
+              ) : manualExpensesFromPeriod.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState
+                    icon={Receipt}
+                    title="Sin gastos manuales"
+                    description="Los gastos que registres aquí no tienen factura CFDI. Usa el botón «Gasto manual» para agregar uno."
+                    actionLabel="Agregar gasto manual"
+                    onAction={() => setIsManualExpenseDialogOpen(true)}
+                    variant="empty"
+                    compact
+                  />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-45">Concepto</TableHead>
+                      <TableHead className="min-w-25">Fecha</TableHead>
+                      <TableHead className="min-w-25 text-right">Subtotal</TableHead>
+                      <TableHead className="min-w-20 text-right">IVA</TableHead>
+                      <TableHead className="min-w-25 text-right">Total</TableHead>
+                      <TableHead className="min-w-22.5">Pagado</TableHead>
+                      <TableHead className="min-w-20 text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {manualExpensesFromPeriod.map((expense) => {
+                      const total = expense.subtotal + (expense.iva_amount ?? expense.iva ?? 0);
+                      return (
+                        <TableRow key={expense.id}>
+                          <TableCell className="font-medium">
+                            {expense.concepto || 'Sin concepto'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {formatDate(expense.fecha)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatCurrency(expense.subtotal)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-right tabular-nums">
+                            {formatCurrency(expense.iva_amount ?? expense.iva ?? 0)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">
+                            {formatCurrency(total)}
+                          </TableCell>
+                          <TableCell>
+                            {expense.is_paid ? (
+                              <Badge className="bg-green-500/10 text-green-600">Sí</Badge>
+                            ) : (
+                              <Badge variant="outline">No</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleOpenEditManual(expense)}
+                              >
+                                Editar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteClick(expense)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+              {manualExpensesState === 'updating' && manualExpensesFromPeriod.length > 0 && (
+                <div className="bg-background/80 absolute inset-0 backdrop-blur-[1px]" />
+              )}
+            </div>
           </div>
-          <div className="relative overflow-x-auto">
-            {manualExpensesState === 'loading' ? (
-              <div className="p-6">
-                <TableRowsSkeleton rows={3} />
-              </div>
-            ) : manualExpensesFromPeriod.length === 0 ? (
-              <div className="p-6">
-                <EmptyState
-                  icon={Receipt}
-                  title="Sin gastos manuales"
-                  description="Los gastos que registres aquí no tienen factura CFDI. Usa el botón «Gasto manual» para agregar uno."
-                  actionLabel="Agregar gasto manual"
-                  onAction={() => setIsManualExpenseDialogOpen(true)}
-                  variant="empty"
-                  compact
-                />
-              </div>
-            ) : (
+        ) : (
+          <div className="bg-muted/30 rounded-lg border border-dashed p-4 text-center">
+            <p className="text-muted-foreground text-sm">
+              {manualExpenseDisabledReason === 'no_profile'
+                ? 'Selecciona un perfil en el selector de arriba (no «Todos») para ver y agregar gastos manuales.'
+                : 'No se obtuvo un período para este perfil y mes/año. El backend debe devolver el ID del período en métricas.'}
+            </p>
+          </div>
+        )}
+
+        {/* Expenses Table */}
+        <div data-tour="expenses-table" className="bg-card overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto">
+            <div className="relative max-h-150 overflow-y-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                   <TableRow>
-                    <TableHead className="min-w-[180px]">Concepto</TableHead>
-                    <TableHead className="min-w-[100px]">Fecha</TableHead>
-                    <TableHead className="min-w-[100px] text-right">Subtotal</TableHead>
-                    <TableHead className="min-w-[80px] text-right">IVA</TableHead>
-                    <TableHead className="min-w-[100px] text-right">Total</TableHead>
-                    <TableHead className="min-w-[90px]">Pagado</TableHead>
-                    <TableHead className="min-w-[80px] text-right">Acciones</TableHead>
+                    <TableHead className="min-w-30">FECHA</TableHead>
+                    <TableHead className="min-w-62.5">EMISOR / CONCEPTO</TableHead>
+                    <TableHead className="min-w-37.5">CATEGORÍA</TableHead>
+                    <TableHead className="min-w-25">ORIGEN</TableHead>
+                    <TableHead className="min-w-37.5">UUID</TableHead>
+                    <TableHead className="min-w-27.5 text-right">MONTO</TableHead>
+                    <TableHead className="min-w-25 text-right">IVA TRASL.</TableHead>
+                    <TableHead className="min-w-23.75 text-right">RET. IVA</TableHead>
+                    <TableHead className="min-w-23.75 text-right">RET. ISR</TableHead>
+                    <TableHead className="min-w-30">ESTADO PAGO</TableHead>
+                    <TableHead className="min-w-25 text-right">ACCIONES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {manualExpensesFromPeriod.map((expense) => {
-                    const total = expense.subtotal + (expense.iva_amount ?? expense.iva ?? 0);
-                    return (
+                  {expenses.length > 0 ? (
+                    expenses.map((expense) => (
                       <TableRow key={expense.id}>
-                        <TableCell className="font-medium">
-                          {expense.concepto || 'Sin concepto'}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
+                        <TableCell className="text-sm whitespace-nowrap">
                           {formatDate(expense.fecha)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell>
+                          <div className="max-w-62.5">
+                            <p
+                              className="truncate text-sm font-medium"
+                              title={expense.nombre_emisor || 'Sin emisor'}
+                            >
+                              {expense.nombre_emisor || 'Sin emisor'}
+                            </p>
+                            <p
+                              className="text-muted-foreground truncate text-xs"
+                              title={expense.concepto || 'Sin concepto'}
+                            >
+                              {expense.concepto || 'Sin concepto'}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getCategoryBadge(expense.categoria)}</TableCell>
+                        <TableCell>{getOriginBadge(expense.tipo_origen)}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          <div className="max-w-37.5 truncate" title={expense.uuid || '--'}>
+                            {expense.uuid
+                              ? `${expense.uuid.slice(0, 8)}...${expense.uuid.slice(-4)}`
+                              : '--'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
                           {formatCurrency(expense.subtotal)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                        <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
                           {formatCurrency(expense.iva_amount ?? expense.iva ?? 0)}
                         </TableCell>
-                        <TableCell className="text-right font-medium tabular-nums">
-                          {formatCurrency(total)}
+                        <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
+                          {formatCurrency(expense.retencion_iva_amount ?? 0)}
                         </TableCell>
-                        <TableCell>
-                          {expense.is_paid ? (
-                            <Badge className="bg-green-500/10 text-green-600">Sí</Badge>
-                          ) : (
-                            <Badge variant="outline">No</Badge>
-                          )}
+                        <TableCell className="text-muted-foreground text-right whitespace-nowrap tabular-nums">
+                          {formatCurrency(expense.retencion_isr_amount ?? 0)}
                         </TableCell>
+                        <TableCell>{getPaymentStatusBadge(expense)}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenEditManual(expense)}
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
+                              size="icon"
+                              title="Eliminar gasto"
                               onClick={() => handleDeleteClick(expense)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
-                              Eliminar
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-            {manualExpensesState === 'updating' && manualExpensesFromPeriod.length > 0 && (
-              <div className="bg-background/80 absolute inset-0 backdrop-blur-[1px]" />
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="bg-muted/30 rounded-lg border border-dashed p-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            {manualExpenseDisabledReason === 'no_profile'
-              ? 'Selecciona un perfil en el selector de arriba (no «Todos») para ver y agregar gastos manuales.'
-              : 'No se obtuvo un período para este perfil y mes/año. El backend debe devolver el ID del período en métricas.'}
-          </p>
-        </div>
-      )}
-
-      {/* Expenses Table */}
-      <div data-tour="expenses-table" className="bg-card overflow-hidden rounded-lg border">
-        <div className="overflow-x-auto">
-          <div className="relative max-h-[600px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-                <TableRow>
-                  <TableHead className="min-w-[120px]">FECHA</TableHead>
-                  <TableHead className="min-w-[250px]">EMISOR / CONCEPTO</TableHead>
-                  <TableHead className="min-w-[150px]">CATEGORÍA</TableHead>
-                  <TableHead className="min-w-[100px]">ORIGEN</TableHead>
-                  <TableHead className="min-w-[150px]">UUID</TableHead>
-                  <TableHead className="min-w-[110px] text-right">MONTO</TableHead>
-                  <TableHead className="min-w-[100px] text-right">IVA TRASL.</TableHead>
-                  <TableHead className="min-w-[95px] text-right">RET. IVA</TableHead>
-                  <TableHead className="min-w-[95px] text-right">RET. ISR</TableHead>
-                  <TableHead className="min-w-[120px]">ESTADO PAGO</TableHead>
-                  <TableHead className="min-w-[100px] text-right">ACCIONES</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.length > 0 ? (
-                  expenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell className="text-sm whitespace-nowrap">
-                        {formatDate(expense.fecha)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[250px]">
-                          <p
-                            className="truncate text-sm font-medium"
-                            title={expense.nombre_emisor || 'Sin emisor'}
-                          >
-                            {expense.nombre_emisor || 'Sin emisor'}
-                          </p>
-                          <p
-                            className="text-muted-foreground truncate text-xs"
-                            title={expense.concepto || 'Sin concepto'}
-                          >
-                            {expense.concepto || 'Sin concepto'}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getCategoryBadge(expense.categoria)}</TableCell>
-                      <TableCell>{getOriginBadge(expense.tipo_origen)}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                        <div className="max-w-[150px] truncate" title={expense.uuid || '--'}>
-                          {expense.uuid
-                            ? `${expense.uuid.slice(0, 8)}...${expense.uuid.slice(-4)}`
-                            : '--'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums whitespace-nowrap">
-                        {formatCurrency(expense.subtotal)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        {formatCurrency(expense.iva_amount ?? expense.iva ?? 0)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        {formatCurrency(expense.retencion_iva_amount ?? 0)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        {formatCurrency(expense.retencion_isr_amount ?? 0)}
-                      </TableCell>
-                      <TableCell>{getPaymentStatusBadge(expense)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Eliminar gasto"
-                            onClick={() => handleDeleteClick(expense)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={11} className="py-8">
+                        <EmptyState
+                          icon={FileX}
+                          title={
+                            search
+                              ? `No se encontraron gastos que coincidan con "${search}"`
+                              : 'No se encontraron gastos'
+                          }
+                          description={
+                            search
+                              ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
+                              : 'Comienza subiendo archivos XML o creando gastos manuales'
+                          }
+                          actionLabel={search ? undefined : 'Subir Gastos XML'}
+                          actionHref={search ? undefined : '/dashboard/expenses/upload'}
+                          variant="search"
+                          compact
+                        />
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={11} className="py-8">
-                      <EmptyState
-                        icon={FileX}
-                        title={
-                          search
-                            ? `No se encontraron gastos que coincidan con "${search}"`
-                            : 'No se encontraron gastos'
-                        }
-                        description={
-                          search
-                            ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
-                            : 'Comienza subiendo archivos XML o creando gastos manuales'
-                        }
-                        actionLabel={search ? undefined : 'Subir Gastos XML'}
-                        actionHref={search ? undefined : '/dashboard/expenses/upload'}
-                        variant="search"
-                        compact
-                      />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
 
-            {tableState !== 'idle' && (
-              <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
-                <TableRowsSkeleton rows={10} />
-              </div>
-            )}
+              {tableState !== 'idle' && (
+                <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
+                  <TableRowsSkeleton rows={10} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">
-            Mostrando {(pagination.page - 1) * pagination.limit + 1}-
-            {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}{' '}
-            resultados
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              Anterior
-            </Button>
-            {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
-              let pageNum;
-              if (pagination.totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (pagination.page <= 3) {
-                pageNum = i + 1;
-              } else if (pagination.page >= pagination.totalPages - 2) {
-                pageNum = pagination.totalPages - 4 + i;
-              } else {
-                pageNum = pagination.page - 2 + i;
-              }
-              return (
-                <Button
-                  key={pageNum}
-                  variant={pagination.page === pageNum ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-            {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
-              <span className="text-muted-foreground px-2">...</span>
-            )}
-            {pagination.totalPages > 5 && (
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Mostrando {(pagination.page - 1) * pagination.limit + 1}-
+              {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}{' '}
+              resultados
+            </p>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(pagination.totalPages)}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
               >
-                {pagination.totalPages}
+                Anterior
               </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
-            >
-              Siguiente
-            </Button>
+              {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pagination.page === pageNum ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+              {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
+                <span className="text-muted-foreground px-2">...</span>
+              )}
+              {pagination.totalPages > 5 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.totalPages)}
+                >
+                  {pagination.totalPages}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.totalPages}
+              >
+                Siguiente
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Manual Expense Dialog */}
-      {selectedProfileId && periodId && (
-        <ManualExpenseDialog
-          isOpen={isManualExpenseDialogOpen}
-          onClose={() => setIsManualExpenseDialogOpen(false)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['accrued-expenses'] });
-            queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] });
-            queryClient.invalidateQueries({ queryKey: ['expenses'] });
-          }}
-          profileId={selectedProfileId}
-          periodId={periodId}
-          profiles={profiles}
-          subscription={subscription}
-          expensesUsed={expensesUsed}
-        />
-      )}
+        {/* Manual Expense Dialog */}
+        {selectedProfileId && periodId && (
+          <ManualExpenseDialog
+            isOpen={isManualExpenseDialogOpen}
+            onClose={() => setIsManualExpenseDialogOpen(false)}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['accrued-expenses'] });
+              queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] });
+              queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            }}
+            profileId={selectedProfileId}
+            periodId={periodId}
+            profiles={profiles}
+            subscription={subscription}
+            expensesUsed={expensesUsed}
+          />
+        )}
 
-      {/* Edit Manual Expense Dialog */}
-      <Dialog open={!!editingManualExpense} onOpenChange={(open) => !open && handleCloseEditManual()}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>Editar gasto manual</DialogTitle>
-            <DialogDescription>
-              Actualiza concepto, montos o estado de pago. No incluye factura CFDI.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-concept">Concepto</Label>
-              <Input
-                id="edit-concept"
-                value={editConcept}
-                onChange={(e) => setEditConcept(e.target.value)}
-                placeholder="Ej. Viáticos marzo"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+        {/* Edit Manual Expense Dialog */}
+        <Dialog
+          open={!!editingManualExpense}
+          onOpenChange={(open) => !open && handleCloseEditManual()}
+        >
+          <DialogContent className="sm:max-w-105">
+            <DialogHeader>
+              <DialogTitle>Editar gasto manual</DialogTitle>
+              <DialogDescription>
+                Actualiza concepto, montos o estado de pago. No incluye factura CFDI.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-subtotal">Subtotal (MXN)</Label>
+                <Label htmlFor="edit-concept">Concepto</Label>
                 <Input
-                  id="edit-subtotal"
-                  type="text"
-                  inputMode="decimal"
-                  value={editSubtotal}
-                  onChange={(e) => setEditSubtotal(e.target.value)}
-                  placeholder="0.00"
+                  id="edit-concept"
+                  value={editConcept}
+                  onChange={(e) => setEditConcept(e.target.value)}
+                  placeholder="Ej. Viáticos marzo"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-subtotal">Subtotal (MXN)</Label>
+                  <Input
+                    id="edit-subtotal"
+                    type="text"
+                    inputMode="decimal"
+                    value={editSubtotal}
+                    onChange={(e) => setEditSubtotal(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-iva">IVA (MXN)</Label>
+                  <Input
+                    id="edit-iva"
+                    type="text"
+                    inputMode="decimal"
+                    value={editIva}
+                    onChange={(e) => setEditIva(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <Label htmlFor="edit-paid">Pagado</Label>
+                  <p className="text-muted-foreground text-sm">Marca si ya pagaste este gasto.</p>
+                </div>
+                <Switch id="edit-paid" checked={editIsPaid} onCheckedChange={setEditIsPaid} />
+              </div>
+              {editIsPaid && (
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-payment-date">Fecha de pago</Label>
+                  <Input
+                    id="edit-payment-date"
+                    type="date"
+                    value={editPaymentDate}
+                    onChange={(e) => setEditPaymentDate(e.target.value)}
+                  />
+                </div>
+              )}
               <div className="grid gap-2">
-                <Label htmlFor="edit-iva">IVA (MXN)</Label>
-                <Input
-                  id="edit-iva"
-                  type="text"
-                  inputMode="decimal"
-                  value={editIva}
-                  onChange={(e) => setEditIva(e.target.value)}
-                  placeholder="0.00"
-                />
+                <Label>Categoría</Label>
+                <Select
+                  value={editCategoria || 'none'}
+                  onValueChange={(v) => setEditCategoria(v === 'none' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin categoría</SelectItem>
+                    {CATEGORIES.filter((c) => c.value !== 'all').map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <Label htmlFor="edit-paid">Pagado</Label>
-                <p className="text-muted-foreground text-sm">
-                  Marca si ya pagaste este gasto.
-                </p>
-              </div>
-              <Switch
-                id="edit-paid"
-                checked={editIsPaid}
-                onCheckedChange={setEditIsPaid}
-              />
-            </div>
-            {editIsPaid && (
-              <div className="grid gap-2">
-                <Label htmlFor="edit-payment-date">Fecha de pago</Label>
-                <Input
-                  id="edit-payment-date"
-                  type="date"
-                  value={editPaymentDate}
-                  onChange={(e) => setEditPaymentDate(e.target.value)}
-                />
-              </div>
-            )}
-            <div className="grid gap-2">
-              <Label>Categoría</Label>
-              <Select value={editCategoria || 'none'} onValueChange={(v) => setEditCategoria(v === 'none' ? '' : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin categoría</SelectItem>
-                  {CATEGORIES.filter((c) => c.value !== 'all').map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {editError && (
-              <Alert variant="destructive">
-                <AlertDescription>{editError}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCloseEditManual}
-              disabled={isUpdatingManual}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleSubmitEditManual} disabled={isUpdatingManual}>
-              {isUpdatingManual ? 'Guardando...' : 'Actualizar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Profile Warning Dialog */}
-      <Dialog open={showProfileWarning} onOpenChange={setShowProfileWarning}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Empresa no seleccionada</DialogTitle>
-            <DialogDescription>
-              Por favor selecciona una empresa antes de agregar un gasto manual.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowProfileWarning(false)}>Entendido</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Expense Dialog */}
-      <Dialog open={!!expenseToDelete} onOpenChange={handleCloseDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Eliminar gasto</DialogTitle>
-            <DialogDescription>
-              Esta acción eliminará el gasto seleccionado y no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          {expenseToDelete && (
-            <div className="rounded-lg border p-4 text-sm">
-              <p className="font-medium">{expenseToDelete.nombre_emisor || 'Sin emisor'}</p>
-              <p className="text-muted-foreground">{expenseToDelete.concepto || 'Sin concepto'}</p>
-              <p className="text-muted-foreground mt-1">
-                Total: {formatCurrency(expenseToDelete.total)}
-              </p>
-              {expenseToDelete.uuid && (
-                <p className="text-muted-foreground mt-1 font-mono text-xs">
-                  UUID: {expenseToDelete.uuid}
-                </p>
+              {editError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{editError}</AlertDescription>
+                </Alert>
               )}
             </div>
-          )}
-          {expenseToDelete && (
-            <div className="space-y-2 text-sm">
-              <p className="text-muted-foreground">
-                Para confirmar, escribe{' '}
-                <span className="text-foreground font-mono font-medium">{deleteKeyword}</span>.
-              </p>
-              <Input
-                value={deleteConfirmation}
-                onChange={(event) => setDeleteConfirmation(event.target.value)}
-                placeholder={deleteKeyword}
-                autoComplete="off"
-              />
-            </div>
-          )}
-          {deleteError && (
-            <Alert variant="destructive">
-              <AlertTitle>No se pudo eliminar</AlertTitle>
-              <AlertDescription>{deleteError}</AlertDescription>
-            </Alert>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => handleCloseDeleteDialog(false)}
-              disabled={isDeleting}
-            >
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleteBlocked}>
-              {isDeleting ? 'Eliminando...' : 'Eliminar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCloseEditManual} disabled={isUpdatingManual}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmitEditManual} disabled={isUpdatingManual}>
+                {isUpdatingManual ? 'Guardando...' : 'Actualizar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Profile Warning Dialog */}
+        <Dialog open={showProfileWarning} onOpenChange={setShowProfileWarning}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Empresa no seleccionada</DialogTitle>
+              <DialogDescription>
+                Por favor selecciona una empresa antes de agregar un gasto manual.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={() => setShowProfileWarning(false)}>Entendido</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Expense Dialog */}
+        <Dialog open={!!expenseToDelete} onOpenChange={handleCloseDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Eliminar gasto</DialogTitle>
+              <DialogDescription>
+                Esta acción eliminará el gasto seleccionado y no se puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+            {expenseToDelete && (
+              <div className="rounded-lg border p-4 text-sm">
+                <p className="font-medium">{expenseToDelete.nombre_emisor || 'Sin emisor'}</p>
+                <p className="text-muted-foreground">
+                  {expenseToDelete.concepto || 'Sin concepto'}
+                </p>
+                <p className="text-muted-foreground mt-1">
+                  Total: {formatCurrency(expenseToDelete.total)}
+                </p>
+                {expenseToDelete.uuid && (
+                  <p className="text-muted-foreground mt-1 font-mono text-xs">
+                    UUID: {expenseToDelete.uuid}
+                  </p>
+                )}
+              </div>
+            )}
+            {expenseToDelete && (
+              <div className="space-y-2 text-sm">
+                <p className="text-muted-foreground">
+                  Para confirmar, escribe{' '}
+                  <span className="text-foreground font-mono font-medium">{deleteKeyword}</span>.
+                </p>
+                <Input
+                  value={deleteConfirmation}
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                  placeholder={deleteKeyword}
+                  autoComplete="off"
+                />
+              </div>
+            )}
+            {deleteError && (
+              <Alert variant="destructive">
+                <AlertTitle>No se pudo eliminar</AlertTitle>
+                <AlertDescription>{deleteError}</AlertDescription>
+              </Alert>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => handleCloseDeleteDialog(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={isDeleteBlocked}
+              >
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }

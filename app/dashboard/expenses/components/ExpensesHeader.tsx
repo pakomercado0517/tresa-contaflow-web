@@ -1,0 +1,179 @@
+'use client';
+
+import Link from 'next/link';
+import { Plus, Download, Receipt, FileText, Upload, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { PageHeader } from '@/components/common/PageHeader';
+import { FilterBar } from '@/components/common/FilterBar';
+import { ProfileSelector } from './ProfileSelector';
+import type { Profile } from '@/lib/types/profiles';
+
+interface CategoryOption {
+  value: string;
+  label: string;
+}
+
+interface ExpensesHeaderProps {
+  profiles: Profile[];
+  selectedProfileId: string;
+  onProfileChange: (profileId: string) => void;
+  selectedMes: number;
+  onMesChange: (mes: number) => void;
+  selectedAño: number;
+  onAñoChange: (año: number) => void;
+  selectedCategoria: string;
+  onCategoriaChange: (cat: string) => void;
+  categories: CategoryOption[];
+  search: string;
+  onSearchChange: (value: string) => void;
+  onClearFilters: () => void;
+  onExportPDF: () => void;
+  onExportExcel: () => void;
+  canExportExcel: boolean;
+  onAddManualExpense: () => void;
+  canAddManualExpense: boolean;
+  manualExpenseDisabledReason: 'no_profile' | 'no_period' | null;
+}
+
+export function ExpensesHeader({
+  profiles,
+  selectedProfileId,
+  onProfileChange,
+  selectedMes,
+  onMesChange,
+  selectedAño,
+  onAñoChange,
+  selectedCategoria,
+  onCategoriaChange,
+  categories,
+  search,
+  onSearchChange,
+  onClearFilters,
+  onExportPDF,
+  onExportExcel,
+  canExportExcel,
+  onAddManualExpense,
+  canAddManualExpense,
+  manualExpenseDisabledReason,
+}: ExpensesHeaderProps) {
+  return (
+    <PageHeader
+      icon={Receipt}
+      title="Gestión de Gastos"
+      subtitle="(Egresos y gastos devengados)"
+      actions={
+        <>
+          <div data-tour="expenses-profile-selector">
+            <ProfileSelector
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onProfileChange={onProfileChange}
+            />
+          </div>
+
+          <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
+
+          <Button
+            onClick={onExportPDF}
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden lg:inline">PDF</span>
+          </Button>
+          <Button
+            onClick={onExportExcel}
+            variant="ghost"
+            size="sm"
+            disabled={!canExportExcel}
+            title={!canExportExcel ? 'Disponible en plan Pro' : undefined}
+            className="text-muted-foreground hover:text-foreground gap-1.5 disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden lg:inline">Excel</span>
+          </Button>
+
+          <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                data-tour="expenses-upload-button"
+                className="bg-primary hover:bg-primary/90 gap-1.5 shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Agregar</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/expenses/upload" className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Cargar Gastos XML
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                data-tour="expenses-manual-button"
+                onClick={onAddManualExpense}
+                disabled={!canAddManualExpense}
+                className="flex items-center gap-2"
+                title={
+                  canAddManualExpense
+                    ? 'Registrar un gasto sin factura CFDI'
+                    : manualExpenseDisabledReason === 'no_profile'
+                      ? 'Selecciona un perfil para agregar gastos manuales'
+                      : 'Se requiere un período válido para habilitar gastos manuales'
+                }
+              >
+                <FileText className="h-4 w-4" />
+                Gasto Manual
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+      filters={
+        <FilterBar
+          selectedMes={selectedMes}
+          onMesChange={onMesChange}
+          selectedAño={selectedAño}
+          onAñoChange={onAñoChange}
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Concepto, Emisor o UUID..."
+          onClearFilters={onClearFilters}
+          extraFilters={
+            <Select value={selectedCategoria} onValueChange={onCategoriaChange}>
+              <SelectTrigger className="h-8 w-50 text-sm">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.value === 'all' ? 'Todas las categorías' : cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
+      }
+    />
+  );
+}
