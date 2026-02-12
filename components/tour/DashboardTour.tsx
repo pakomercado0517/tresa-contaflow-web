@@ -54,7 +54,7 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         content:
           'Haz clic en el icono de configuración para acceder a la gestión de perfiles (RFCs), tu cuenta personal y suscripciones. Aquí puedes agregar nuevas empresas, editar información personal y administrar tu plan.',
         selector: "[data-tour='settings-button']",
-        side: 'right',
+        side: 'top',
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
@@ -90,7 +90,7 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         content:
           'Haz clic aquí para subir una nueva factura XML. El sistema validará automáticamente el archivo antes de procesarlo.',
         selector: "[data-tour='new-invoice-button']",
-        side: 'left',
+        side: 'bottom-right',
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
@@ -101,8 +101,8 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         title: 'Métricas Financieras',
         content:
           'Aquí puedes ver un resumen rápido de tus finanzas: ingresos totales, gastos, utilidad neta, diferencia y total de facturas.',
-        selector: "[data-tour='metrics-cards']",
-        side: 'top',
+        selector: "[data-tour='metrics-cashflow']",
+        side: 'bottom',
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
@@ -168,7 +168,7 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         content:
           'Desde este menú puedes agregar ingresos de dos formas: subir archivos XML de facturas (el sistema los valida automáticamente) o registrar un ingreso manual sin comprobante fiscal.',
         selector: "[data-tour='invoices-upload-button']",
-        side: 'left',
+        side: 'bottom-right',
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
@@ -210,7 +210,7 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         content:
           'Desde este menú puedes agregar gastos de dos formas: cargar archivos XML para que el sistema los valide automáticamente, o registrar un gasto manual para viáticos, gastos menores o pagos en efectivo sin comprobante fiscal.',
         selector: "[data-tour='expenses-upload-button']",
-        side: 'left',
+        side: 'bottom-right',
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
@@ -328,6 +328,120 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
     ],
   },
 ];
+
+function getCurrentStepConfig(tourName: string | null, stepIndex: number): CustomStep | null {
+  if (!tourName || stepIndex < 0) return null;
+  const activeTour = tourSteps.find((tour) => tour.tour === tourName);
+  if (!activeTour) return null;
+  return activeTour.steps[stepIndex] ?? null;
+}
+
+function isElementOutOfViewport(element: Element, margin = 96): boolean {
+  const rect = element.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  return rect.top < margin || rect.bottom > viewportHeight - margin;
+}
+
+function shouldAutoScrollToElement(element: Element): boolean {
+  const rect = element.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const viewportCenterY = viewportHeight / 2;
+  const elementCenterY = rect.top + rect.height / 2;
+  const centerDistance = Math.abs(elementCenterY - viewportCenterY);
+
+  if (isElementOutOfViewport(element)) {
+    return true;
+  }
+
+  // También forzamos ajuste cuando el objetivo queda muy alejado del centro visual.
+  return centerDistance > viewportHeight * 0.18;
+}
+
+function syncSpotlightWithElement(step: CustomStep, element: Element): void {
+  const rect = element.getBoundingClientRect();
+  const pointerPadding = step.pointerPadding ?? 10;
+  const pointerRadius = step.pointerRadius ?? 8;
+
+  const holeX = rect.left - pointerPadding + window.scrollX;
+  const holeY = rect.top - pointerPadding + window.scrollY;
+  const holeWidth = rect.width + pointerPadding * 2;
+  const holeHeight = rect.height + pointerPadding * 2;
+
+  const pointer = document.querySelector<HTMLElement>("[data-name='nextstep-pointer']");
+  if (pointer) {
+    pointer.style.width = `${holeWidth}px`;
+    pointer.style.height = `${holeHeight}px`;
+    pointer.style.borderRadius = `${pointerRadius}px`;
+    pointer.style.transform = `translateX(${holeX}px) translateY(${holeY}px)`;
+  }
+
+  const maskRect = document.querySelector<SVGRectElement>(
+    '#smooth-spotlight-mask rect[fill="black"]'
+  );
+  if (maskRect) {
+    maskRect.setAttribute('width', `${holeWidth}px`);
+    maskRect.setAttribute('height', `${holeHeight}px`);
+    maskRect.setAttribute('rx', `${pointerRadius}`);
+    maskRect.setAttribute('ry', `${pointerRadius}`);
+    maskRect.setAttribute(
+      'style',
+      `transform: translateX(${holeX}px) translateY(${holeY}px); transform-origin: 50% 50%; transform-box: fill-box;`
+    );
+  }
+
+  const documentHeight = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight
+  );
+  const documentWidth = Math.max(document.documentElement.clientWidth, window.innerWidth);
+
+  const clampedTop = Math.max(0, holeY);
+  const clampedLeft = Math.max(0, holeX);
+  const clampedRight = Math.min(documentWidth, holeX + holeWidth);
+  const clampedBottom = Math.min(documentHeight, holeY + holeHeight);
+
+  const overlay = document.querySelector<HTMLElement>("[data-name='nextstep-overlay']");
+  const preventOverlay = document.querySelector<HTMLElement>(
+    "[data-name='nextstep-prevent-click-overlay']"
+  );
+  const overlayTop = document.querySelector<HTMLElement>(
+    "[data-name='nextstep-prevent-click-overlay-top']"
+  );
+  const overlayBottom = document.querySelector<HTMLElement>(
+    "[data-name='nextstep-prevent-click-overlay-bottom']"
+  );
+  const overlayLeft = document.querySelector<HTMLElement>(
+    "[data-name='nextstep-prevent-click-overlay-left']"
+  );
+  const overlayRight = document.querySelector<HTMLElement>(
+    "[data-name='nextstep-prevent-click-overlay-right']"
+  );
+
+  if (overlay) {
+    overlay.style.width = `${documentWidth}px`;
+    overlay.style.height = `${documentHeight}px`;
+  }
+  if (preventOverlay) {
+    preventOverlay.style.width = `${documentWidth}px`;
+    preventOverlay.style.height = `${documentHeight}px`;
+  }
+  if (overlayTop) {
+    overlayTop.style.height = `${clampedTop}px`;
+  }
+  if (overlayBottom) {
+    overlayBottom.style.height = `${Math.max(0, documentHeight - clampedBottom)}px`;
+  }
+  if (overlayLeft) {
+    overlayLeft.style.width = `${clampedLeft}px`;
+    overlayLeft.style.height = `${documentHeight}px`;
+  }
+  if (overlayRight) {
+    overlayRight.style.left = `${clampedRight}px`;
+    overlayRight.style.height = `${documentHeight}px`;
+  }
+}
 
 function CustomTourCard({
   step,
@@ -467,7 +581,7 @@ function TourController({ user }: { user?: User }) {
     markTourCompleted,
     checkTourStatus,
   } = useTour();
-  const { startNextStep, isNextStepVisible, currentTour } = useNextStep();
+  const { startNextStep, isNextStepVisible, currentTour, currentStep } = useNextStep();
   const pathname = usePathname();
   const isAuthenticated = Boolean(user);
   const hasStartedRef = useRef(false);
@@ -695,6 +809,71 @@ function TourController({ user }: { user?: User }) {
     }
   }, [isNextStepVisible, isRunning, currentTour, markTourCompleted, pathname]);
 
+  useEffect(() => {
+    if (!isNextStepVisible || !currentTour) return;
+
+    const stepConfig = getCurrentStepConfig(currentTour, currentStep);
+    const selector = stepConfig?.selector;
+    if (!selector) return;
+
+    const scrollToCurrentStep = () => {
+      const targetElement = document.querySelector(selector);
+      if (!targetElement) return;
+
+      const shouldForceDashboardEndScroll =
+        pathname === '/dashboard' &&
+        (selector === "[data-tour='recent-invoices']" ||
+          selector === "[data-tour='recent-expenses']");
+
+      if (shouldForceDashboardEndScroll || shouldAutoScrollToElement(targetElement)) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest',
+        });
+      }
+    };
+
+    const timer = window.setTimeout(scrollToCurrentStep, 120);
+    return () => window.clearTimeout(timer);
+  }, [isNextStepVisible, currentTour, currentStep, pathname]);
+
+  useEffect(() => {
+    if (!isNextStepVisible || !currentTour) return;
+
+    let rafId: number | null = null;
+
+    const syncCurrentStep = () => {
+      const stepConfig = getCurrentStepConfig(currentTour, currentStep);
+      const selector = stepConfig?.selector;
+      if (!stepConfig || !selector) return;
+
+      const targetElement = document.querySelector(selector);
+      if (!targetElement) return;
+
+      syncSpotlightWithElement(stepConfig, targetElement);
+    };
+
+    const onViewportChange = () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      rafId = window.requestAnimationFrame(syncCurrentStep);
+    };
+
+    window.addEventListener('scroll', onViewportChange, { passive: true });
+    window.addEventListener('resize', onViewportChange);
+    syncCurrentStep();
+
+    return () => {
+      window.removeEventListener('scroll', onViewportChange);
+      window.removeEventListener('resize', onViewportChange);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [isNextStepVisible, currentTour, currentStep, pathname]);
+
   // La navegación se maneja en CustomTourCard cuando se hace clic en "Finalizar"
 
   // Detectar cambios de ruta para iniciar tours específicos
@@ -874,7 +1053,7 @@ export function DashboardTour({ children, user }: DashboardTourProps) {
         steps={tourSteps}
         cardComponent={CustomTourCard}
         shadowRgb="0, 0, 0"
-        shadowOpacity="0.5"
+        shadowOpacity="0.85"
         clickThroughOverlay={false}
       >
         <TourController user={user} />
