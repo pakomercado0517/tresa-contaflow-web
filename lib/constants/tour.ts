@@ -3,7 +3,7 @@
  * Incrementar esta versión cuando se actualicen los pasos del tour
  * para que los usuarios que ya completaron el tour vean la nueva versión
  */
-export const CURRENT_TOUR_VERSION = '3.0.0';
+export const CURRENT_TOUR_VERSION = '3.1.0';
 
 /**
  * Clave para almacenar el estado del tour en localStorage
