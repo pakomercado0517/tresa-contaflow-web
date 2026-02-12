@@ -13,6 +13,10 @@ export interface FlujoMetrics {
   ingresos_cobrados: number;
   egresos_pagados: number;
   flujo_neto: number;
+  /** Parte de ingresos_cobrados por complementos sin factura PPD relacionada */
+  ingresos_cobrados_sin_conciliar?: number;
+  /** Parte de egresos_pagados por complementos sin gasto PPD relacionado */
+  egresos_pagados_sin_conciliar?: number;
 }
 
 export interface DevengadoMetrics {
@@ -50,7 +54,13 @@ export interface PeriodMetricsResponse {
 /** Respuesta por defecto cuando el backend devuelve 404 (ej. usuario sin suscripción o sin período) */
 export const DEFAULT_PERIOD_METRICS: PeriodMetricsResponse = {
   period: { id: '', start: '', end: '' },
-  flujo: { ingresos_cobrados: 0, egresos_pagados: 0, flujo_neto: 0 },
+  flujo: {
+    ingresos_cobrados: 0,
+    egresos_pagados: 0,
+    flujo_neto: 0,
+    ingresos_cobrados_sin_conciliar: 0,
+    egresos_pagados_sin_conciliar: 0,
+  },
   devengado: { ingresos_devengados: 0, egresos_devengados: 0, resultado_devengado: 0 },
   impuestos: {
     iva_trasladado: {},

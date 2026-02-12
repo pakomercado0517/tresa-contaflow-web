@@ -52,9 +52,10 @@ export function UploadInvoicesContent({
   subscription,
   invoicesUsed,
 }: UploadInvoicesContentProps) {
-  const [selectedProfileId, setSelectedProfileId] = useState<string>(profiles[0]?.id || '');
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
 
   // Estados para el dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -91,15 +92,6 @@ export function UploadInvoicesContent({
   );
 
   const handleFilesSelected = (files: File[]) => {
-    // Verificar si el perfil está congelado
-    if (selectedProfile?.frozen) {
-      showDialog(
-        'Perfil Congelado',
-        'Este perfil está congelado y no puedes subir facturas. Por favor selecciona un perfil activo o actualiza tu plan para descongelar este perfil.'
-      );
-      return;
-    }
-
     // Verificar límite antes de agregar archivos
     if (!canUpload) {
       showDialog(
@@ -160,14 +152,6 @@ export function UploadInvoicesContent({
   };
 
   const handleProcess = async () => {
-    if (!selectedProfileId) {
-      showDialog(
-        'Empresa no seleccionada',
-        'Por favor selecciona una empresa antes de procesar los archivos.'
-      );
-      return;
-    }
-
     // Verificar límite antes de procesar
     if (!canUpload) {
       showDialog(
@@ -204,6 +188,38 @@ export function UploadInvoicesContent({
       return;
     }
 
+    // Reiniciar selección para forzar confirmación explícita de perfil antes de procesar
+    setSelectedProfileId('');
+    setIsProcessDialogOpen(true);
+  };
+
+  const handleConfirmProcess = async () => {
+    if (!selectedProfileId) {
+      showDialog(
+        'Empresa no seleccionada',
+        'Selecciona una empresa para procesar las facturas cargadas.'
+      );
+      return;
+    }
+
+    if (selectedProfile?.frozen) {
+      showDialog(
+        'Perfil Congelado',
+        'Este perfil está congelado y no puedes subir facturas. Selecciona un perfil activo o actualiza tu plan para descongelarlo.'
+      );
+      return;
+    }
+
+    const validFiles = queuedFiles.filter((f) => f.status === 'valid');
+    if (validFiles.length === 0) {
+      showDialog(
+        'Sin archivos válidos',
+        'No hay archivos válidos para procesar. Por favor, agrega archivos XML válidos.'
+      );
+      return;
+    }
+
+    setIsProcessDialogOpen(false);
     setIsProcessing(true);
 
     // Procesar cada archivo individualmente
@@ -291,14 +307,9 @@ export function UploadInvoicesContent({
           <h1 className="text-3xl font-bold">Carga de Facturas XML</h1>
           <p className="text-muted-foreground mt-2">
             Sube tus archivos CFDI para validación y procesamiento automático. Detectamos errores
-            antes de que lleguen al SAT.
+            antes de que lleguen al SAT. El perfil se selecciona al confirmar el procesamiento.
           </p>
         </div>
-        <ProfileSelector
-          profiles={profiles}
-          selectedProfileId={selectedProfileId}
-          onProfileChange={setSelectedProfileId}
-        />
       </div>
 
       {/* Banner de límite de uso */}
@@ -420,6 +431,50 @@ export function UploadInvoicesContent({
           </DialogHeader>
           <DialogFooter>
             <Button onClick={() => setIsDialogOpen(false)}>Entendido</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmación de procesamiento con selección de perfil */}
+      <Dialog open={isProcessDialogOpen} onOpenChange={setIsProcessDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Selecciona la empresa para procesar</DialogTitle>
+            <DialogDescription>
+              Se procesarán {validCount} archivo{validCount !== 1 ? 's' : ''} válido
+              {validCount !== 1 ? 's' : ''}. Elige el perfil correcto para evitar sobreprocesar
+              facturas.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <ProfileSelector
+              profiles={profiles}
+              selectedProfileId={selectedProfileId}
+              onProfileChange={setSelectedProfileId}
+            />
+            {selectedProfile && (
+              <p className="text-muted-foreground text-sm">
+                Se procesarán {validCount} archivo{validCount !== 1 ? 's' : ''} para{' '}
+                <span className="text-foreground font-medium">
+                  {selectedProfile.nombre} ({selectedProfile.rfc})
+                </span>
+                .
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsProcessDialogOpen(false)}
+              disabled={isProcessing}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmProcess} disabled={!selectedProfileId || isProcessing}>
+              Confirmar y procesar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

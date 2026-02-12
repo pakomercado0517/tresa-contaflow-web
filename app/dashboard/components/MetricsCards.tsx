@@ -34,7 +34,11 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
     ingresos_cobrados: 0,
     egresos_pagados: 0,
     flujo_neto: 0,
+    ingresos_cobrados_sin_conciliar: 0,
+    egresos_pagados_sin_conciliar: 0,
   };
+  const ingresosSinConciliar = flujo.ingresos_cobrados_sin_conciliar ?? 0;
+  const egresosSinConciliar = flujo.egresos_pagados_sin_conciliar ?? 0;
   const devengado = metrics?.devengado ?? {
     ingresos_devengados: 0,
     egresos_devengados: 0,
@@ -82,6 +86,13 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
               <p className="text-2xl font-bold tabular-nums md:text-3xl">
                 {formatCurrency(flujo.ingresos_cobrados)}
               </p>
+              {ingresosSinConciliar > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300/90">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                  Incluye {formatCurrency(ingresosSinConciliar)} de complementos sin conciliar
+                  (ya incluido en este total)
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm">
@@ -97,6 +108,13 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
               <p className="text-2xl font-bold tabular-nums md:text-3xl">
                 {formatCurrency(flujo.egresos_pagados)}
               </p>
+              {egresosSinConciliar > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300/90">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                  Incluye {formatCurrency(egresosSinConciliar)} de complementos sin conciliar
+                  (ya incluido en este total)
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm lg:col-span-1">
