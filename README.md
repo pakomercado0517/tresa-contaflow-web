@@ -1,4 +1,4 @@
-# Conta Flow 💰
+# Contafy 💰
 
 Sistema web SaaS para el control y gestión de facturas CFDI (México) que permite a empresas y contadores gestionar múltiples clientes/empresas (RFCs) desde una sola cuenta, con procesamiento automático de XML, validaciones fiscales, reportes profesionales y sincronización en la nube.
 
