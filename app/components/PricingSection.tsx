@@ -305,7 +305,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                 >
                   <Link
                     href={
-                      plan.id === 'ENTERPRISE' ? 'mailto:ventas@contaflow.com' : '/auth/register'
+                      plan.id === 'ENTERPRISE' ? 'mailto:ventas@contafy.com' : '/auth/register'
                     }
                   >
                     {plan.id === 'FREE'

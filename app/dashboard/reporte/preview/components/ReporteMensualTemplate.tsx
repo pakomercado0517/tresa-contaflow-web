@@ -131,7 +131,7 @@ export function ReporteMensualTemplate({
                 <Building2 className="h-5 w-5" />
               </div>
               <span className="text-lg font-semibold text-gray-900">
-                Portal de Reportes Contaflow
+                Portal de Reportes Contafy
               </span>
             </div>
             {headerAction}
@@ -147,7 +147,7 @@ export function ReporteMensualTemplate({
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <h2 className="text-xl font-bold text-emerald-700">Contaflow</h2>
+            <h2 className="text-xl font-bold text-emerald-700">Contafy</h2>
             <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
               FINANCIAL ANALYTICS
             </p>
@@ -418,7 +418,7 @@ export function ReporteMensualTemplate({
       <footer className="border-t border-gray-200 bg-gray-50 px-6 py-4 text-xs text-gray-600" data-html-footer>
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <p>Generado por: Contaflow</p>
+            <p>Generado por: Contafy</p>
             <p suppressHydrationWarning>
               Fecha de generación:{" "}
               {new Date().toLocaleDateString("es-MX", {
@@ -438,7 +438,7 @@ export function ReporteMensualTemplate({
           <p className="text-right font-medium">Página {pageNumber} de {totalPages}</p>
         </div>
         <p className="mt-2 text-center text-gray-500" suppressHydrationWarning>
-          © {new Date().getFullYear()} Contaflow - Aviso de privacidad y términos de
+          © {new Date().getFullYear()} Contafy - Aviso de privacidad y términos de
           servicio aplicables.
         </p>
       </footer>

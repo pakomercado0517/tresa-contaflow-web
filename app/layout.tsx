@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Conta Flow - Gestión de Facturas CFDI Multi-RFC',
+  title: 'Contafy - Gestión de Facturas CFDI Multi-RFC',
   description:
     'Sistema completo para el control y gestión de facturas CFDI. Gestiona múltiples clientes y empresas (RFCs) desde una sola cuenta.',
   icons: {

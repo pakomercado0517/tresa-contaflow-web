@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
-import { loginAction } from "../actions";
+import { useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { loginAction } from '../actions';
 
 export function LoginForm() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const resetParam = searchParams.get("reset");
-  const successMessage = resetParam === "success" 
-    ? "Contraseña restablecida correctamente. Ya puedes iniciar sesión."
-    : null;
+  const resetParam = searchParams.get('reset');
+  const successMessage =
+    resetParam === 'success'
+      ? 'Contraseña restablecida correctamente. Ya puedes iniciar sesión.'
+      : null;
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -30,27 +31,25 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md p-8 bg-card border-border shadow-lg">
+    <Card className="bg-card border-border w-full max-w-md p-8 shadow-lg">
       <div className="flex flex-col items-center gap-6">
-        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <Lock className="h-8 w-8 text-primary" />
+        <div className="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+          <Lock className="text-primary h-8 w-8" />
         </div>
 
-        <div className="text-center space-y-2">
+        <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold">Iniciar Sesión</h1>
-          <p className="text-sm text-muted-foreground">
-            Gestiona tus RFCs de forma segura
-          </p>
+          <p className="text-muted-foreground text-sm">Gestiona tus RFCs de forma segura</p>
         </div>
 
         {error && (
-          <div className="w-full p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="bg-destructive/10 border-destructive/20 w-full rounded-md border p-3">
+            <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
         {successMessage && (
-          <div className="w-full p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+          <div className="w-full rounded-md border border-green-500/20 bg-green-500/10 p-3">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <p className="text-sm text-green-600">{successMessage}</p>
@@ -64,7 +63,7 @@ export function LoginForm() {
               Correo electrónico
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
               <Input
                 id="email"
                 name="email"
@@ -72,7 +71,7 @@ export function LoginForm() {
                 placeholder="nombre@empresa.com"
                 required
                 disabled={isPending}
-                className="pl-10 bg-background"
+                className="bg-background pl-10"
               />
             </div>
           </div>
@@ -82,7 +81,7 @@ export function LoginForm() {
               Contraseña
             </Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Lock className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
               <Input
                 id="password"
                 name="password"
@@ -90,14 +89,11 @@ export function LoginForm() {
                 placeholder="••••••••"
                 required
                 disabled={isPending}
-                className="pl-10 bg-background"
+                className="bg-background pl-10"
               />
             </div>
             <div className="flex justify-end">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-primary hover:underline"
-              >
+              <Link href="/auth/forgot-password" className="text-primary text-sm hover:underline">
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
@@ -105,7 +101,7 @@ export function LoginForm() {
 
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 w-full"
             size="lg"
             disabled={isPending}
           >
@@ -126,22 +122,19 @@ export function LoginForm() {
         <div className="w-full">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
+              <div className="border-border w-full border-t"></div>
             </div>
             <div className="relative flex justify-center">
               <div className="bg-card px-3">
-                <div className="h-2 w-2 rounded-full bg-foreground/40"></div>
+                <div className="bg-foreground/40 h-2 w-2 rounded-full"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="text-center text-sm text-muted-foreground">
-          <span>¿Eres nuevo en Conta Flow? </span>
-          <Link
-            href="/auth/register"
-            className="font-semibold text-foreground hover:underline"
-          >
+        <div className="text-muted-foreground text-center text-sm">
+          <span>¿Eres nuevo en Contafy? </span>
+          <Link href="/auth/register" className="text-foreground font-semibold hover:underline">
             Crea una cuenta gratis
           </Link>
         </div>

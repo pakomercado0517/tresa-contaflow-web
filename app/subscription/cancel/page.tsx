@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { XCircle, ArrowLeft, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -9,57 +9,53 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+} from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
 
 export default function SubscriptionCancelPage() {
   const router = useRouter();
 
   const handleGoBack = () => {
-    router.push("/dashboard/setup?tab=subscription");
+    router.push('/dashboard/setup?tab=subscription');
   };
 
   const handleTryAgain = () => {
-    router.push("/dashboard/setup?tab=subscription");
+    router.push('/dashboard/setup?tab=subscription');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
+    <div className="from-background to-muted/20 flex min-h-screen items-center justify-center bg-linear-to-b p-4">
       <Card className="w-full max-w-lg shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20">
             <XCircle className="h-8 w-8 text-orange-600" />
           </div>
           <CardTitle className="text-2xl">Pago Cancelado</CardTitle>
-          <CardDescription>
-            El proceso de suscripción fue cancelado
-          </CardDescription>
+          <CardDescription>El proceso de suscripción fue cancelado</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="rounded-lg bg-muted p-4 text-sm">
+          <div className="bg-muted rounded-lg p-4 text-sm">
             <p className="text-muted-foreground">
-              No te preocupes, no se realizó ningún cargo a tu tarjeta. Puedes
-              intentar nuevamente cuando estés listo.
+              No te preocupes, no se realizó ningún cargo a tu tarjeta. Puedes intentar nuevamente
+              cuando estés listo.
             </p>
           </div>
 
           <div className="space-y-2">
             <p className="text-sm font-medium">¿Por qué cancelaste?</p>
-            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+            <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
               <li>¿Necesitas más información sobre los planes?</li>
               <li>¿Tienes dudas sobre las características?</li>
               <li>¿Prefieres probar el plan gratuito primero?</li>
             </ul>
           </div>
 
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <p className="text-sm font-medium mb-2">
-              Recuerda: Plan FREE siempre disponible
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Puedes usar ContaFlow con el plan gratuito sin necesidad de
-              suscripción. Incluye 1 RFC y 50 archivos XML al mes.
+          <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
+            <p className="mb-2 text-sm font-medium">Recuerda: Plan FREE siempre disponible</p>
+            <p className="text-muted-foreground text-sm">
+              Puedes usar Contafy con el plan gratuito sin necesidad de suscripción. Incluye 1 RFC y
+              50 archivos XML al mes.
             </p>
           </div>
         </CardContent>

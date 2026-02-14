@@ -744,7 +744,7 @@ export async function exportToPDF(options: PDFOptions): Promise<void> {
   
   // Generar nombre de archivo
   const tipoTexto = tipo === "completo" ? "completo" : tipo === "facturas" ? "facturas" : "gastos";
-  const fileName = `contaflow-${tipoTexto}-${MESES[mes - 1].toLowerCase()}-${año}.pdf`;
+  const fileName = `contafy-${tipoTexto}-${MESES[mes - 1].toLowerCase()}-${año}.pdf`;
   
   // Descargar
   doc.save(fileName);
@@ -1020,7 +1020,7 @@ export async function exportProfilesToPDF(
     month: "2-digit",
     year: "numeric",
   }).replace(/\//g, "-");
-  const fileName = `contaflow-perfiles-${fecha}.pdf`;
+  const fileName = `contafy-perfiles-${fecha}.pdf`;
   
   // Descargar
   doc.save(fileName);

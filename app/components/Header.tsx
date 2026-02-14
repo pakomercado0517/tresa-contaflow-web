@@ -8,13 +8,13 @@ export function Header() {
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/logotipo-contaFlow.svg"
-            alt="Conta Flow"
+            src="/logotipo-contafy.svg"
+            alt="Contafy"
             width={32}
             height={32}
             className="h-8 w-8"
           />
-          <span className="text-xl font-semibold">Conta Flow</span>
+          <span className="text-xl font-semibold">Contafy</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">

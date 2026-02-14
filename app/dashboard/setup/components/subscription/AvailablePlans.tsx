@@ -73,7 +73,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
     // ENTERPRISE requiere contacto con ventas
     if (planId === 'ENTERPRISE') {
       setError(
-        'El plan Empresarial requiere contacto directo. Por favor, escríbenos a ventas@contaflow.com'
+        'El plan Empresarial requiere contacto directo. Por favor, escríbenos a ventas@contafy.com'
       );
       return;
     }

@@ -62,7 +62,7 @@ export function ReportePreviewContent({
       el.scrollIntoView({ behavior: "instant", block: "start" });
       await new Promise((r) => setTimeout(r, 300));
 
-      const fileName = `contaflow-reporte-${MESES[data.mes - 1].toLowerCase()}-${data.año}.pdf`;
+      const fileName = `contafy-reporte-${MESES[data.mes - 1].toLowerCase()}-${data.año}.pdf`;
       await exportReportElementToPDF(el, fileName);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -136,7 +136,7 @@ export function ReportePreviewContent({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Reporte Contaflow - ${MESES[data.mes - 1]} ${data.año}`,
+          title: `Reporte Contafy - ${MESES[data.mes - 1]} ${data.año}`,
           text: `Reporte mensual de operaciones - ${data.profileName}`,
         });
       } catch (err) {

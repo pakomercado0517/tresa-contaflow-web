@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TOUR_IDS } from '@/lib/constants/tour';
 
-const TOUR_RESET_EVENT = 'contaflow:tour-reset';
+const TOUR_RESET_EVENT = 'contafy:tour-reset';
 
 export function TourResetButton() {
   const { resetTour, startTour } = useTour();

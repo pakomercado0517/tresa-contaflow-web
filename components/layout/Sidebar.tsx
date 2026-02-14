@@ -95,13 +95,13 @@ export function Sidebar({ user }: SidebarProps) {
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-border flex h-16 items-center gap-2.5 border-b px-6">
           <Image
-            src="/logotipo-contaFlow.svg"
-            alt="Conta Flow"
+            src="/logotipo-contafy.svg"
+            alt="Contafy"
             width={140}
             height={32}
             className="h-8 w-auto"
           />
-          <span className="text-xl font-semibold">Conta Flow</span>
+          <span className="text-xl font-semibold">Contafy</span>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-6">

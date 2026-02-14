@@ -87,7 +87,7 @@ export function HeroSection() {
             </div>
 
             <div className="space-y-4">
-              <div className="from-primary/20 to-primary/5 flex h-48 items-center justify-center rounded-lg bg-gradient-to-br">
+              <div className="from-primary/20 to-primary/5 flex h-48 items-center justify-center rounded-lg bg-linear-to-br">
                 <div className="text-center">
                   <div className="text-primary mb-2 text-3xl font-bold">305.30%</div>
                   <div className="bg-primary/20 flex h-32 w-full items-end justify-center gap-2 rounded p-4">

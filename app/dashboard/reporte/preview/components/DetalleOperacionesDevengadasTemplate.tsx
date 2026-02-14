@@ -95,7 +95,7 @@ export function DetalleOperacionesDevengadasTemplate({
       <header className="flex items-center justify-between bg-emerald-600 px-6 py-3 text-white">
         <div className="flex items-center gap-2">
           <Eye className="h-5 w-5 shrink-0" />
-          <span className="font-semibold">Contaflow Financial Analytics</span>
+          <span className="font-semibold">Contafy Financial Analytics</span>
         </div>
         <div className="flex flex-col items-end gap-0.5 text-sm">
           <p className="font-medium">RFC EMISOR: {data.rfc || "—"}</p>
@@ -266,7 +266,7 @@ export function DetalleOperacionesDevengadasTemplate({
       <footer className="mt-8 border-t border-gray-200 bg-gray-50 px-6 py-4 text-xs text-gray-600" data-html-footer>
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <p>Generado por: Contaflow</p>
+            <p>Generado por: Contafy</p>
             <p suppressHydrationWarning>
               Fecha de generación:{" "}
               {new Date().toLocaleDateString("es-MX", {
@@ -287,7 +287,7 @@ export function DetalleOperacionesDevengadasTemplate({
           </p>
         </div>
         <p className="mt-2 text-center text-gray-500" suppressHydrationWarning>
-          © {new Date().getFullYear()} Contaflow - Aviso de privacidad y términos de servicio
+          © {new Date().getFullYear()} Contafy - Aviso de privacidad y términos de servicio
           aplicables.
         </p>
       </footer>

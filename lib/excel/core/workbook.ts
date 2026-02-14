@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import type { Workbook, Worksheet } from "exceljs";
 
-const APP_NAME = "ContaFlow";
+const APP_NAME = "Contafy";
 
 /**
  * Crea un workbook base con propiedades del documento.

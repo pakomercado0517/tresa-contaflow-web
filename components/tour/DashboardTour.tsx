@@ -29,8 +29,8 @@ interface CustomStep extends Step {
 // Used to prevent re-starting the same tour between `skipTour()` and `router.push()`.
 // This is module-scoped on purpose so `CustomTourCard` and `TourController` can share it.
 const navigationPendingRef = { current: false };
-const TOUR_COMPLETED_EVENT = 'contaflow:tour-complete';
-const TOUR_RESET_EVENT = 'contaflow:tour-reset';
+const TOUR_COMPLETED_EVENT = 'contafy:tour-complete';
+const TOUR_RESET_EVENT = 'contafy:tour-reset';
 
 const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
   {
@@ -274,7 +274,7 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         icon: '💡',
         title: 'Sugerencias rápidas',
         content:
-          'Utiliza las sugerencias para probar búsquedas populares, acelerar el descubrimiento y experimentar con nuevas descripciones. ¡Felicidades! Has completado el tour completo de ContaFlow.',
+          'Utiliza las sugerencias para probar búsquedas populares, acelerar el descubrimiento y experimentar con nuevas descripciones. ¡Felicidades! Has completado el tour completo de Contafy.',
         selector: "[data-tour='sat-search-suggestions']",
         side: 'top',
         showControls: true,
@@ -1064,7 +1064,7 @@ export function DashboardTour({ children, user }: DashboardTourProps) {
           <DialogHeader>
             <DialogTitle>¡Terminaste el tour!</DialogTitle>
             <DialogDescription>
-              Bienvenido a ContaFlow. Ya conoces los pasos esenciales para empezar a usar la
+              Bienvenido a Contafy. Ya conoces los pasos esenciales para empezar a usar la
               plataforma.
             </DialogDescription>
           </DialogHeader>

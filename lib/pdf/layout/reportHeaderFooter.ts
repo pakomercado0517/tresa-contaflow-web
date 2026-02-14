@@ -50,7 +50,7 @@ export function drawReportFooter(
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.grayDark);
-  doc.text('Generado por Contaflow', 15, pageHeight - REPORT.footerHeightMm + 4);
+  doc.text('Generado por Contafy', 15, pageHeight - REPORT.footerHeightMm + 4);
   doc.text(`Fecha: ${fechaGen}`, 15, pageHeight - REPORT.footerHeightMm + 8);
   doc.text(
     `Página ${pageNum} de ${totalPages}`,

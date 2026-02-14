@@ -18,7 +18,7 @@ import { addProfilesSection } from "./sections/profiles";
  */
 function getFileName(tipo: "completo" | "facturas" | "gastos", mes: number, año: number): string {
   const tipoTexto = tipo === "completo" ? "completo" : tipo === "facturas" ? "facturas" : "gastos";
-  return `contaflow-${tipoTexto}-${MESES[mes - 1].toLowerCase()}-${año}.xlsx`;
+  return `contafy-${tipoTexto}-${MESES[mes - 1].toLowerCase()}-${año}.xlsx`;
 }
 
 /**
@@ -26,7 +26,7 @@ function getFileName(tipo: "completo" | "facturas" | "gastos", mes: number, año
  */
 export async function exportToExcel(options: ExcelOptions): Promise<void> {
   validateExcelOptions(options);
-  const workbook = createWorkbook("Reporte ContaFlow");
+  const workbook = createWorkbook("Reporte Contafy");
 
   const {
     tipo,
@@ -100,7 +100,7 @@ export async function exportToExcel(options: ExcelOptions): Promise<void> {
  */
 export async function exportToExcelBlob(options: ExcelOptions): Promise<Blob> {
   validateExcelOptions(options);
-  const workbook = createWorkbook("Reporte ContaFlow");
+  const workbook = createWorkbook("Reporte Contafy");
 
   const {
     tipo,
@@ -200,7 +200,7 @@ export async function exportExpensesToExcel(options: ExcelExpensesOptions): Prom
  */
 export async function exportProfilesToExcel(options: ExcelProfilesOptions): Promise<void> {
   validateExcelProfilesOptions(options);
-  const workbook = createWorkbook("Perfiles ContaFlow");
+  const workbook = createWorkbook("Perfiles Contafy");
   const sheet = addWorksheet(workbook, SHEET_NAMES.perfiles);
 
   addHeader(sheet, "Reporte de Perfiles RFC", "", "", 0, 0);
@@ -218,7 +218,7 @@ export async function exportProfilesToExcel(options: ExcelProfilesOptions): Prom
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `contaflow-perfiles-${fecha}.xlsx`;
+  a.download = `contafy-perfiles-${fecha}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }

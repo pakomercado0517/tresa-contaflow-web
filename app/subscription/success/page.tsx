@@ -1,14 +1,14 @@
-import { Suspense } from "react";
-import { SubscriptionSuccessContent } from "./components/SubscriptionSuccessContent";
+import { Suspense } from 'react';
+import { SubscriptionSuccessContent } from './components/SubscriptionSuccessContent';
 
 export const metadata = {
-  title: "Suscripción Exitosa - ContaFlow",
-  description: "Tu suscripción se ha activado correctamente",
+  title: 'Suscripción Exitosa - Contafy',
+  description: 'Tu suscripción se ha activado correctamente',
 };
 
 export default function SubscriptionSuccessPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
+    <div className="from-background to-muted/20 flex min-h-screen items-center justify-center bg-linear-to-b p-4">
       <Suspense fallback={<div>Cargando...</div>}>
         <SubscriptionSuccessContent />
       </Suspense>
