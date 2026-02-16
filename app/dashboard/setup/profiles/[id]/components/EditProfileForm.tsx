@@ -276,9 +276,9 @@ export function EditProfileForm({ profile }: EditProfileFormProps) {
       </div>
 
       {error && (
-        <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+        <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-sm">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 mt-0.5" />
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
         </div>

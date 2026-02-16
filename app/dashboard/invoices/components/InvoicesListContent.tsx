@@ -95,6 +95,7 @@ export function InvoicesListContent({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { subscription } = useSubscription();
+  const canExportPDF = hasFeatureAccess(subscription, 'pdf_export');
   const canExportExcel = hasFeatureAccess(subscription, 'excel_export');
   const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
@@ -684,6 +685,7 @@ export function InvoicesListContent({
         onClearFilters={handleClearFilters}
         exportPdfHref={exportPdfHref}
         onExportPDF={handleExportPDF}
+        canExportPDF={canExportPDF}
         onExportExcel={handleExportExcel}
         canExportExcel={canExportExcel}
         onAddManualIncome={handleOpenAddManualIncome}

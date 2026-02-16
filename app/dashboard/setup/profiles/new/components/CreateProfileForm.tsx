@@ -350,9 +350,9 @@ export function CreateProfileForm({
         )}
       </div>
 
-      {/* Error Message */}
+      {/* Mensaje informativo (ej. perfil ya existe con otro usuario) */}
       {error && (
-        <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+        <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-sm">
           {error}
         </div>
       )}

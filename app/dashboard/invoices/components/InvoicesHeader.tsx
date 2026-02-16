@@ -19,6 +19,13 @@ import {
 import { PageHeader } from '@/components/common/PageHeader';
 import { FilterBar } from '@/components/common/FilterBar';
 import { ProfileSelector } from './ProfileSelector';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { getExportUpgradeMessage } from '@/lib/utils/subscription';
 import type { Profile } from '@/lib/types/profiles';
 
 interface RegimenOption {
@@ -44,6 +51,7 @@ interface InvoicesHeaderProps {
   /** Si se proporciona, el botón PDF es un Link al preview; si no, usa onExportPDF */
   exportPdfHref?: string;
   onExportPDF: () => void;
+  canExportPDF: boolean;
   onExportExcel: () => void;
   canExportExcel: boolean;
   onAddManualIncome: () => void;
@@ -68,6 +76,7 @@ export function InvoicesHeader({
   onClearFilters,
   exportPdfHref,
   onExportPDF,
+  canExportPDF,
   onExportExcel,
   canExportExcel,
   onAddManualIncome,
@@ -91,40 +100,84 @@ export function InvoicesHeader({
 
           <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
 
-          {exportPdfHref ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground gap-1.5"
-              asChild
-            >
-              <Link href={exportPdfHref}>
+          {canExportPDF ? (
+            exportPdfHref ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground gap-1.5"
+                asChild
+              >
+                <Link href={exportPdfHref}>
+                  <Download className="h-4 w-4" />
+                  <span className="hidden lg:inline">Ver reporte PDF</span>
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                onClick={onExportPDF}
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground gap-1.5"
+              >
                 <Download className="h-4 w-4" />
-                <span className="hidden lg:inline">Ver reporte PDF</span>
-              </Link>
-            </Button>
+                <span className="hidden lg:inline">PDF</span>
+              </Button>
+            )
           ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled
+                      className="text-muted-foreground gap-1.5 disabled:opacity-50 cursor-not-allowed"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden lg:inline">PDF</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={6}>
+                  {getExportUpgradeMessage('pdf_export')}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {canExportExcel ? (
             <Button
-              onClick={onExportPDF}
+              onClick={onExportExcel}
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-foreground gap-1.5"
             >
               <Download className="h-4 w-4" />
-              <span className="hidden lg:inline">PDF</span>
+              <span className="hidden lg:inline">Excel</span>
             </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled
+                      className="text-muted-foreground gap-1.5 disabled:opacity-50 cursor-not-allowed"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden lg:inline">Excel</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={6}>
+                  {getExportUpgradeMessage('excel_export')}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
-          <Button
-            onClick={onExportExcel}
-            variant="ghost"
-            size="sm"
-            disabled={!canExportExcel}
-            title={!canExportExcel ? 'Disponible en plan Pro' : undefined}
-            className="text-muted-foreground hover:text-foreground gap-1.5 disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden lg:inline">Excel</span>
-          </Button>
 
           <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
 
