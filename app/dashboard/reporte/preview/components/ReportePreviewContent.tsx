@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useRef, useState } from "react";
-import { Download, Loader2, Printer, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useRef, useState } from 'react';
+import { Download, Printer, Share2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,25 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ReporteMensualTemplate, type ReporteMensualData } from "./ReporteMensualTemplate";
-import { DetalleOperacionesDevengadasTemplate } from "./DetalleOperacionesDevengadasTemplate";
-import type { DetalleOperacionesDevengadasData } from "./DetalleOperacionesDevengadasTemplate";
-import { exportReportElementToPDF } from "@/lib/pdf";
+} from '@/components/ui/dialog';
+import { ReporteMensualTemplate, type ReporteMensualData } from './ReporteMensualTemplate';
+import { DetalleOperacionesDevengadasTemplate } from './DetalleOperacionesDevengadasTemplate';
+import type { DetalleOperacionesDevengadasData } from './DetalleOperacionesDevengadasTemplate';
+import { exportReportElementToPDF } from '@/lib/pdf';
 
 const MESES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 interface ReportePreviewContentProps {
@@ -53,14 +63,14 @@ export function ReportePreviewContent({
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       await new Promise((r) => setTimeout(r, 300));
 
-      el.scrollIntoView({ behavior: "instant", block: "start" });
+      el.scrollIntoView({ behavior: 'instant', block: 'start' });
       await new Promise((r) => setTimeout(r, 200));
 
       if (asBlob) {
-        const { exportReportElementToPDFBlob } = await import("@/lib/pdf");
+        const { exportReportElementToPDFBlob } = await import('@/lib/pdf');
         const pdfBlob = await exportReportElementToPDFBlob(el);
         const pdfUrl = URL.createObjectURL(pdfBlob);
-        const printWindow = window.open(pdfUrl, "_blank");
+        const printWindow = window.open(pdfUrl, '_blank');
         if (printWindow) {
           printWindow.onload = () => printWindow.print();
         }
@@ -71,7 +81,7 @@ export function ReportePreviewContent({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error("Error al exportar PDF", error);
+      console.error('Error al exportar PDF', error);
       setErrorMessage(message);
     } finally {
       setIsExporting(false);
@@ -89,13 +99,13 @@ export function ReportePreviewContent({
           text: `Reporte mensual de operaciones - ${data.profileName}`,
         });
       } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          console.error("Error al compartir", err);
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Error al compartir', err);
         }
       }
     } else {
       await navigator.clipboard.writeText(window.location.href);
-      alert("Enlace copiado al portapapeles.");
+      alert('Enlace copiado al portapapeles.');
     }
   };
 
@@ -103,7 +113,7 @@ export function ReportePreviewContent({
     <div className="relative min-h-screen bg-gray-100 print:bg-white">
       {/* reportRef envuelve las mismas plantillas que se ven en pantalla.
           html2canvas captura este contenedor → el PDF es idéntico al preview. */}
-      <div ref={reportRef} className="w-full max-w-[210mm] mx-auto">
+      <div ref={reportRef} className="mx-auto w-full max-w-[210mm]">
         <ReporteMensualTemplate
           data={data}
           pageNumber={1}
@@ -133,7 +143,7 @@ export function ReportePreviewContent({
 
       {/* Botones flotantes (ocultos al imprimir y durante exportación) */}
       {!isExporting && (
-        <div className="fixed right-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-3 print:hidden">
+        <div className="fixed top-1/2 right-6 z-10 flex -translate-y-1/2 flex-col gap-3 print:hidden">
           <Button
             size="icon"
             className="h-12 w-12 rounded-full bg-emerald-600 shadow-lg hover:bg-emerald-700"
@@ -157,7 +167,7 @@ export function ReportePreviewContent({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Error al generar el PDF</DialogTitle>
-            <DialogDescription>{errorMessage ?? ""}</DialogDescription>
+            <DialogDescription>{errorMessage ?? ''}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button onClick={() => setErrorMessage(null)}>Entendido</Button>

@@ -21,7 +21,7 @@ import { FilterBar } from '@/components/common/FilterBar';
 import { ProfileSelector } from './ProfileSelector';
 import type { Profile } from '@/lib/types/profiles';
 
-interface CategoryOption {
+interface RegimenOption {
   value: string;
   label: string;
 }
@@ -34,12 +34,15 @@ interface ExpensesHeaderProps {
   onMesChange: (mes: number) => void;
   selectedAño: number;
   onAñoChange: (año: number) => void;
-  selectedCategoria: string;
-  onCategoriaChange: (cat: string) => void;
-  categories: CategoryOption[];
+  selectedRegimenFiscal: string;
+  onRegimenFiscalChange: (regimen: string) => void;
+  regimenOptions: RegimenOption[];
+  isRegimenDisabled: boolean;
   search: string;
   onSearchChange: (value: string) => void;
   onClearFilters: () => void;
+  /** Si se proporciona, el botón PDF es un Link al preview; si no, usa onExportPDF */
+  exportPdfHref?: string;
   onExportPDF: () => void;
   onExportExcel: () => void;
   canExportExcel: boolean;
@@ -56,12 +59,14 @@ export function ExpensesHeader({
   onMesChange,
   selectedAño,
   onAñoChange,
-  selectedCategoria,
-  onCategoriaChange,
-  categories,
+  selectedRegimenFiscal,
+  onRegimenFiscalChange,
+  regimenOptions,
+  isRegimenDisabled,
   search,
   onSearchChange,
   onClearFilters,
+  exportPdfHref,
   onExportPDF,
   onExportExcel,
   canExportExcel,
@@ -86,15 +91,29 @@ export function ExpensesHeader({
 
           <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
 
-          <Button
-            onClick={onExportPDF}
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground gap-1.5"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden lg:inline">PDF</span>
-          </Button>
+          {exportPdfHref ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-1.5"
+              asChild
+            >
+              <Link href={exportPdfHref}>
+                <Download className="h-4 w-4" />
+                <span className="hidden lg:inline">Ver reporte PDF</span>
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              onClick={onExportPDF}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-1.5"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden lg:inline">PDF</span>
+            </Button>
+          )}
           <Button
             onClick={onExportExcel}
             variant="ghost"
@@ -159,14 +178,18 @@ export function ExpensesHeader({
           searchPlaceholder="Concepto, Emisor o UUID..."
           onClearFilters={onClearFilters}
           extraFilters={
-            <Select value={selectedCategoria} onValueChange={onCategoriaChange}>
+            <Select
+              value={selectedRegimenFiscal}
+              onValueChange={onRegimenFiscalChange}
+              disabled={isRegimenDisabled}
+            >
               <SelectTrigger className="h-8 w-50 text-sm">
-                <SelectValue placeholder="Categoría" />
+                <SelectValue placeholder="Régimen fiscal" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.value === 'all' ? 'Todas las categorías' : cat.label}
+                {regimenOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.value === 'all' ? 'Todos los regímenes' : opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>

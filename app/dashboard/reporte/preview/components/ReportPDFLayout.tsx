@@ -1,15 +1,21 @@
-"use client";
+'use client';
 
-import type { ReporteMensualData, EstadoPorRegimen } from "./ReporteMensualTemplate";
-import type {
-  DetalleOperacionesDevengadasData,
-  FilaIngresoDevengado,
-  FilaEgresoDevengado,
-} from "./DetalleOperacionesDevengadasTemplate";
+import type { ReporteMensualData } from './ReporteMensualTemplate';
+import type { DetalleOperacionesDevengadasData } from './DetalleOperacionesDevengadasTemplate';
 
 const MESES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 interface ReportPDFLayoutProps {
@@ -19,7 +25,7 @@ interface ReportPDFLayoutProps {
 }
 
 function formatCurrency(amount: number): string {
-  return `$${amount.toLocaleString("es-MX", {
+  return `$${amount.toLocaleString('es-MX', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -27,15 +33,15 @@ function formatCurrency(amount: number): string {
 
 function formatDate(dateString: string): string {
   const d = new Date(dateString);
-  return d.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
+  return d.toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 }
 
 function truncate(str: string, max: number): string {
-  if (!str) return "—";
+  if (!str) return '—';
   return str.length <= max ? str : `${str.slice(0, max)}...`;
 }
 
@@ -43,16 +49,10 @@ function truncate(str: string, max: number): string {
  * Layout exclusivo para PDF/impresión. NO reutiliza estilos del dashboard.
  * Diseñado para hoja A4 profesional con formato de documento financiero corporativo.
  */
-export function ReportPDFLayout({
-  data,
-  detalleData,
-  totalPages,
-}: ReportPDFLayoutProps) {
+export function ReportPDFLayout({ data, detalleData, totalPages }: ReportPDFLayoutProps) {
   const periodoTexto = `${MESES[data.mes - 1]} ${data.año}`;
   const margen =
-    data.ingresosDevengados > 0
-      ? (data.utilidadOperativa / data.ingresosDevengados) * 100
-      : 0;
+    data.ingresosDevengados > 0 ? (data.utilidadOperativa / data.ingresosDevengados) * 100 : 0;
 
   return (
     <div className="report-pdf-root">
@@ -66,7 +66,7 @@ export function ReportPDFLayout({
           </div>
           <div className="report-pdf-header-info">
             <p className="report-pdf-header-title">Reporte Mensual de Operaciones</p>
-            <p className="report-pdf-header-rfc">RFC: {data.rfc || "—"}</p>
+            <p className="report-pdf-header-rfc">RFC: {data.rfc || '—'}</p>
             <p className="report-pdf-header-periodo">Período: {periodoTexto}</p>
           </div>
         </header>
@@ -78,11 +78,15 @@ export function ReportPDFLayout({
             <div className="report-pdf-grid-3">
               <div className="report-pdf-metric">
                 <span className="report-pdf-metric-label">Ingresos cobrados</span>
-                <span className="report-pdf-metric-value">{formatCurrency(data.ingresosCobrados)}</span>
+                <span className="report-pdf-metric-value">
+                  {formatCurrency(data.ingresosCobrados)}
+                </span>
               </div>
               <div className="report-pdf-metric">
                 <span className="report-pdf-metric-label">Egresos pagados</span>
-                <span className="report-pdf-metric-value">{formatCurrency(data.egresosPagados)}</span>
+                <span className="report-pdf-metric-value">
+                  {formatCurrency(data.egresosPagados)}
+                </span>
               </div>
               <div className="report-pdf-metric report-pdf-metric-total">
                 <span className="report-pdf-metric-label">Flujo neto</span>
@@ -97,11 +101,15 @@ export function ReportPDFLayout({
             <div className="report-pdf-rows">
               <div className="report-pdf-row">
                 <span>Facturas por cobrar</span>
-                <span className="report-pdf-row-value">{formatCurrency(data.facturasPorCobrar)}</span>
+                <span className="report-pdf-row-value">
+                  {formatCurrency(data.facturasPorCobrar)}
+                </span>
               </div>
               <div className="report-pdf-row">
                 <span>Facturas por pagar</span>
-                <span className="report-pdf-row-value">{formatCurrency(data.facturasPorPagar)}</span>
+                <span className="report-pdf-row-value">
+                  {formatCurrency(data.facturasPorPagar)}
+                </span>
               </div>
               <div className="report-pdf-row">
                 <span>Proyección saldo bancario</span>
@@ -126,7 +134,9 @@ export function ReportPDFLayout({
                       </div>
                       <div className="report-pdf-row">
                         <span>Egresos (pagados / deducidos)</span>
-                        <span className="report-pdf-negative">({formatCurrency(regimen.egresos)})</span>
+                        <span className="report-pdf-negative">
+                          ({formatCurrency(regimen.egresos)})
+                        </span>
                       </div>
                       <div className="report-pdf-row">
                         <span>Retenciones de terceros (IVA)</span>
@@ -163,7 +173,9 @@ export function ReportPDFLayout({
                 </div>
                 <div className="report-pdf-row">
                   <span>Egresos devengados (costos y gastos)</span>
-                  <span className="report-pdf-negative">({formatCurrency(data.egresosDevengados)})</span>
+                  <span className="report-pdf-negative">
+                    ({formatCurrency(data.egresosDevengados)})
+                  </span>
                 </div>
                 <div className="report-pdf-row report-pdf-row-total">
                   <span>Utilidad operativa</span>
@@ -179,12 +191,12 @@ export function ReportPDFLayout({
           <div className="report-pdf-footer-left">
             <p>Generado por Contafy</p>
             <p suppressHydrationWarning>
-              {new Date().toLocaleDateString("es-MX", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
+              {new Date().toLocaleDateString('es-MX', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
               })}
             </p>
           </div>
@@ -201,7 +213,7 @@ export function ReportPDFLayout({
           </div>
           <div className="report-pdf-header-info">
             <p className="report-pdf-header-title">Detalle de Operaciones Devengadas</p>
-            <p className="report-pdf-header-rfc">RFC: {detalleData.rfc || "—"}</p>
+            <p className="report-pdf-header-rfc">RFC: {detalleData.rfc || '—'}</p>
             <p className="report-pdf-header-periodo">Período: {periodoTexto}</p>
           </div>
         </header>
@@ -224,7 +236,9 @@ export function ReportPDFLayout({
                 <tbody>
                   {detalleData.ingresos.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="report-pdf-td-empty">Sin registros</td>
+                      <td colSpan={5} className="report-pdf-td-empty">
+                        Sin registros
+                      </td>
                     </tr>
                   ) : (
                     detalleData.ingresos.map((row, idx) => (
@@ -241,7 +255,9 @@ export function ReportPDFLayout({
                 <tfoot>
                   <tr className="report-pdf-tfoot-total">
                     <td colSpan={4}>Total ingresos devengados</td>
-                    <td className="report-pdf-td-right report-pdf-total-value">{formatCurrency(detalleData.totalIngresos)}</td>
+                    <td className="report-pdf-td-right report-pdf-total-value">
+                      {formatCurrency(detalleData.totalIngresos)}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -265,7 +281,9 @@ export function ReportPDFLayout({
                 <tbody>
                   {detalleData.egresos.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="report-pdf-td-empty">Sin registros</td>
+                      <td colSpan={5} className="report-pdf-td-empty">
+                        Sin registros
+                      </td>
                     </tr>
                   ) : (
                     detalleData.egresos.map((row, idx) => (
@@ -282,7 +300,9 @@ export function ReportPDFLayout({
                 <tfoot>
                   <tr className="report-pdf-tfoot-total report-pdf-tfoot-egresos">
                     <td colSpan={4}>Total egresos devengados</td>
-                    <td className="report-pdf-td-right report-pdf-total-value report-pdf-total-egresos">{formatCurrency(detalleData.totalEgresos)}</td>
+                    <td className="report-pdf-td-right report-pdf-total-value report-pdf-total-egresos">
+                      {formatCurrency(detalleData.totalEgresos)}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -293,7 +313,9 @@ export function ReportPDFLayout({
           <div className="report-pdf-utilidad-block">
             <p className="report-pdf-utilidad-label">Utilidad bruta</p>
             <p className="report-pdf-utilidad-value">{formatCurrency(detalleData.utilidadBruta)}</p>
-            <p className="report-pdf-utilidad-margen">Margen: {detalleData.margenPercent.toFixed(1)}%</p>
+            <p className="report-pdf-utilidad-margen">
+              Margen: {detalleData.margenPercent.toFixed(1)}%
+            </p>
           </div>
         </div>
 
@@ -301,12 +323,12 @@ export function ReportPDFLayout({
           <div className="report-pdf-footer-left">
             <p>Generado por Contafy</p>
             <p suppressHydrationWarning>
-              {new Date().toLocaleDateString("es-MX", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
+              {new Date().toLocaleDateString('es-MX', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
               })}
             </p>
           </div>

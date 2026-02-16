@@ -153,6 +153,18 @@ export function InvoicesListContent({
     return options;
   }, [selectedProfile?.regimenes_fiscales, regimenesQuery.data?.data]);
 
+  const exportPdfHref = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('mes', String(selectedMes));
+    params.set('año', String(selectedAño));
+    if (selectedProfileId) params.set('profileId', selectedProfileId);
+    if (selectedRegimenFiscal && selectedRegimenFiscal !== 'all') {
+      params.set('regimen_fiscal', selectedRegimenFiscal);
+    }
+    if (search?.trim()) params.set('search', search.trim());
+    return `/dashboard/invoices/reporte/preview?${params.toString()}`;
+  }, [selectedMes, selectedAño, selectedProfileId, selectedRegimenFiscal, search]);
+
   const createManualIncomeMutation = useMutation({
     mutationFn: createManualIncomeClient,
     onSuccess: () => {
@@ -670,6 +682,7 @@ export function InvoicesListContent({
         search={search}
         onSearchChange={setSearch}
         onClearFilters={handleClearFilters}
+        exportPdfHref={exportPdfHref}
         onExportPDF={handleExportPDF}
         onExportExcel={handleExportExcel}
         canExportExcel={canExportExcel}
