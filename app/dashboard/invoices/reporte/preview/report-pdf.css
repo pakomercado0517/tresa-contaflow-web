@@ -1,0 +1,30 @@
+/**
+ * Estilos de impresión para reporte de facturas.
+ * @page A4, márgenes controlados; @media print colores exactos.
+ */
+
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+@media print {
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  [style*="height: 100vh"],
+  [style*="overflow: hidden"],
+  [style*="position: fixed"] {
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+}

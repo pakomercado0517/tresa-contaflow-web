@@ -1,21 +1,24 @@
-"use client";
+'use client';
 
-import { type ReactNode } from "react";
-import {
-  BarChart3,
-  Building2,
-  DollarSign,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { type ReactNode } from 'react';
+import { BarChart3, Building2, DollarSign, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 const MESES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 /** Estado de resultados por régimen fiscal (una fila por régimen del perfil) */
@@ -26,8 +29,10 @@ export interface EstadoPorRegimen {
   ingresos: number;
   /** Egresos devengados del régimen (valor positivo; en pantalla se muestran entre paréntesis) */
   egresos: number;
-  /** Total retenciones (ISR + IVA) aplicadas en el régimen */
-  retenciones: number;
+  /** Retenciones de IVA aplicadas en el régimen */
+  retencionesIva: number;
+  /** Retenciones de ISR aplicadas en el régimen */
+  retencionesIsr: number;
   /** Impuesto trasladado (IVA trasladado) del régimen */
   impuestoTrasladado: number;
   /** Utilidad neta del régimen */
@@ -66,14 +71,14 @@ export interface ReporteMensualData {
 }
 
 function formatCurrency(amount: number): string {
-  return `$${amount.toLocaleString("es-MX", {
+  return `$${amount.toLocaleString('es-MX', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 }
 
 function formatPercent(value: number): string {
-  const sign = value >= 0 ? "+" : "";
+  const sign = value >= 0 ? '+' : '';
   return `${sign}${value.toFixed(1)}%`;
 }
 
@@ -102,43 +107,38 @@ export function ReporteMensualTemplate({
   className,
 }: ReporteMensualTemplateProps) {
   const margen =
-    data.ingresosDevengados > 0
-      ? (data.utilidadOperativa / data.ingresosDevengados) * 100
-      : 0;
+    data.ingresosDevengados > 0 ? (data.utilidadOperativa / data.ingresosDevengados) * 100 : 0;
 
-  const maxTesorería = Math.max(
-    data.facturasPorCobrar,
-    data.facturasPorPagar,
-    1
-  );
+  const maxTesorería = Math.max(data.facturasPorCobrar, data.facturasPorPagar, 1);
   const progressCobrar = maxTesorería > 0 ? (data.facturasPorCobrar / maxTesorería) * 100 : 0;
   const progressPagar = maxTesorería > 0 ? (data.facturasPorPagar / maxTesorería) * 100 : 0;
 
   return (
     <article
       className={cn(
-        "bg-white text-gray-900 shadow-none print:shadow-none",
-        "max-w-[210mm] mx-auto",
+        'bg-white text-gray-900 shadow-none print:shadow-none',
+        'mx-auto max-w-[210mm]',
         className
       )}
       data-reporte-contenido
     >
-        {/* Header: oculto durante captura PDF para que no aparezca en el documento */}
-        {!hideHeaderForCapture && (
-          <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4" data-html-header>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <span className="text-lg font-semibold text-gray-900">
-                Portal de Reportes Contafy
-              </span>
+      {/* Header: oculto durante captura PDF para que no aparezca en el documento */}
+      {!hideHeaderForCapture && (
+        <header
+          className="flex items-center justify-between border-b border-gray-200 px-6 py-4"
+          data-html-header
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <Building2 className="h-5 w-5" />
             </div>
-            {headerAction}
-          </header>
-        )}
+            <span className="text-lg font-semibold text-gray-900">Portal de Reportes Contafy</span>
+          </div>
+          {headerAction}
+        </header>
+      )}
 
-        {/* Bloque superior: tarjeta empresa + tarjeta reporte */}
+      {/* Bloque superior: tarjeta empresa + tarjeta reporte */}
       <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
         <Card className="overflow-visible border border-gray-200 bg-gray-50/80 shadow-sm">
           <CardHeader className="pb-2">
@@ -148,7 +148,7 @@ export function ReporteMensualTemplate({
           </CardHeader>
           <CardContent className="pt-0">
             <h2 className="text-xl font-bold text-emerald-700">Contafy</h2>
-            <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
+            <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
               FINANCIAL ANALYTICS
             </p>
           </CardContent>
@@ -156,7 +156,7 @@ export function ReporteMensualTemplate({
 
         <Card className="overflow-hidden border-0 bg-emerald-600 text-white shadow-sm">
           <div
-            className="absolute left-0 top-0 h-24 w-24 opacity-10"
+            className="absolute top-0 left-0 h-24 w-24 opacity-10"
             style={{
               backgroundImage: `repeating-linear-gradient(
                 45deg,
@@ -168,12 +168,8 @@ export function ReporteMensualTemplate({
             }}
           />
           <CardContent className="relative p-6">
-            <p className="text-sm font-medium text-emerald-100">
-              Reporte Mensual de Operaciones
-            </p>
-            <p className="mt-2 text-2xl font-bold">
-              RFC: {data.rfc || "—"}
-            </p>
+            <p className="text-sm font-medium text-emerald-100">Reporte Mensual de Operaciones</p>
+            <p className="mt-2 text-2xl font-bold">RFC: {data.rfc || '—'}</p>
             <p className="mt-1 text-emerald-100">
               Periodo: {MESES[data.mes - 1]} {data.año}
             </p>
@@ -183,14 +179,14 @@ export function ReporteMensualTemplate({
 
       {/* RESUMEN DE FLUJO (CAJA) */}
       <section className="px-6 pb-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wide text-gray-700 uppercase">
           <BarChart3 className="h-4 w-4" />
           Resumen de flujo (caja)
         </h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card className="border border-gray-200 bg-white">
             <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+              <p className="text-xs font-semibold tracking-wide text-blue-600 uppercase">
                 Ingresos cobrados
               </p>
               <p className="mt-1 text-2xl font-bold text-gray-900">
@@ -199,8 +195,8 @@ export function ReporteMensualTemplate({
               {data.variacionIngresos != null && (
                 <p
                   className={cn(
-                    "mt-1 flex items-center gap-1 text-sm",
-                    data.variacionIngresos >= 0 ? "text-emerald-600" : "text-red-600"
+                    'mt-1 flex items-center gap-1 text-sm',
+                    data.variacionIngresos >= 0 ? 'text-emerald-600' : 'text-red-600'
                   )}
                 >
                   {data.variacionIngresos >= 0 ? (
@@ -216,7 +212,7 @@ export function ReporteMensualTemplate({
 
           <Card className="border border-gray-200 bg-white">
             <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+              <p className="text-xs font-semibold tracking-wide text-amber-600 uppercase">
                 Egresos pagados
               </p>
               <p className="mt-1 text-2xl font-bold text-gray-900">
@@ -225,8 +221,8 @@ export function ReporteMensualTemplate({
               {data.variacionEgresos != null && (
                 <p
                   className={cn(
-                    "mt-1 flex items-center gap-1 text-sm",
-                    data.variacionEgresos <= 0 ? "text-emerald-600" : "text-red-600"
+                    'mt-1 flex items-center gap-1 text-sm',
+                    data.variacionEgresos <= 0 ? 'text-emerald-600' : 'text-red-600'
                   )}
                 >
                   {data.variacionEgresos <= 0 ? (
@@ -242,15 +238,13 @@ export function ReporteMensualTemplate({
 
           <Card className="border border-emerald-200 bg-emerald-50/60">
             <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              <p className="text-xs font-semibold tracking-wide text-emerald-700 uppercase">
                 Flujo neto
               </p>
               <p className="mt-1 text-2xl font-bold text-emerald-700">
                 {formatCurrency(data.flujoNeto)}
               </p>
-              <p className="mt-1 text-sm text-gray-600">
-                Liquidez disponible
-              </p>
+              <p className="mt-1 text-sm text-gray-600">Liquidez disponible</p>
             </CardContent>
           </Card>
         </div>
@@ -258,7 +252,7 @@ export function ReporteMensualTemplate({
 
       {/* TESORERÍA PENDIENTE */}
       <section className="px-6 pb-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wide text-gray-700 uppercase">
           <Wallet className="h-4 w-4" />
           Tesorería pendiente
         </h3>
@@ -266,7 +260,10 @@ export function ReporteMensualTemplate({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm text-gray-600">Facturas por cobrar</span>
             <div className="flex flex-1 items-center gap-4 sm:max-w-xs">
-              <Progress value={Math.min(progressCobrar, 100)} className="h-2 flex-1 bg-emerald-100 [&>div]:bg-emerald-600" />
+              <Progress
+                value={Math.min(progressCobrar, 100)}
+                className="h-2 flex-1 bg-emerald-100 [&>div]:bg-emerald-600"
+              />
               <span className="w-28 shrink-0 text-right font-medium text-gray-900">
                 {formatCurrency(data.facturasPorCobrar)}
               </span>
@@ -275,7 +272,10 @@ export function ReporteMensualTemplate({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm text-gray-600">Facturas por pagar</span>
             <div className="flex flex-1 items-center gap-4 sm:max-w-xs">
-              <Progress value={Math.min(progressPagar, 100)} className="h-2 flex-1 bg-red-100 [&>div]:bg-red-500" />
+              <Progress
+                value={Math.min(progressPagar, 100)}
+                className="h-2 flex-1 bg-red-100 [&>div]:bg-red-500"
+              />
               <span className="w-28 shrink-0 text-right font-medium text-gray-900">
                 {formatCurrency(data.facturasPorPagar)}
               </span>
@@ -292,7 +292,7 @@ export function ReporteMensualTemplate({
 
       {/* COMPARATIVA COBRADO VS PAGADO */}
       <section className="px-6 pb-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wide text-gray-700 uppercase">
           <BarChart3 className="h-4 w-4" />
           Comparativa cobrado vs pagado
         </h3>
@@ -310,59 +310,68 @@ export function ReporteMensualTemplate({
 
       {/* ESTADO DE RESULTADOS POR REGIMEN: regímenes en flujo continuo dentro del article */}
       {data.estadoPorRegimen && data.estadoPorRegimen.length > 0 && (
-        <section className="px-6 pb-6">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
-            <BarChart3 className="h-4 w-4" />
-            Estado de resultados por régimen
-          </h3>
-          <span className="mb-4 block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-            Basado en fecha de emisión CFDI
-          </span>
+        <section className="px-6 pb-6" data-reporte-seccion-regimenes>
           <div className="space-y-6">
             {data.estadoPorRegimen.map((regimen, index) => (
-              <div
-                key={index}
-                data-reporte-regimen
-                className="rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden"
-              >
-                <div className="border-b border-gray-200 bg-gray-100 px-4 py-2.5">
-                  <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-                  <h4 className="text-sm font-bold text-gray-900">
-                    {regimen.nombreRegimen}
-                  </h4>
-                </div>
-                <div className="space-y-2 p-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Ingresos (cobrados / devengados)</span>
-                    <span className="font-medium text-gray-900">
-                      {formatCurrency(regimen.ingresos)}
+              <div key={index} data-reporte-regimen className={index === 0 ? '' : ''}>
+                {/* Título de sección incluido en el primer régimen para que el
+                    salto de página ocurra antes del título, no entre título y card */}
+                {index === 0 && (
+                  <div className="mb-4 pt-10">
+                    <h3 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wide text-gray-700 uppercase">
+                      <BarChart3 className="h-4 w-4" />
+                      Estado de resultados por régimen
+                    </h3>
+                    <span className="mb-4 block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                      Basado en fecha de emisión CFDI
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Egresos (pagados / deducidos)</span>
-                    <span className="font-medium text-red-600">
-                      ({formatCurrency(regimen.egresos)})
-                    </span>
+                )}
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50/50">
+                  <div className="border-b border-gray-200 bg-gray-100 px-4 py-2.5">
+                    <span
+                      className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500"
+                      aria-hidden
+                    />
+                    <h4 className="text-sm font-bold text-gray-900">{regimen.nombreRegimen}</h4>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total retenciones de terceros (ISR / IVA)</span>
-                    <span className="font-medium text-gray-900">
-                      {formatCurrency(regimen.retenciones)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Impuesto trasladado</span>
-                    <span className="font-medium text-gray-900">
-                      {formatCurrency(regimen.impuestoTrasladado)}
-                    </span>
-                  </div>
-                  <div className="border-t border-gray-200 pt-3 flex justify-between">
-                    <span className="font-bold text-emerald-700">
-                      Utilidad neta del régimen
-                    </span>
-                    <span className="text-lg font-bold text-emerald-700">
-                      {formatCurrency(regimen.utilidadNeta)}
-                    </span>
+                  <div className="space-y-2 p-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Ingresos (cobrados / devengados)</span>
+                      <span className="font-medium text-gray-900">
+                        {formatCurrency(regimen.ingresos)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Egresos (pagados / deducidos)</span>
+                      <span className="font-medium text-red-600">
+                        ({formatCurrency(regimen.egresos)})
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Retenciones de terceros (IVA)</span>
+                      <span className="font-medium text-gray-900">
+                        {formatCurrency(regimen.retencionesIva)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Retenciones de terceros (ISR)</span>
+                      <span className="font-medium text-gray-900">
+                        {formatCurrency(regimen.retencionesIsr)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Impuesto trasladado</span>
+                      <span className="font-medium text-gray-900">
+                        {formatCurrency(regimen.impuestoTrasladado)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-200 pt-3">
+                      <span className="font-bold text-emerald-700">Utilidad neta del régimen</span>
+                      <span className="text-lg font-bold text-emerald-700">
+                        {formatCurrency(regimen.utilidadNeta)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -375,7 +384,7 @@ export function ReporteMensualTemplate({
       {(!data.estadoPorRegimen || data.estadoPorRegimen.length === 0) && (
         <section className="px-6 pb-8">
           <div className="flex flex-wrap items-start justify-between gap-2">
-            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+            <h3 className="flex items-center gap-2 text-sm font-bold tracking-wide text-gray-700 uppercase">
               <BarChart3 className="h-4 w-4" />
               Estado de resultados (modelo devengado)
             </h3>
@@ -398,9 +407,7 @@ export function ReporteMensualTemplate({
             </div>
             <div className="border-t border-gray-200 pt-3">
               <div className="flex justify-between">
-                <span className="font-bold text-emerald-700">
-                  Utilidad operativa
-                </span>
+                <span className="font-bold text-emerald-700">Utilidad operativa</span>
                 <span className="text-xl font-bold text-emerald-700">
                   {formatCurrency(data.utilidadOperativa)}
                 </span>
@@ -415,33 +422,38 @@ export function ReporteMensualTemplate({
 
       {/* Footer: oculto durante captura PDF (jsPDF dibuja footer en cada página) */}
       {!hideFooterForCapture && (
-      <footer className="border-t border-gray-200 bg-gray-50 px-6 py-4 text-xs text-gray-600" data-html-footer>
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p>Generado por: Contafy</p>
-            <p suppressHydrationWarning>
-              Fecha de generación:{" "}
-              {new Date().toLocaleDateString("es-MX", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
+        <footer
+          className="border-t border-gray-200 bg-gray-50 px-6 py-4 text-xs text-gray-600"
+          data-html-footer
+        >
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p>Generado por: Contafy</p>
+              <p suppressHydrationWarning>
+                Fecha de generación:{' '}
+                {new Date().toLocaleDateString('es-MX', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                })}
+              </p>
+            </div>
+            <p className="max-w-md text-center md:text-right">
+              Este documento es para fines informativos y de gestión interna. Sujeto a cambios
+              basados en conciliaciones bancarias.
+            </p>
+            <p className="text-right font-medium">
+              Página {pageNumber} de {totalPages}
             </p>
           </div>
-          <p className="max-w-md text-center md:text-right">
-            Este documento es para fines informativos y de gestión interna. Sujeto a
-            cambios basados en conciliaciones bancarias.
+          <p className="mt-2 text-center text-gray-500" suppressHydrationWarning>
+            © {new Date().getFullYear()} Contafy - Aviso de privacidad y términos de servicio
+            aplicables.
           </p>
-          <p className="text-right font-medium">Página {pageNumber} de {totalPages}</p>
-        </div>
-        <p className="mt-2 text-center text-gray-500" suppressHydrationWarning>
-          © {new Date().getFullYear()} Contafy - Aviso de privacidad y términos de
-          servicio aplicables.
-        </p>
-      </footer>
+        </footer>
       )}
     </article>
   );

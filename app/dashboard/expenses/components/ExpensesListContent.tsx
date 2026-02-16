@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileX, Trash2, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,7 @@ import { exportToPDF, normalizeExpensesForExport } from '@/lib/utils/pdf-export'
 import { exportToExcel } from '@/lib/excel';
 import { hasFeatureAccess } from '@/lib/hooks/useSubscription';
 import { deleteExpense } from '@/lib/api/expenses.client';
+import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import {
   deleteAccruedExpenseClient,
   updateAccruedExpenseClient,
@@ -70,13 +71,13 @@ interface ExpensesListContentProps {
   initialProfileId?: string;
   initialMes?: number;
   initialAño?: number;
-  initialCategoria?: string;
+  initialRegimenFiscal?: string;
   initialSearch?: string;
   tableState?: 'idle' | 'loading' | 'updating';
 }
 
+/** Categorías para gastos manuales (edición y tabla). No confundir con el filtro de régimen fiscal. */
 const CATEGORIES = [
-  { value: 'all', label: 'Todas las categorías' },
   { value: 'Viáticos', label: 'Viáticos' },
   { value: 'Oficina', label: 'Oficina' },
   { value: 'Servicios', label: 'Servicios' },
@@ -129,7 +130,7 @@ export function ExpensesListContent({
   initialProfileId,
   initialMes,
   initialAño,
-  initialCategoria,
+  initialRegimenFiscal,
   initialSearch,
   tableState = 'idle',
 }: ExpensesListContentProps) {
@@ -141,7 +142,48 @@ export function ExpensesListContent({
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
   const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
   const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
-  const [selectedCategoria, setSelectedCategoria] = useState(initialCategoria || 'all');
+  const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(initialRegimenFiscal || 'all');
+
+  const selectedProfile = useMemo(
+    () => profiles.find((p) => p.id === selectedProfileId),
+    [profiles, selectedProfileId]
+  );
+
+  const regimenesQuery = useQuery({
+    queryKey: ['regimenes-fiscales'],
+    queryFn: () => getRegimenesFiscalesClient(),
+    enabled: !!selectedProfile?.regimenes_fiscales?.length,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const regimenOptions = useMemo(() => {
+    const options = [{ value: 'all', label: 'Todos los regímenes' }];
+    const profileRegimenes = selectedProfile?.regimenes_fiscales ?? [];
+    if (profileRegimenes.length === 0) return options;
+
+    const catalog = regimenesQuery.data?.data ?? [];
+    const descripcionMap = Object.fromEntries(catalog.map((r) => [r.clave, r.descripcion]));
+
+    for (const clave of profileRegimenes) {
+      const desc = descripcionMap[clave];
+      options.push({
+        value: clave,
+        label: desc ? `${clave} - ${desc}` : clave,
+      });
+    }
+    return options;
+  }, [selectedProfile?.regimenes_fiscales, regimenesQuery.data?.data]);
+
+  const exportPdfHref = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('mes', String(selectedMes));
+    params.set('año', String(selectedAño));
+    if (selectedProfileId && selectedProfileId !== 'all') params.set('profileId', selectedProfileId);
+    if (selectedRegimenFiscal && selectedRegimenFiscal !== 'all')
+      params.set('regimen_fiscal', selectedRegimenFiscal);
+    if (search?.trim()) params.set('search', search.trim());
+    return `/dashboard/expenses/reporte/preview?${params.toString()}`;
+  }, [selectedMes, selectedAño, selectedProfileId, selectedRegimenFiscal, search]);
   const [isManualExpenseDialogOpen, setIsManualExpenseDialogOpen] = useState(false);
   const [showProfileWarning, setShowProfileWarning] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -165,26 +207,31 @@ export function ExpensesListContent({
       params.set('profileId', selectedProfileId);
     if (selectedMes) params.set('mes', selectedMes.toString());
     if (selectedAño) params.set('año', selectedAño.toString());
-    if (selectedCategoria && selectedCategoria !== 'all')
-      params.set('categoria', selectedCategoria);
+    if (
+      selectedProfileId &&
+      selectedProfileId !== 'all' &&
+      selectedRegimenFiscal &&
+      selectedRegimenFiscal !== 'all'
+    )
+      params.set('regimen_fiscal', selectedRegimenFiscal);
     if (search) params.set('search', search);
     params.set('page', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
-  }, [selectedProfileId, selectedMes, selectedAño, selectedCategoria, search, router]);
+  }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
   // Sincronizar estado interno con URL (permite back/forward sin desalineación)
   useEffect(() => {
     const urlProfileId = searchParams.get('profileId') ?? 'all';
     const urlMes = Number(searchParams.get('mes') ?? new Date().getMonth() + 1);
     const urlAño = Number(searchParams.get('año') ?? new Date().getFullYear());
-    const urlCategoria = searchParams.get('categoria') ?? 'all';
+    const urlRegimen = searchParams.get('regimen_fiscal') ?? 'all';
     const urlSearch = searchParams.get('search') ?? '';
 
     isSyncingFromUrlRef.current = true;
     setSelectedProfileId(urlProfileId);
     setSelectedMes(urlMes);
     setSelectedAño(urlAño);
-    setSelectedCategoria(urlCategoria);
+    setSelectedRegimenFiscal(urlRegimen);
     setSearch(urlSearch);
 
     const timeout = window.setTimeout(() => {
@@ -200,7 +247,7 @@ export function ExpensesListContent({
     if (isSyncingFromUrlRef.current) return;
     applyFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMes, selectedAño, selectedCategoria]); // Solo estos filtros se aplican automáticamente
+  }, [selectedMes, selectedAño, selectedRegimenFiscal]); // Solo estos filtros se aplican automáticamente
 
   // Marcar que la carga inicial ya terminó
   useEffect(() => {
@@ -224,7 +271,7 @@ export function ExpensesListContent({
     setSearch('');
     setSelectedMes(new Date().getMonth() + 1);
     setSelectedAño(new Date().getFullYear());
-    setSelectedCategoria('all');
+    setSelectedRegimenFiscal('all');
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
     if (selectedProfileId && selectedProfileId !== 'all')
@@ -289,12 +336,14 @@ export function ExpensesListContent({
 
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
+    setSelectedRegimenFiscal('all');
     const params = new URLSearchParams(searchParams.toString());
     if (profileId && profileId !== 'all') {
       params.set('profileId', profileId);
     } else {
       params.delete('profileId');
     }
+    params.delete('regimen_fiscal');
     params.set('page', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
@@ -510,12 +559,14 @@ export function ExpensesListContent({
         onMesChange={(m) => setSelectedMes(m)}
         selectedAño={selectedAño}
         onAñoChange={(a) => setSelectedAño(a)}
-        selectedCategoria={selectedCategoria}
-        onCategoriaChange={setSelectedCategoria}
-        categories={CATEGORIES}
+        selectedRegimenFiscal={selectedRegimenFiscal}
+        onRegimenFiscalChange={setSelectedRegimenFiscal}
+        regimenOptions={regimenOptions}
+        isRegimenDisabled={!selectedProfile?.regimenes_fiscales?.length}
         search={search}
         onSearchChange={setSearch}
         onClearFilters={handleClearFilters}
+        exportPdfHref={exportPdfHref}
         onExportPDF={handleExportPDF}
         onExportExcel={handleExportExcel}
         canExportExcel={canExportExcel}
@@ -912,7 +963,7 @@ export function ExpensesListContent({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sin categoría</SelectItem>
-                    {CATEGORIES.filter((c) => c.value !== 'all').map((cat) => (
+                    {CATEGORIES.map((cat) => (
                       <SelectItem key={cat.value} value={cat.value}>
                         {cat.label}
                       </SelectItem>

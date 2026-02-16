@@ -29,7 +29,7 @@ interface NormalizedExpenseParams {
   profileId?: string;
   mes: number;
   año: number;
-  categoria?: string;
+  regimen_fiscal?: string;
   page: number;
   search?: string;
 }
@@ -53,13 +53,13 @@ export function ExpensesPageClient() {
 
   const normalizedParams: NormalizedExpenseParams = useMemo(() => {
     const profileIdParam = searchParams.get('profileId');
-    const categoriaParam = searchParams.get('categoria');
+    const regimenFiscalParam = searchParams.get('regimen_fiscal');
 
     return {
       profileId: profileIdParam && profileIdParam !== 'all' ? profileIdParam : undefined,
       mes: toNumber(searchParams.get('mes'), getDefaultMes()),
       año: toNumber(searchParams.get('año'), getDefaultAño()),
-      categoria: categoriaParam && categoriaParam !== 'all' ? categoriaParam : undefined,
+      regimen_fiscal: regimenFiscalParam && regimenFiscalParam !== 'all' ? regimenFiscalParam : undefined,
       page: toNumber(searchParams.get('page'), 1),
       search: searchParams.get('search') ?? undefined,
     };
@@ -77,7 +77,7 @@ export function ExpensesPageClient() {
       normalizedParams.profileId ?? null,
       normalizedParams.mes,
       normalizedParams.año,
-      normalizedParams.categoria ?? null,
+      normalizedParams.regimen_fiscal ?? null,
       normalizedParams.page,
       normalizedParams.search ?? null,
     ],
@@ -86,7 +86,7 @@ export function ExpensesPageClient() {
         profileId: normalizedParams.profileId,
         mes: normalizedParams.mes,
         año: normalizedParams.año,
-        categoria: normalizedParams.categoria,
+        regimen_fiscal: normalizedParams.regimen_fiscal,
         page: normalizedParams.page,
         limit: 10,
         search: normalizedParams.search,
@@ -181,7 +181,7 @@ export function ExpensesPageClient() {
       initialProfileId={normalizedParams.profileId}
       initialMes={normalizedParams.mes}
       initialAño={normalizedParams.año}
-      initialCategoria={normalizedParams.categoria ?? 'all'}
+      initialRegimenFiscal={normalizedParams.regimen_fiscal ?? 'all'}
       initialSearch={normalizedParams.search}
       tableState={tableState}
     />

@@ -12,7 +12,7 @@ export interface GetExpensesClientParams {
   mes?: number;
   año?: number;
   tipo?: string;
-  categoria?: string;
+  regimen_fiscal?: string;
   page?: number;
   limit?: number;
   search?: string;
@@ -30,7 +30,7 @@ export async function getExpensesClient(
   if (params?.mes) queryParams.append('mes', params.mes.toString());
   if (params?.año) queryParams.append('año', params.año.toString());
   if (params?.tipo) queryParams.append('tipo', params.tipo);
-  if (params?.categoria) queryParams.append('categoria', params.categoria);
+  if (params?.regimen_fiscal) queryParams.append('regimen_fiscal', params.regimen_fiscal);
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
   if (params?.search) queryParams.append('search', params.search);

@@ -41,6 +41,8 @@ interface InvoicesHeaderProps {
   search: string;
   onSearchChange: (value: string) => void;
   onClearFilters: () => void;
+  /** Si se proporciona, el botón PDF es un Link al preview; si no, usa onExportPDF */
+  exportPdfHref?: string;
   onExportPDF: () => void;
   onExportExcel: () => void;
   canExportExcel: boolean;
@@ -64,6 +66,7 @@ export function InvoicesHeader({
   search,
   onSearchChange,
   onClearFilters,
+  exportPdfHref,
   onExportPDF,
   onExportExcel,
   canExportExcel,
@@ -88,15 +91,29 @@ export function InvoicesHeader({
 
           <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
 
-          <Button
-            onClick={onExportPDF}
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground gap-1.5"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden lg:inline">PDF</span>
-          </Button>
+          {exportPdfHref ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-1.5"
+              asChild
+            >
+              <Link href={exportPdfHref}>
+                <Download className="h-4 w-4" />
+                <span className="hidden lg:inline">Ver reporte PDF</span>
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              onClick={onExportPDF}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-1.5"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden lg:inline">PDF</span>
+            </Button>
+          )}
           <Button
             onClick={onExportExcel}
             variant="ghost"
