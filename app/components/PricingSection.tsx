@@ -25,17 +25,17 @@ interface PricingSectionProps {
 const planMetadata = {
   FREE: {
     icon: 'Leaf' as const,
-    description: 'Para freelancers que inician.',
+    description: 'Para empezar a organizar tus XML.',
     isPopular: false,
   },
   BASIC: {
     icon: 'Rocket' as const,
-    description: 'Pequeños negocios en crecimiento.',
+    description: 'Pequeños negocios y múltiples RFCs.',
     isPopular: false,
   },
   PRO: {
     icon: 'Gem' as const,
-    description: 'Contadores y despachos.',
+    description: 'Contadores, reportes PDF/Excel y más.',
     isPopular: true,
   },
   ENTERPRISE: {
@@ -154,10 +154,11 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
             </span>
           </div>
           <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            Elige el plan perfecto para ti
+            Elige el plan que se adapte a tu contabilidad
           </h2>
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-            Sin compromisos. Cancela cuando quieras. Empieza con 30 días gratis.
+            Más RFCs, exportación PDF/Excel y búsqueda SAT con IA según el plan. Sin compromisos;
+            cancela cuando quieras. Prueba gratis 30 días.
           </p>
         </div>
 
@@ -184,10 +185,11 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
           </span>
         </div>
         <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-          Elige el plan perfecto para ti
+          Elige el plan que se adapte a tu contabilidad
         </h2>
         <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-          Sin compromisos. Cancela cuando quieras. Empieza con 30 días gratis.
+          Más RFCs, exportación PDF/Excel y búsqueda SAT con IA según el plan. Sin compromisos;
+          cancela cuando quieras. Prueba gratis 30 días.
         </p>
       </div>
 
