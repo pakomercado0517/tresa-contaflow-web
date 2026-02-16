@@ -7,6 +7,7 @@ import { createProfile, updateProfile } from "@/lib/api/profiles";
 import { getProfiles } from "@/lib/api/profiles";
 import { getSubscription } from "@/lib/api/subscription";
 import { logoutUser } from "@/lib/api/auth";
+import { ServerApiError } from "@/lib/api/server-client";
 import {
   canCreateProfile,
   getProfileLimit,
@@ -93,13 +94,17 @@ export async function createProfileAction(
       }
     }
 
+    // Priorizar el mensaje del response del backend cuando viene en el body (ej. perfil ya existe con otro usuario)
+    if (error instanceof ServerApiError && error.data && typeof error.data === "object" && "message" in error.data) {
+      const apiMessage = (error.data as { message?: unknown }).message;
+      if (typeof apiMessage === "string" && apiMessage.trim()) {
+        return { error: apiMessage };
+      }
+    }
+
     if (error instanceof Error) {
-      // Manejar errores de la API
       if (error.message.includes("Límite de perfiles")) {
         return { error: "Has alcanzado el límite de perfiles de tu plan" };
-      }
-      if (error.message.includes("RFC")) {
-        return { error: "El RFC ingresado ya está registrado" };
       }
       return { error: error.message };
     }
@@ -161,10 +166,14 @@ export async function updateProfileAction(
       }
     }
 
-    if (error instanceof Error) {
-      if (error.message.includes("RFC")) {
-        return { error: "El RFC ingresado ya está registrado" };
+    if (error instanceof ServerApiError && error.data && typeof error.data === "object" && "message" in error.data) {
+      const apiMessage = (error.data as { message?: unknown }).message;
+      if (typeof apiMessage === "string" && apiMessage.trim()) {
+        return { error: apiMessage };
       }
+    }
+
+    if (error instanceof Error) {
       if (error.message.includes("Perfil no encontrado")) {
         return { error: "El perfil ya no existe o fue eliminado" };
       }

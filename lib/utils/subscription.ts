@@ -1,5 +1,25 @@
 import type { Plan, Subscription } from "@/lib/types/subscription";
 
+/** Feature de exportación para mensaje de actualización de plan */
+export type ExportFeature = "pdf_export" | "excel_export";
+
+/**
+ * Plan mínimo que incluye la funcionalidad (para mensajes de upgrade).
+ * PDF: Básico; Excel: Pro.
+ */
+export function getExportUpgradeMessage(
+  feature: ExportFeature
+): string {
+  switch (feature) {
+    case "pdf_export":
+      return "Actualiza a Básico para exportar PDF";
+    case "excel_export":
+      return "Actualiza a Pro para exportar Excel";
+    default:
+      return "Actualiza tu plan para usar esta función";
+  }
+}
+
 /**
  * Obtiene el límite de perfiles según el plan
  * Si hay una suscripción con límites dinámicos, usa esos valores

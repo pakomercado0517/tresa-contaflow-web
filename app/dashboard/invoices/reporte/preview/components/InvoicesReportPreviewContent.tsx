@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { ReporteFacturasTemplate, type ReporteFacturasData } from "./ReporteFacturasTemplate";
 import { exportReportElementToPDF } from "@/lib/pdf";
+import { useSubscription, hasFeatureAccess } from "@/lib/hooks/useSubscription";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -25,6 +26,8 @@ interface InvoicesReportPreviewContentProps {
 
 export function InvoicesReportPreviewContent({ data }: InvoicesReportPreviewContentProps) {
   const reportRef = useRef<HTMLDivElement>(null);
+  const { subscription } = useSubscription();
+  const canExportPDF = hasFeatureAccess(subscription, "pdf_export");
   const [isExporting, setIsExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -89,8 +92,9 @@ export function InvoicesReportPreviewContent({ data }: InvoicesReportPreviewCont
             !isExporting ? (
               <Button
                 onClick={() => handleExport(false)}
-                disabled={isExporting}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                disabled={!canExportPDF || isExporting}
+                title={!canExportPDF ? "Disponible en plan Básico o superior" : undefined}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Descargar PDF
@@ -109,9 +113,10 @@ export function InvoicesReportPreviewContent({ data }: InvoicesReportPreviewCont
         <div className="fixed right-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-3 print:hidden">
           <Button
             size="icon"
-            className="h-12 w-12 rounded-full bg-emerald-600 shadow-lg hover:bg-emerald-700"
+            className="h-12 w-12 rounded-full bg-emerald-600 shadow-lg hover:bg-emerald-700 disabled:opacity-50"
             onClick={() => handleExport(true)}
-            title="Imprimir"
+            disabled={!canExportPDF}
+            title={canExportPDF ? "Imprimir" : "Disponible en plan Básico o superior"}
           >
             <Printer className="h-5 w-5" />
           </Button>

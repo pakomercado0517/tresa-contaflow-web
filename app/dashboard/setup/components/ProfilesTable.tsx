@@ -135,6 +135,7 @@ export function ProfilesTable({
   subscription,
 }: ProfilesTableProps) {
   const router = useRouter();
+  const canExportPDF = hasFeatureAccess(subscription ?? null, 'pdf_export');
   const canExportExcel = hasFeatureAccess(subscription ?? null, 'excel_export');
 
   const { data: regimenesData } = useQuery({
@@ -360,7 +361,14 @@ export function ProfilesTable({
             <Filter className="mr-2 h-4 w-4" />
             Filtros
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={!canExportPDF || isExporting}
+            title={!canExportPDF ? 'Disponible en plan Básico o superior' : undefined}
+            className={!canExportPDF ? 'disabled:opacity-50' : undefined}
+          >
             {isExporting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

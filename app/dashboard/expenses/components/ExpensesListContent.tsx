@@ -288,6 +288,7 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
+  const canExportPDF = hasFeatureAccess(subscription ?? null, 'pdf_export');
   const canExportExcel = hasFeatureAccess(subscription ?? null, 'excel_export');
 
   const handleExportPDF = async () => {
@@ -568,6 +569,7 @@ export function ExpensesListContent({
         onClearFilters={handleClearFilters}
         exportPdfHref={exportPdfHref}
         onExportPDF={handleExportPDF}
+        canExportPDF={canExportPDF}
         onExportExcel={handleExportExcel}
         canExportExcel={canExportExcel}
         onAddManualExpense={() => setIsManualExpenseDialogOpen(true)}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSubscription, hasFeatureAccess } from "@/lib/hooks/useSubscription";
 
 interface ExportPDFButtonProps {
   profileId?: string;
@@ -12,13 +13,20 @@ interface ExportPDFButtonProps {
 
 /**
  * Navega a la vista previa del reporte mensual, donde el usuario puede
- * descargar PDF o imprimir.
+ * descargar PDF o imprimir. Solo se muestra si el plan tiene acceso a exportación PDF.
  */
 export function ExportPDFButton({
   profileId,
   mes,
   año,
 }: ExportPDFButtonProps) {
+  const { subscription } = useSubscription();
+  const canExportPDF = hasFeatureAccess(subscription, "pdf_export");
+
+  if (!canExportPDF) {
+    return null;
+  }
+
   const params = new URLSearchParams();
   params.set("mes", mes.toString());
   params.set("año", año.toString());
