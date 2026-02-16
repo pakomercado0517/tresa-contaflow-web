@@ -93,11 +93,12 @@ export function FinalCTA() {
       <div className="flex flex-col gap-12 lg:flex-row lg:items-center lg:gap-16">
         <div className="flex-1 space-y-6">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Empieza hoy a trabajar con orden y claridad
+            Claridad contable sin Excel ni caos
           </h2>
           <p className="text-muted-foreground max-w-xl text-lg">
-            Una plataforma creada para negocios y contadores que necesitan controlar facturas,
-            ingresos y gastos sin procesos complicados. Empieza gratis y decide después.
+            Convierte tus XML en información contable clara para tomar decisiones. Organiza
+            ingresos y egresos, administra múltiples RFCs y genera reportes en PDF o Excel desde un
+            solo panel. Empieza gratis y decide después.
           </p>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">

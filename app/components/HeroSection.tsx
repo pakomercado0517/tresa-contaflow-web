@@ -2,9 +2,32 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, Check } from 'lucide-react';
+
+// Datos de ejemplo para el mini chart (ingresos y egresos por mes)
+const HERO_CHART_DATA = [
+  { mes: 'Ene', ingresos: 120, egresos: 80 },
+  { mes: 'Feb', ingresos: 145, egresos: 90 },
+  { mes: 'Mar', ingresos: 130, egresos: 85 },
+  { mes: 'Abr', ingresos: 165, egresos: 95 },
+  { mes: 'May', ingresos: 180, egresos: 100 },
+];
+
+const CHART_COLORS = {
+  primary: 'hsl(142, 76%, 36%)',
+  muted: 'hsl(0, 0%, 45%)',
+};
 
 export function HeroSection() {
   const router = useRouter();
@@ -35,19 +58,18 @@ export function HeroSection() {
         <div className="flex flex-1 flex-col gap-6">
           <div className="bg-primary/10 inline-flex w-fit items-center gap-2 rounded-full px-4 py-1.5">
             <span className="text-primary text-sm font-medium">
-              Evita errores fiscales antes de que el SAT los detecte
+              Gestión contable basada en XML (CFDI)
             </span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-            Control fiscal sin estrés para{' '}
-            <span className="text-primary">negocios y contadores</span>
+            Organiza tu contabilidad automáticamente desde tus XML —{' '}
+            <span className="text-primary">sin Excel</span>
           </h1>
 
           <p className="text-muted-foreground max-w-xl text-lg">
-            Centraliza tus CFDI, detecta errores fiscales automáticamente y genera reportes claros
-            para tomar mejores decisiones, sin Excel y sin caos. Gestiona múltiples RFCs desde un
-            solo sistema.
+            Visualiza ingresos, egresos y utilidades mes a mes. Administra múltiples RFCs y genera
+            reportes en PDF o Excel desde un solo panel.
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -87,16 +109,59 @@ export function HeroSection() {
             </div>
 
             <div className="space-y-4">
-              <div className="from-primary/20 to-primary/5 flex h-48 items-center justify-center rounded-lg bg-linear-to-br">
-                <div className="text-center">
-                  <div className="text-primary mb-2 text-3xl font-bold">305.30%</div>
-                  <div className="bg-primary/20 flex h-32 w-full items-end justify-center gap-2 rounded p-4">
-                    <div className="bg-primary h-16 w-8 rounded"></div>
-                    <div className="bg-primary h-24 w-8 rounded"></div>
-                    <div className="bg-primary h-20 w-8 rounded"></div>
-                    <div className="bg-primary h-28 w-8 rounded"></div>
-                  </div>
-                </div>
+              <div className="from-primary/20 to-primary/5 flex h-48 items-center justify-center rounded-lg bg-linear-to-br px-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={HERO_CHART_DATA}
+                    margin={{ top: 8, right: 4, left: -16, bottom: 0 }}
+                    barGap={4}
+                    barCategoryGap="20%"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,20%)" vertical={false} />
+                    <XAxis
+                      dataKey="mes"
+                      tick={{ fill: 'hsl(0,0%,63.9%)', fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      hide
+                      domain={[0, (max: number) => Math.max(max, 200)]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(0,0%,7%)',
+                        border: '1px solid hsl(0,0%,14.9%)',
+                        borderRadius: '8px',
+                        fontSize: 12,
+                      }}
+                      formatter={(value, name) => [
+                        value != null ? `$${value}K MXN` : '',
+                        name ?? '',
+                      ]}
+                      labelFormatter={(_, payload) =>
+                        payload?.[0]?.payload?.mes ? `${payload[0].payload.mes}` : ''
+                      }
+                      cursor={{ fill: 'hsl(0,0%,14.9%)' }}
+                    />
+                    <Bar
+                      dataKey="ingresos"
+                      fill={CHART_COLORS.primary}
+                      radius={[4, 4, 0, 0]}
+                      name="Ingresos"
+                      isAnimationActive
+                      animationDuration={800}
+                    />
+                    <Bar
+                      dataKey="egresos"
+                      fill={CHART_COLORS.muted}
+                      radius={[4, 4, 0, 0]}
+                      name="Egresos"
+                      isAnimationActive
+                      animationDuration={800}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
 
               <div className="bg-muted/50 flex items-center gap-3 rounded-lg p-4">
@@ -104,12 +169,12 @@ export function HeroSection() {
                   <span className="text-primary-foreground text-sm">✓</span>
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium">Validación fiscal completada</div>
+                  <div className="font-medium">Resumen del mes listo</div>
                   <div className="text-muted-foreground text-sm">
-                    342 CFDI revisados automáticamente hoy
+                    Ingresos y egresos organizados desde tus XML
                   </div>
                 </div>
-                <div className="text-primary font-semibold">+12.5%</div>
+                <div className="text-primary font-semibold">Listo</div>
               </div>
             </div>
           </div>

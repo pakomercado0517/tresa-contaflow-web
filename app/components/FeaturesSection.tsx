@@ -13,54 +13,54 @@ interface Feature {
 const empresarioFeatures: Feature[] = [
   {
     icon: <BarChart3 className="h-6 w-6" />,
-    title: "Visibilidad financiera en tiempo real",
+    title: "Ingresos y egresos mes a mes",
     description:
-      "Entiende cómo va tu negocio hoy. Visualiza ingresos, gastos y flujo de efectivo sin depender de hojas de Excel.",
+      "Visualiza resultados por periodo desde tus XML. Sin Excel manual ni hojas dispersas: todo en un solo panel.",
   },
   {
     icon: <Download className="h-6 w-6" />,
-    title: "Facturas siempre sincronizadas con el SAT",
+    title: "Reportes en PDF y Excel",
     description:
-      "Descarga automáticamente tus CFDI directamente del SAT y evita omisiones o información incompleta.",
+      "Exporta reportes listos para descargar según tu plan. Información contable clara, sin armar cuadros a mano.",
   },
   {
     icon: <CheckCircle2 className="h-6 w-6" />,
-    title: "Detección temprana de errores fiscales",
+    title: "Organización automática desde XML",
     description:
-      "Identifica facturas incorrectas, inconsistencias y riesgos fiscales antes de que se conviertan en problemas.",
+      "Sube tus CFDI y deja que la plataforma organice ingresos, egresos y complementos de pago por ti.",
   },
   {
     icon: <Users className="h-6 w-6" />,
-    title: "Todos tus RFCs en un solo lugar",
+    title: "Varios RFCs en una sola cuenta",
     description:
-      "Administra varios negocios desde una sola cuenta, con información separada, clara y organizada.",
+      "Administra múltiples negocios o razones sociales desde un solo lugar, con información separada y ordenada.",
   },
 ];
 
 const contadorFeatures: Feature[] = [
   {
     icon: <Users className="h-6 w-6" />,
-    title: "Control total de todos tus clientes",
+    title: "Múltiples RFCs en un solo panel",
     description:
-      "Gestiona múltiples RFCs desde una sola plataforma y cambia entre clientes sin fricción ni duplicar trabajo.",
+      "Gestiona todos tus clientes desde una cuenta. Cambia entre RFCs sin duplicar trabajo ni perder claridad.",
   },
   {
     icon: <BarChart3 className="h-6 w-6" />,
-    title: "Reportes profesionales listos para entregar",
+    title: "Reportes listos para entregar",
     description:
-      "Genera reportes claros y consolidados por cliente o periodo. Exporta a PDF y Excel en segundos.",
+      "Genera reportes por cliente o periodo. Exporta a PDF y Excel desde el mismo panel, según tu plan.",
   },
   {
     icon: <CheckCircle2 className="h-6 w-6" />,
-    title: "Validación fiscal automatizada",
+    title: "Ingresos y egresos devengables",
     description:
-      "Detecta discrepancias, errores CFDI 4.0 y posibles riesgos fiscales sin revisar XML uno por uno.",
+      "Identifica y organiza ingresos y egresos devengables a partir de tus XML, sin revisar CFDI uno por uno.",
   },
   {
     icon: <Download className="h-6 w-6" />,
-    title: "Descarga masiva directa desde el SAT",
+    title: "Búsqueda de claves SAT con IA",
     description:
-      "Centraliza las facturas de todos tus clientes con integración directa al SAT, sin procesos manuales.",
+      "En planes compatibles: encuentra claves SAT más rápido con búsqueda asistida por IA y ahorra tiempo.",
   },
 ];
 
@@ -82,6 +82,10 @@ export function FeaturesSection() {
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
             Beneficios claros según cómo trabajas
           </h2>
+          <p className="text-muted-foreground mx-auto max-w-2xl">
+            Deja atrás el caos de XML sueltos y Excel manual. Organiza tu contabilidad desde tus CFDI
+            y obtén claridad financiera sin procesos complicados.
+          </p>
         </div>
 
         <div className="flex justify-center">
