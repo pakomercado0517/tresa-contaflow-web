@@ -1,3 +1,4 @@
+import "./report-pdf.css";
 import { getMetrics, getInvoices } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
@@ -119,7 +120,8 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
         nombreRegimen,
         ingresos: devengado.ingresos_devengados ?? 0,
         egresos: devengado.egresos_devengados ?? 0,
-        retenciones: retIva + retIsr,
+        retencionesIva: retIva,
+        retencionesIsr: retIsr,
         impuestoTrasladado: ivaTrasladado,
         utilidadNeta: devengado.resultado_devengado ?? 0,
       };
