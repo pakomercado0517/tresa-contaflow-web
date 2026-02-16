@@ -12,6 +12,14 @@ import { addSummary } from "./sections/summary";
 import { addInvoicesSection } from "./sections/invoices";
 import { addExpensesSection } from "./sections/expenses";
 import { addProfilesSection } from "./sections/profiles";
+import {
+  buildInvoicesSheet,
+  buildResumenSheet as buildInvoicesResumenSheet,
+} from "./sections/invoices-report";
+import {
+  buildExpensesSheet,
+  buildResumenSheet as buildExpensesResumenSheet,
+} from "./sections/expenses-report";
 
 /**
  * Genera el nombre de archivo para reporte financiero.
@@ -23,6 +31,7 @@ function getFileName(tipo: "completo" | "facturas" | "gastos", mes: number, año
 
 /**
  * Exporta reporte financiero a Excel (completo, solo facturas o solo gastos).
+ * Para tipo "facturas" genera 2 hojas: Facturas y Resumen Ejecutivo.
  */
 export async function exportToExcel(options: ExcelOptions): Promise<void> {
   validateExcelOptions(options);
@@ -43,44 +52,42 @@ export async function exportToExcel(options: ExcelOptions): Promise<void> {
   if (tipo === "facturas") titulo = "Reporte de Facturas";
   if (tipo === "gastos") titulo = "Reporte de Gastos";
 
-  if (tipo === "gastos") {
-    const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
-    addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
-    addExpensesSection(sheetGastos, expenses, 6);
-  }
-
   if (tipo === "facturas") {
-    const sheetTodasFirst = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
-    addHeader(sheetTodasFirst, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetTodasFirst, invoices, "todas", 6);
-  }
+    const periodo =
+      mes >= 1 && año >= 1 ? `Período: ${MESES[mes - 1]} ${año}` : "Reporte general";
+    const context = { titulo, periodo, rfc };
+    const range = buildInvoicesSheet(workbook, invoices, context);
+    buildInvoicesResumenSheet(workbook, { context, range });
+  } else if (tipo === "gastos") {
+    const periodo =
+      mes >= 1 && año >= 1 ? `Período: ${MESES[mes - 1]} ${año}` : "Reporte general";
+    const context = { titulo, periodo, rfc };
+    const range = buildExpensesSheet(workbook, expenses, context);
+    buildExpensesResumenSheet(workbook, { context, range });
+  } else {
+    const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
+    const nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
+    if (metrics) {
+      addSummary(sheetResumen, metrics, nextRow, tipo);
+    }
 
-  const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
-  const nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
-  if (metrics) {
-    addSummary(sheetResumen, metrics, nextRow, tipo);
-  }
+    if (tipo === "completo") {
+      const sheetPend = addWorksheet(workbook, SHEET_NAMES.facturasPendientes);
+      addHeader(sheetPend, titulo, profileName, rfc, mes, año);
+      addInvoicesSection(sheetPend, invoices, "pendientes", 6);
 
-  if (tipo === "completo" || tipo === "facturas") {
-    const sheetPend = addWorksheet(workbook, SHEET_NAMES.facturasPendientes);
-    addHeader(sheetPend, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetPend, invoices, "pendientes", 6);
+      const sheetPag = addWorksheet(workbook, SHEET_NAMES.facturasPagadas);
+      addHeader(sheetPag, titulo, profileName, rfc, mes, año);
+      addInvoicesSection(sheetPag, invoices, "pagadas", 6);
 
-    const sheetPag = addWorksheet(workbook, SHEET_NAMES.facturasPagadas);
-    addHeader(sheetPag, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetPag, invoices, "pagadas", 6);
-  }
+      const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
+      addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
+      addExpensesSection(sheetGastos, expenses, 6);
 
-  if (tipo === "completo") {
-    const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
-    addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
-    addExpensesSection(sheetGastos, expenses, 6);
-  }
-
-  if (tipo === "completo") {
-    const sheetTodas = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
-    addHeader(sheetTodas, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetTodas, invoices, "todas", 6);
+      const sheetTodas = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
+      addHeader(sheetTodas, titulo, profileName, rfc, mes, año);
+      addInvoicesSection(sheetTodas, invoices, "todas", 6);
+    }
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
@@ -117,44 +124,42 @@ export async function exportToExcelBlob(options: ExcelOptions): Promise<Blob> {
   if (tipo === "facturas") titulo = "Reporte de Facturas";
   if (tipo === "gastos") titulo = "Reporte de Gastos";
 
-  if (tipo === "gastos") {
-    const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
-    addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
-    addExpensesSection(sheetGastos, expenses, 6);
-  }
-
   if (tipo === "facturas") {
-    const sheetTodasFirst = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
-    addHeader(sheetTodasFirst, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetTodasFirst, invoices, "todas", 6);
-  }
+    const periodo =
+      mes >= 1 && año >= 1 ? `Período: ${MESES[mes - 1]} ${año}` : "Reporte general";
+    const context = { titulo, periodo, rfc };
+    const range = buildInvoicesSheet(workbook, invoices, context);
+    buildInvoicesResumenSheet(workbook, { context, range });
+  } else if (tipo === "gastos") {
+    const periodo =
+      mes >= 1 && año >= 1 ? `Período: ${MESES[mes - 1]} ${año}` : "Reporte general";
+    const context = { titulo, periodo, rfc };
+    const range = buildExpensesSheet(workbook, expenses, context);
+    buildExpensesResumenSheet(workbook, { context, range });
+  } else {
+    const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
+    const nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
+    if (metrics) {
+      addSummary(sheetResumen, metrics, nextRow, tipo);
+    }
 
-  const sheetResumen = addWorksheet(workbook, SHEET_NAMES.resumen);
-  const nextRow = addHeader(sheetResumen, titulo, profileName, rfc, mes, año);
-  if (metrics) {
-    addSummary(sheetResumen, metrics, nextRow, tipo);
-  }
+    if (tipo === "completo") {
+      const sheetPend = addWorksheet(workbook, SHEET_NAMES.facturasPendientes);
+      addHeader(sheetPend, titulo, profileName, rfc, mes, año);
+      addInvoicesSection(sheetPend, invoices, "pendientes", 6);
 
-  if (tipo === "completo" || tipo === "facturas") {
-    const sheetPend = addWorksheet(workbook, SHEET_NAMES.facturasPendientes);
-    addHeader(sheetPend, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetPend, invoices, "pendientes", 6);
+      const sheetPag = addWorksheet(workbook, SHEET_NAMES.facturasPagadas);
+      addHeader(sheetPag, titulo, profileName, rfc, mes, año);
+      addInvoicesSection(sheetPag, invoices, "pagadas", 6);
 
-    const sheetPag = addWorksheet(workbook, SHEET_NAMES.facturasPagadas);
-    addHeader(sheetPag, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetPag, invoices, "pagadas", 6);
-  }
+      const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
+      addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
+      addExpensesSection(sheetGastos, expenses, 6);
 
-  if (tipo === "completo") {
-    const sheetGastos = addWorksheet(workbook, SHEET_NAMES.gastos);
-    addHeader(sheetGastos, titulo, profileName, rfc, mes, año);
-    addExpensesSection(sheetGastos, expenses, 6);
-  }
-
-  if (tipo === "completo") {
-    const sheetTodas = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
-    addHeader(sheetTodas, titulo, profileName, rfc, mes, año);
-    addInvoicesSection(sheetTodas, invoices, "todas", 6);
+      const sheetTodas = addWorksheet(workbook, SHEET_NAMES.todasFacturas);
+      addHeader(sheetTodas, titulo, profileName, rfc, mes, año);
+      addInvoicesSection(sheetTodas, invoices, "todas", 6);
+    }
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
