@@ -114,8 +114,8 @@ export function DashboardPreview() {
                           borderRadius: '8px',
                           fontSize: 12,
                         }}
-                        formatter={(value: number) => [
-                          `$${value}K MXN`,
+                        formatter={(value) => [
+                          value != null ? `$${value}K MXN` : '',
                           'Utilidad',
                         ]}
                         labelFormatter={(label) => label}
