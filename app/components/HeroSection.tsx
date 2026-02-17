@@ -2,15 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, Check } from 'lucide-react';
@@ -95,9 +87,7 @@ export function HeroSection() {
             </Button>
           </div>
 
-          <p className="text-muted-foreground text-sm">
-            30 días gratis. Sin tarjeta. Sin compromisos.
-          </p>
+          <p className="text-muted-foreground text-sm">30 días gratis. Sin compromisos.</p>
         </div>
 
         <div className="flex flex-1 justify-center lg:justify-end">
@@ -124,10 +114,7 @@ export function HeroSection() {
                       axisLine={false}
                       tickLine={false}
                     />
-                    <YAxis
-                      hide
-                      domain={[0, (max: number) => Math.max(max, 200)]}
-                    />
+                    <YAxis hide domain={[0, (max: number) => Math.max(max, 200)]} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'hsl(0,0%,7%)',
