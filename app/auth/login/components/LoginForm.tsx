@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { loginAction } from '../actions';
+import { GoogleLoginButton } from './GoogleLoginButton';
 
 export function LoginForm() {
   const searchParams = useSearchParams();
@@ -125,10 +126,11 @@ export function LoginForm() {
               <div className="border-border w-full border-t"></div>
             </div>
             <div className="relative flex justify-center">
-              <div className="bg-card px-3">
-                <div className="bg-foreground/40 h-2 w-2 rounded-full"></div>
-              </div>
+              <span className="bg-card text-muted-foreground px-3 text-xs">o</span>
             </div>
+          </div>
+          <div className="mt-4">
+            <GoogleLoginButton />
           </div>
         </div>
 
