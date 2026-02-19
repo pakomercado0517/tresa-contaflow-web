@@ -77,3 +77,65 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     return { error: 'Error al iniciar sesión. Intenta nuevamente.' };
   }
 }
+
+export async function loginWithGoogleAction(idToken: string): Promise<ActionResult> {
+  if (!idToken?.trim()) {
+    return { error: 'Token de Google no recibido' };
+  }
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+  try {
+    const backendResponse = await fetch(`${API_URL}/api/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken }),
+    });
+
+    const response = (await backendResponse.json()) as LoginResponse;
+
+    if (!backendResponse.ok) {
+      const errorData = response as unknown as { error?: string; message?: string };
+      return {
+        error: errorData.error || errorData.message || 'Error al iniciar sesión con Google',
+      };
+    }
+
+    const cookieStore = await cookies();
+
+    cookieStore.set('accessToken', response.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 15,
+    });
+
+    cookieStore.set('refreshToken', response.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    if (!response.user.email_verified) {
+      redirect('/auth/verify-email');
+    }
+
+    revalidatePath('/dashboard');
+    redirect('/dashboard');
+  } catch (error) {
+    if (error && typeof error === 'object' && 'digest' in error) {
+      const nextError = error as { digest?: string };
+      if (nextError.digest?.startsWith('NEXT_REDIRECT')) {
+        throw error;
+      }
+    }
+
+    if (error instanceof Error) {
+      return { error: error.message };
+    }
+    return { error: 'Error al iniciar sesión con Google. Intenta nuevamente.' };
+  }
+}
