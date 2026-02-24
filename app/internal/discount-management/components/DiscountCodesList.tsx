@@ -76,6 +76,12 @@ export function DiscountCodesList({ codes, onUpdate }: DiscountCodesListProps) {
     });
   };
 
+  const formatTrialDays = (trialDays: number | null) => {
+    if (trialDays === null) return "Default plan";
+    if (trialDays === 0) return "Sin trial";
+    return `${trialDays} días`;
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
@@ -85,6 +91,7 @@ export function DiscountCodesList({ codes, onUpdate }: DiscountCodesListProps) {
               <TableHead>Código</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Uso</TableHead>
+              <TableHead>Trial</TableHead>
               <TableHead>Expira</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -103,6 +110,9 @@ export function DiscountCodesList({ codes, onUpdate }: DiscountCodesListProps) {
                   <TableCell>{getStatusBadge(code)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {usageText}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatTrialDays(code.trialDays ?? null)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(code.expiresAt)}
