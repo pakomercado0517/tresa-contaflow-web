@@ -17,6 +17,7 @@ export interface DiscountCode {
   timesRedeemed: number;
   createdBy: string;
   metadata: Record<string, string> | null;
+  trialDays: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +32,7 @@ export interface CreateDiscountCodeRequest {
   maxRedemptions?: number;
   expiresAt?: string;
   active?: boolean;
+  trialDays?: number;
   metadata?: Record<string, string>;
 }
 

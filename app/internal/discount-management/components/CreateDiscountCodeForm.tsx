@@ -31,6 +31,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
   const [maxRedemptions, setMaxRedemptions] = useState<string>("");
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [active, setActive] = useState(true);
+  const [trialDays, setTrialDays] = useState<string>("");
   const [metadataKey, setMetadataKey] = useState<string>("");
   const [metadataValue, setMetadataValue] = useState<string>("");
 
@@ -79,6 +80,14 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
         }
       }
 
+      if (trialDays.trim() !== "") {
+        const trimmed = trialDays.trim();
+        const days = parseInt(trimmed, 10);
+        if (isNaN(days) || days < 0 || String(days) !== trimmed) {
+          throw new Error("Los días de prueba deben ser un número entero mayor o igual a 0");
+        }
+      }
+
       // Construir el payload
       const payload: CreateDiscountCodeRequest = {
         code: code.trim().toUpperCase(),
@@ -90,6 +99,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
         ...(duration === "repeating" && { durationInMonths: parseInt(durationInMonths) }),
         ...(maxRedemptions && { maxRedemptions: parseInt(maxRedemptions) }),
         ...(expiresAt && { expiresAt: new Date(expiresAt).toISOString() }),
+        ...(trialDays.trim() !== "" && { trialDays: parseInt(trialDays.trim(), 10) }),
         ...(metadataKey && metadataValue && {
           metadata: { [metadataKey]: metadataValue },
         }),
@@ -104,6 +114,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
       setDurationInMonths("");
       setMaxRedemptions("");
       setExpiresAt("");
+      setTrialDays("");
       setMetadataKey("");
       setMetadataValue("");
       setSuccess(true);
@@ -271,6 +282,22 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
       <div className="flex items-center justify-between">
         <Label htmlFor="active">Código activo</Label>
         <Switch id="active" checked={active} onCheckedChange={setActive} />
+      </div>
+
+      {/* Días de periodo de prueba (opcional) */}
+      <div className="space-y-2">
+        <Label htmlFor="trialDays">Días de periodo de prueba (opcional)</Label>
+        <Input
+          id="trialDays"
+          type="number"
+          min="0"
+          value={trialDays}
+          onChange={(e) => setTrialDays(e.target.value)}
+          placeholder="0 = sin trial, vacío = default del plan (30 días)"
+        />
+        <p className="text-xs text-muted-foreground">
+          Solo aplica si el usuario es elegible para trial. 0 = sin trial, vacío = usar default del plan (30 días para Basic y Pro).
+        </p>
       </div>
 
       {/* Metadatos (opcional) */}
