@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types/auth';
+import { clearAllStoredProfileSelections } from '@/lib/storage/profile-selection';
 
 interface NavItem {
   title: string;
@@ -81,6 +82,7 @@ export function Sidebar({ user }: SidebarProps) {
     // Limpiar localStorage antes de cerrar sesión
     if (typeof window !== 'undefined') {
       localStorage.removeItem('tour:onboarding');
+      clearAllStoredProfileSelections();
     }
 
     // Llamar a la Server Action que elimina cookies y redirige
