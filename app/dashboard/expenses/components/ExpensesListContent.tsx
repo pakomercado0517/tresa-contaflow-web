@@ -51,6 +51,11 @@ import {
 } from '@/lib/api/accrued-expenses.client';
 import { ApiError } from '@/lib/api/client';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
+import {
+  clearStoredProfileSelection,
+  getStoredProfileSelection,
+  setStoredProfileSelection,
+} from '@/lib/storage/profile-selection';
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -219,6 +224,29 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
+  useEffect(() => {
+    const urlProfileId = searchParams.get('profileId');
+    if (urlProfileId) {
+      setStoredProfileSelection(urlProfileId);
+      return;
+    }
+
+    const storedProfileId = getStoredProfileSelection();
+    if (!storedProfileId || storedProfileId === 'all') return;
+    if (profiles.length === 0) return;
+
+    const storedProfileExists = profiles.some((profile) => profile.id === storedProfileId && !profile.frozen);
+    if (!storedProfileExists) {
+      clearStoredProfileSelection();
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('profileId', storedProfileId);
+    params.set('page', '1');
+    router.replace(`/dashboard/expenses?${params.toString()}`);
+  }, [searchParams, profiles, router]);
+
   // Sincronizar estado interno con URL (permite back/forward sin desalineación)
   useEffect(() => {
     const urlProfileId = searchParams.get('profileId') ?? 'all';
@@ -338,6 +366,7 @@ export function ExpensesListContent({
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     setSelectedRegimenFiscal('all');
+    setStoredProfileSelection(profileId || 'all');
     const params = new URLSearchParams(searchParams.toString());
     if (profileId && profileId !== 'all') {
       params.set('profileId', profileId);

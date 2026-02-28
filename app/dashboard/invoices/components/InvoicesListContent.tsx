@@ -44,6 +44,11 @@ import {
 import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { ApiError } from '@/lib/api/client';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
+import {
+  clearStoredProfileSelection,
+  getStoredProfileSelection,
+  setStoredProfileSelection,
+} from '@/lib/storage/profile-selection';
 
 interface InvoicesListContentProps {
   invoices: Invoice[];
@@ -273,6 +278,29 @@ export function InvoicesListContent({
     router.push(`/dashboard/invoices?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
+  useEffect(() => {
+    const urlProfileId = searchParams.get('profileId');
+    if (urlProfileId) {
+      setStoredProfileSelection(urlProfileId);
+      return;
+    }
+
+    const storedProfileId = getStoredProfileSelection();
+    if (!storedProfileId || storedProfileId === 'all') return;
+    if (profiles.length === 0) return;
+
+    const storedProfileExists = profiles.some((profile) => profile.id === storedProfileId && !profile.frozen);
+    if (!storedProfileExists) {
+      clearStoredProfileSelection();
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('profileId', storedProfileId);
+    params.set('page', '1');
+    router.replace(`/dashboard/invoices?${params.toString()}`);
+  }, [searchParams, profiles, router]);
+
   // Sincronizar estado interno con URL (permite back/forward sin desalineación)
   useEffect(() => {
     const urlProfileId = searchParams.get('profileId') ?? 'all';
@@ -339,6 +367,7 @@ export function InvoicesListContent({
   const handleProfileChange = (profileId: string) => {
     setSelectedProfileId(profileId);
     setSelectedRegimenFiscal('all'); // Reset régimen al cambiar perfil
+    setStoredProfileSelection(profileId || 'all');
     const params = new URLSearchParams(searchParams.toString());
     if (profileId && profileId !== 'all') {
       params.set('profileId', profileId);

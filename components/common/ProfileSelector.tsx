@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import {
@@ -10,6 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Profile } from '@/lib/types/profiles';
+import {
+  clearStoredProfileSelection,
+  getStoredProfileSelection,
+  setStoredProfileSelection,
+} from '@/lib/storage/profile-selection';
 
 interface ProfileSelectorProps {
   profiles: Profile[];
@@ -26,6 +32,28 @@ export function ProfileSelector({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  useEffect(() => {
+    const urlProfileId = searchParams.get('profileId');
+    if (urlProfileId) {
+      setStoredProfileSelection(urlProfileId);
+      return;
+    }
+
+    const storedProfileId = getStoredProfileSelection();
+    if (!storedProfileId || storedProfileId === 'all') return;
+
+    const storedProfile = profiles.find((profile) => profile.id === storedProfileId);
+    if (!storedProfile || storedProfile.frozen) {
+      clearStoredProfileSelection();
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('profileId', storedProfileId);
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+    router.refresh();
+  }, [searchParams, profiles, router]);
+
   function handleProfileChange(profileId: string) {
     // Verificar que el perfil no esté congelado
     if (profileId !== 'all') {
@@ -34,6 +62,7 @@ export function ProfileSelector({
         return; // Prevenir selección de perfil congelado
       }
     }
+    setStoredProfileSelection(profileId || 'all');
 
     const params = new URLSearchParams(searchParams.toString());
     if (profileId) {
