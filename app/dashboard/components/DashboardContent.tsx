@@ -79,7 +79,7 @@ export async function DashboardContent({
         activeProfile={activeProfile}
         companyName={selectedCompanyName}
       />
-      <main className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
+      <main className="min-w-0 flex-1 w-full space-y-6 p-4 md:p-6 lg:p-8">
         {/* Trial Banner - Solo se muestra si el usuario está en trial */}
         <TrialBannerWrapper />
 
@@ -112,9 +112,13 @@ export async function DashboardContent({
           regimenFiscal={regimenFiscal}
         />
         </Suspense>
-        <div className="grid gap-6 md:grid-cols-2">
-          <RecentInvoicesTable invoices={invoices.data} />
-          <RecentExpensesTable expenses={expenses.data} />
+        <div className="grid w-full min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="min-w-0">
+            <RecentInvoicesTable invoices={invoices.data} />
+          </div>
+          <div className="min-w-0">
+            <RecentExpensesTable expenses={expenses.data} />
+          </div>
         </div>
       </main>
     </>

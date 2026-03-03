@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { DashboardFooter } from '@/components/layout/DashboardFooter';
 import { DashboardTour } from '@/components/tour/DashboardTour';
 import { getCurrentUser } from '@/lib/api/auth.server';
@@ -13,8 +14,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <ProfileFreezeDetector />
       <DashboardTour user={currentUser.user}>
         <div className="bg-background flex min-h-screen">
+          <MobileNav user={currentUser.user} />
           <Sidebar user={currentUser.user} />
-          <div className="flex min-w-0 flex-1 flex-col md:ml-64 print:ml-0">
+            <div className="flex min-w-0 flex-1 flex-col w-full pt-16 lg:ml-64 lg:pt-0 print:ml-0 print:pt-0">
             <DashboardRouteTransition>{children}</DashboardRouteTransition>
             <DashboardFooter />
           </div>

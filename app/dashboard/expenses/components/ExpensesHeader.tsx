@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Download, Receipt, FileText, Upload, ChevronDown } from 'lucide-react';
+import { Plus, Receipt, FileText, FileSpreadsheet, Upload, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -109,8 +109,8 @@ export function ExpensesHeader({
                 asChild
               >
                 <Link href={exportPdfHref}>
-                  <Download className="h-4 w-4" />
-                  <span className="hidden lg:inline">Ver reporte PDF</span>
+                  <FileText className="h-4 w-4" />
+                  <span>PDF</span>
                 </Link>
               </Button>
             ) : (
@@ -120,8 +120,8 @@ export function ExpensesHeader({
                 size="sm"
                 className="text-muted-foreground hover:text-foreground gap-1.5"
               >
-                <Download className="h-4 w-4" />
-                <span className="hidden lg:inline">PDF</span>
+                <FileText className="h-4 w-4" />
+                <span>PDF</span>
               </Button>
             )
           ) : (
@@ -135,8 +135,8 @@ export function ExpensesHeader({
                       disabled
                       className="text-muted-foreground gap-1.5 disabled:opacity-50 cursor-not-allowed"
                     >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden lg:inline">PDF</span>
+                      <FileText className="h-4 w-4" />
+                      <span>PDF</span>
                     </Button>
                   </span>
                 </TooltipTrigger>
@@ -153,8 +153,8 @@ export function ExpensesHeader({
               size="sm"
               className="text-muted-foreground hover:text-foreground gap-1.5"
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden lg:inline">Excel</span>
+              <FileSpreadsheet className="h-4 w-4" />
+              <span>Excel</span>
             </Button>
           ) : (
             <TooltipProvider>
@@ -167,8 +167,8 @@ export function ExpensesHeader({
                       disabled
                       className="text-muted-foreground gap-1.5 disabled:opacity-50 cursor-not-allowed"
                     >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden lg:inline">Excel</span>
+                      <FileSpreadsheet className="h-4 w-4" />
+                      <span>Excel</span>
                     </Button>
                   </span>
                 </TooltipTrigger>
@@ -231,12 +231,13 @@ export function ExpensesHeader({
           searchPlaceholder="Concepto, Emisor o UUID..."
           onClearFilters={onClearFilters}
           extraFilters={
-            <Select
-              value={selectedRegimenFiscal}
-              onValueChange={onRegimenFiscalChange}
-              disabled={isRegimenDisabled}
-            >
-              <SelectTrigger className="h-8 w-50 text-sm">
+            <div className="w-full min-w-0 sm:w-auto">
+              <Select
+                value={selectedRegimenFiscal}
+                onValueChange={onRegimenFiscalChange}
+                disabled={isRegimenDisabled}
+              >
+                <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-[180px]">
                 <SelectValue placeholder="Régimen fiscal" />
               </SelectTrigger>
               <SelectContent>
@@ -247,6 +248,7 @@ export function ExpensesHeader({
                 ))}
               </SelectContent>
             </Select>
+            </div>
           }
         />
       }

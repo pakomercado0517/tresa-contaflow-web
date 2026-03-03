@@ -71,22 +71,22 @@ export function FilterBar({
   return (
     <>
       {/* Label */}
-      <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium tracking-wider uppercase">
+      <div className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-[11px] font-medium tracking-wider uppercase">
         <SlidersHorizontal className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Filtros</span>
       </div>
       <FilterSeparator />
 
-      {/* Búsqueda */}
+      {/* Búsqueda - ancho completo en móvil */}
       {onSearchChange !== undefined && (
         <>
-          <div className="relative">
+          <div className="relative w-full min-w-0 sm:w-48 md:w-56">
             <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
             <Input
               placeholder={searchPlaceholder}
               value={search ?? ''}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-8 w-48 pr-8 pl-8 text-sm md:w-56"
+              className="h-8 w-full pr-8 pl-8 text-sm"
             />
             {search && (
               <button
@@ -101,9 +101,9 @@ export function FilterBar({
         </>
       )}
 
-      {/* Mes */}
+      {/* Mes - ancho completo en móvil */}
       <Select value={selectedMes.toString()} onValueChange={(v) => onMesChange(Number(v))}>
-        <SelectTrigger className="h-8 w-32.5 text-sm">
+        <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-32.5">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -117,7 +117,7 @@ export function FilterBar({
 
       {/* Año */}
       <Select value={selectedAño.toString()} onValueChange={(v) => onAñoChange(Number(v))}>
-        <SelectTrigger className="h-8 w-22.5 text-sm">
+        <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-22.5">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -138,7 +138,7 @@ export function FilterBar({
           onClick={onClearFilters}
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs"
+          className="text-muted-foreground hover:text-foreground h-8 shrink-0 gap-1.5 text-xs"
         >
           <X className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Limpiar</span>
