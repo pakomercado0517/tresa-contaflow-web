@@ -33,24 +33,31 @@ export function PageHeader({
   return (
     <header className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-40 w-full backdrop-blur">
       {/* Fila 1: Título + Acciones */}
-      <div className="border-border flex items-center justify-between border-b px-4 py-3.5 md:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="border-border flex flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between md:px-6 lg:px-8">
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
           <div className="flex items-center gap-2">
-            <Icon className="text-primary h-5 w-5" />
-            <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+            <Icon className="text-primary h-5 w-5 shrink-0" />
+            <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
           </div>
           {subtitle && (
             <span className="text-muted-foreground hidden text-sm md:inline">{subtitle}</span>
           )}
         </div>
 
-        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+            {actions}
+          </div>
+        )}
       </div>
 
       {/* Fila 2: Barra de filtros */}
       {filters && (
         <div className="border-border/50 bg-muted/20 border-b px-4 py-2.5 md:px-6 lg:px-8">
-          <div data-tour={filtersTourId} className="flex flex-wrap items-center gap-x-2 gap-y-2">
+          <div
+            data-tour={filtersTourId}
+            className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-2"
+          >
             {filters}
           </div>
         </div>

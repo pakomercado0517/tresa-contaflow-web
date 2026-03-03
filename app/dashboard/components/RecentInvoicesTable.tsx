@@ -78,7 +78,7 @@ export function RecentInvoicesTable({
   };
 
   return (
-    <Card data-tour="recent-invoices" className="p-6 bg-card border-border">
+    <Card data-tour="recent-invoices" className="min-w-0 overflow-hidden p-6 bg-card border-border">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Últimos Ingresos</h3>
         <Link
@@ -88,7 +88,7 @@ export function RecentInvoicesTable({
           Ver todos
         </Link>
       </div>
-      <div className="overflow-x-auto">
+      <div className="min-w-0 overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">

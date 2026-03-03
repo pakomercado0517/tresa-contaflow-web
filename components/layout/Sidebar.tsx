@@ -12,56 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  LayoutDashboard,
-  FileText,
-  Receipt,
-  Settings,
-  LogOut,
-  ShieldCheck,
-  Search,
-} from 'lucide-react';
+import { Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types/auth';
 import { clearAllStoredProfileSelections } from '@/lib/storage/profile-selection';
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ReactNode;
-}
+import { navigationItems } from '@/lib/navigation';
 
 interface SidebarProps {
   user: User;
 }
-
-const navigationItems: NavItem[] = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: <LayoutDashboard className="h-5 w-5" />,
-  },
-  {
-    title: 'Facturas (Ingresos)',
-    href: '/dashboard/invoices',
-    icon: <FileText className="h-5 w-5" />,
-  },
-  {
-    title: 'Gastos (Egresos)',
-    href: '/dashboard/expenses',
-    icon: <Receipt className="h-5 w-5" />,
-  },
-  {
-    title: 'Buscador SAT',
-    href: '/dashboard/sat-search',
-    icon: <Search className="h-5 w-5" />,
-  },
-  {
-    title: 'Obtener CSF',
-    href: '/dashboard/certification',
-    icon: <ShieldCheck className="h-5 w-5" />,
-  },
-];
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
@@ -92,7 +51,7 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside
       data-tour="sidebar"
-      className="bg-card border-border hidden border-r md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col print:hidden"
+      className="bg-card border-border hidden border-r lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col print:hidden"
     >
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-border flex h-16 items-center gap-2.5 border-b px-6">
@@ -108,18 +67,12 @@ export function Sidebar({ user }: SidebarProps) {
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-6">
           {navigationItems.map((item) => {
-            // Lógica mejorada para evitar múltiples elementos activos
-            // Para Dashboard, solo activo si es exactamente /dashboard (sin subrutas)
-            // Para otros items, activo si coincide exactamente o es una subruta
-            let isActive = false;
+            const isActive =
+              item.href === '/dashboard'
+                ? pathname === '/dashboard'
+                : pathname === item.href || pathname?.startsWith(item.href + '/');
 
-            if (item.href === '/dashboard') {
-              // Dashboard solo activo en la ruta exacta
-              isActive = pathname === '/dashboard';
-            } else {
-              // Otros items: activo si coincide exactamente o es subruta
-              isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-            }
+            const Icon = item.icon;
 
             return (
               <Link
@@ -132,7 +85,7 @@ export function Sidebar({ user }: SidebarProps) {
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
-                {item.icon}
+                <Icon className="h-5 w-5" />
                 {item.title}
               </Link>
             );

@@ -56,7 +56,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
   const expensesQuery = buildQueryString(profileId, mes, año);
 
   return (
-    <div data-tour="metrics-cards" className="space-y-8">
+    <div data-tour="metrics-cards" className="w-full space-y-8">
       {/* 1. Flujo de Efectivo */}
       <section data-tour="metrics-cashflow" className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -72,7 +72,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
             </div>
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm">
             <CardContent className="relative pt-6">
               <div className="absolute top-4 right-4">
@@ -117,7 +117,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
               )}
             </CardContent>
           </Card>
-          <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm lg:col-span-1">
+          <Card className="border-primary/20 bg-[hsl(160,28%,15%)] shadow-sm">
             <CardContent className="relative pt-6">
               <div className="absolute top-4 right-4">
                 <div
@@ -164,7 +164,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
             Por conciliar
           </Badge>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2">
           <Card className="border-amber-500/20 bg-[hsl(38,35%,14%)] shadow-sm">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
@@ -233,10 +233,10 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
             </p>
           </div>
         </div>
-        <Card className="border-blue-500/20 bg-[hsl(217,35%,14%)] shadow-sm">
+        <Card className="w-full border-blue-500/20 bg-[hsl(217,35%,14%)] shadow-sm">
           <CardContent className="p-6">
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div>
+            <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+              <div className="min-w-0">
                 <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                   Ingresos devengados
                 </p>
@@ -247,7 +247,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
                   Suma total de facturas emitidas
                 </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                   Egresos devengados
                 </p>
@@ -256,7 +256,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">Suma total de gastos recibidos</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                   Resultado devengado
                 </p>

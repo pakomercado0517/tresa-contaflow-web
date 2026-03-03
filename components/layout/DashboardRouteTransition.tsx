@@ -30,6 +30,7 @@ export function DashboardRouteTransition({ children }: DashboardRouteTransitionP
   return (
     <motion.div
       key={pathname}
+      className="min-w-0 flex-1"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
