@@ -21,6 +21,13 @@ const ExportPDFButton = dynamic(
   }
 );
 
+const ShareReportButton = dynamic(
+  () => import('./ShareReportButton').then((mod) => ({ default: mod.ShareReportButton })),
+  {
+    loading: () => <div className="bg-muted h-10 w-28 animate-pulse rounded-md" />,
+  }
+);
+
 const FlowTrendChart = dynamic(
   () => import('./FlowTrendChart').then((mod) => ({ default: mod.FlowTrendChart })),
   {
@@ -56,9 +63,7 @@ export async function DashboardContent({
     getCurrentUser(),
   ]);
 
-  const activeProfile = profileId
-    ? profiles.data.find((p) => p.id === profileId) ?? null
-    : null;
+  const activeProfile = profileId ? (profiles.data.find((p) => p.id === profileId) ?? null) : null;
   const selectedCompanyName = profileId
     ? activeProfile?.nombre
     : profiles.data.length > 0
@@ -79,24 +84,23 @@ export async function DashboardContent({
         activeProfile={activeProfile}
         companyName={selectedCompanyName}
       />
-      <main className="min-w-0 flex-1 w-full space-y-6 p-4 md:p-6 lg:p-8">
+      <main className="w-full min-w-0 flex-1 space-y-6 p-4 md:p-6 lg:p-8">
         {/* Trial Banner - Solo se muestra si el usuario está en trial */}
         <TrialBannerWrapper />
 
         <div className="flex items-center justify-between">
           <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
-          <ExportPDFButton
-            profileId={profileId}
-            mes={mes}
-            año={año}
-          />
+          <div className="flex items-center gap-2">
+            <ShareReportButton
+              profileId={profileId}
+              clientName={activeProfile?.nombre}
+              mes={mes}
+              año={año}
+            />
+            <ExportPDFButton profileId={profileId} mes={mes} año={año} />
+          </div>
         </div>
-        <MetricsCards
-          metrics={metrics}
-          profileId={profileId}
-          mes={mes}
-          año={año}
-        />
+        <MetricsCards metrics={metrics} profileId={profileId} mes={mes} año={año} />
         <Suspense
           fallback={
             <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
@@ -105,12 +109,12 @@ export async function DashboardContent({
           }
         >
           <FlowTrendChart
-          initialData={trendData}
-          profileId={profileId}
-          año={año}
-          mes={mes}
-          regimenFiscal={regimenFiscal}
-        />
+            initialData={trendData}
+            profileId={profileId}
+            año={año}
+            mes={mes}
+            regimenFiscal={regimenFiscal}
+          />
         </Suspense>
         <div className="grid w-full min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
           <div className="min-w-0">

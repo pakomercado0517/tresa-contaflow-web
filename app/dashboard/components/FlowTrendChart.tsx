@@ -27,13 +27,11 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import {
-  getTrendDataClient,
-  type TrendDataPoint,
-} from '@/lib/api/invoices.client';
+import { getTrendDataClient, type TrendDataPoint } from '@/lib/api/invoices.client';
 import type { TrendPeriodView } from '@/lib/api/invoices';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Filter } from 'lucide-react';
+import { formatCurrencyCompact } from '@/lib/utils/format';
 
 const MONTHS_SHORT = [
   'Ene',
@@ -80,14 +78,6 @@ interface FlowTrendChartProps {
   mes?: number;
   regimenFiscal?: string;
 }
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
 
 export function FlowTrendChart({
   initialData,
@@ -189,7 +179,7 @@ export function FlowTrendChart({
   };
 
   return (
-    <Card data-tour="trend-chart" className="w-full bg-card border-border p-6">
+    <Card data-tour="trend-chart" className="bg-card border-border w-full p-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h3 className="text-lg font-semibold">Tendencia de Flujo</h3>
@@ -268,10 +258,7 @@ export function FlowTrendChart({
                   border: '1px solid #374151',
                   borderRadius: '8px',
                 }}
-                formatter={(value, name) => [
-                  formatCurrency(Number(value ?? 0)),
-                  name,
-                ]}
+                formatter={(value, name) => [formatCurrencyCompact(Number(value ?? 0)), name]}
                 labelFormatter={(label) => label}
               />
               {visibleSeries.ingresos_cobrados && (
@@ -342,7 +329,9 @@ export function FlowTrendChart({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-foreground text-lg font-semibold">No hay datos disponibles</h3>
+                  <h3 className="text-foreground text-lg font-semibold">
+                    No hay datos disponibles
+                  </h3>
                   <p className="text-muted-foreground text-sm">
                     Sube tus primeras facturas y gastos para ver la tendencia de flujo.
                   </p>
