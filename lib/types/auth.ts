@@ -39,6 +39,8 @@ export interface User {
   email_verified: boolean;
   tour_version: string | null;
   tour_completed_at: string | null;
+  logo_url?: string | null;
+  nombre_comercial?: string | null;
 }
 
 export interface RegisterResponse {
@@ -85,6 +87,8 @@ export interface UpdateProfileRequest {
   nombre?: string;
   apellido?: string;
   telefono?: string;
+  logo_url?: string;
+  nombre_comercial?: string;
 }
 
 export interface UpdateProfileResponse {

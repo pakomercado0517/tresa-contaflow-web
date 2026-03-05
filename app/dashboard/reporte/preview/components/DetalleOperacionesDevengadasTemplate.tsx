@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FileText, ArrowDownCircle, ArrowUpCircle, Eye } from "lucide-react";
 import {
   Table,
@@ -45,6 +46,10 @@ export interface DetalleOperacionesDevengadasData {
   margenPercent: number;
   pageNumber: number;
   totalPages: number;
+  /** URL del logo del despacho (branding en PDF) */
+  logoUrl?: string | null;
+  /** Nombre comercial del despacho (branding en PDF) */
+  nombreComercial?: string | null;
 }
 
 function formatCurrency(amount: number): string {
@@ -91,11 +96,25 @@ export function DetalleOperacionesDevengadasTemplate({
       )}
       data-reporte-pagina-2
     >
-      {/* Encabezado verde */}
+      {/* Encabezado verde con branding del despacho */}
       <header className="flex items-center justify-between bg-emerald-600 px-6 py-3 text-white">
-        <div className="flex items-center gap-2">
-          <Eye className="h-5 w-5 shrink-0" />
-          <span className="font-semibold">Contafy Financial Analytics</span>
+        <div className="flex items-center gap-3">
+          {data.logoUrl ? (
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
+              <Image
+                src={data.logoUrl}
+                alt=""
+                width={48}
+                height={48}
+                className="object-contain"
+              />
+            </div>
+          ) : (
+            <Eye className="h-5 w-5 shrink-0 text-white" />
+          )}
+          <span className="font-semibold">
+            {data.nombreComercial || "Contafy Financial Analytics"}
+          </span>
         </div>
         <div className="flex flex-col items-end gap-0.5 text-sm">
           <p className="font-medium">RFC EMISOR: {data.rfc || "—"}</p>

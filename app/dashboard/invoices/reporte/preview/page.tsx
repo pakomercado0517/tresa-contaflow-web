@@ -2,6 +2,7 @@ import "./report-pdf.css";
 import { getInvoices } from "@/lib/api/invoices";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
+import { getCurrentUser } from "@/lib/api/auth.server";
 import { InvoicesReportPreviewContent } from "./components/InvoicesReportPreviewContent";
 import type { ReporteFacturasData, FilaFacturaReporte } from "./components/ReporteFacturasTemplate";
 
@@ -48,7 +49,7 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
     : currentDate.getFullYear();
 
-  const [profilesRes, invoicesRes, regimenesCatalog] = await Promise.all([
+  const [profilesRes, invoicesRes, regimenesCatalog, currentUser] = await Promise.all([
     getProfiles(),
     getInvoices({
       profileId,
@@ -60,6 +61,7 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
       search,
     }),
     getRegimenesFiscales(),
+    getCurrentUser(),
   ]);
 
   const profiles = profilesRes.data ?? [];
@@ -138,6 +140,8 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     totalRetencionesIva,
     totalRetencionesIsr,
     filas,
+    logoUrl: currentUser?.user?.logo_url ?? null,
+    nombreComercial: currentUser?.user?.nombre_comercial ?? null,
   };
 
   return (

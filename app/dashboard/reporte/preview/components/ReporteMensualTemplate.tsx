@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
+import Image from 'next/image';
 import { BarChart3, Building2, DollarSign, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -68,6 +69,10 @@ export interface ReporteMensualData {
   variacionEgresos?: number;
   /** Estado de resultados desglosado por régimen fiscal (si existe, se muestra esta sección en lugar del bloque único) */
   estadoPorRegimen?: EstadoPorRegimen[];
+  /** URL del logo del despacho (branding en PDF) */
+  logoUrl?: string | null;
+  /** Nombre comercial del despacho (branding en PDF) */
+  nombreComercial?: string | null;
 }
 
 function formatCurrency(amount: number): string {
@@ -138,19 +143,44 @@ export function ReporteMensualTemplate({
         </header>
       )}
 
-      {/* Bloque superior: tarjeta empresa + tarjeta reporte */}
+      {/* Bloque superior: tarjeta empresa (logo + nombre comercial) + tarjeta reporte */}
       <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
         <Card className="overflow-visible border border-gray-200 bg-gray-50/80 shadow-sm">
           <CardHeader className="pb-2">
-            <div className="-mt-10 flex h-12 w-12 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow">
-              <DollarSign className="h-6 w-6" />
-            </div>
+            {data.logoUrl ? (
+              <div className="-mt-10 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow">
+                <Image
+                  src={data.logoUrl}
+                  alt=""
+                  width={96}
+                  height={96}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="-mt-10 flex h-12 w-12 items-center justify-center rounded-full border-4 border-white bg-emerald-500 text-white shadow">
+                <DollarSign className="h-6 w-6" />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="pt-0">
-            <h2 className="text-xl font-bold text-emerald-700">Contafy</h2>
-            <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
-              FINANCIAL ANALYTICS
-            </p>
+            {data.nombreComercial ? (
+              <>
+                <h2 className="text-xl font-bold tracking-tight text-gray-900">
+                  {data.nombreComercial}
+                </h2>
+                <p className="mt-0.5 text-xs font-medium tracking-wide text-gray-500">
+                  Generado con Contafy
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-emerald-700">Contafy</h2>
+                <p className="text-sm font-medium tracking-wide text-gray-500 uppercase">
+                  FINANCIAL ANALYTICS
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 

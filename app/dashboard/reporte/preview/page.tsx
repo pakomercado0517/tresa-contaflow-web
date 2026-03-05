@@ -3,6 +3,7 @@ import { getMetrics, getInvoices } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
+import { getCurrentUser } from "@/lib/api/auth.server";
 import { ReportePreviewContent } from "./components/ReportePreviewContent";
 import type { ReporteMensualData, EstadoPorRegimen } from "./components/ReporteMensualTemplate";
 import type {
@@ -73,13 +74,15 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
   const añoValid =
     Number.isFinite(año) && año >= 2000 && año <= 2100 ? año : currentDate.getFullYear();
 
-  const [metrics, profiles, invoicesRes, expensesRes, regimenesCatalog] = await Promise.all([
-    getMetrics(profileId, mesValid, añoValid),
-    getProfiles(),
-    getInvoices({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
-    getExpenses({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
-    getRegimenesFiscales(),
-  ]);
+  const [metrics, profiles, invoicesRes, expensesRes, regimenesCatalog, currentUser] =
+    await Promise.all([
+      getMetrics(profileId, mesValid, añoValid),
+      getProfiles(),
+      getInvoices({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
+      getExpenses({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
+      getRegimenesFiscales(),
+      getCurrentUser(),
+    ]);
 
   const activeProfile = profileId
     ? profiles.data.find((p) => p.id === profileId) ?? null
@@ -143,6 +146,8 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
     egresosDevengados: metrics.devengado?.egresos_devengados ?? 0,
     utilidadOperativa: metrics.devengado?.resultado_devengado ?? 0,
     estadoPorRegimen,
+    logoUrl: currentUser?.user?.logo_url ?? null,
+    nombreComercial: currentUser?.user?.nombre_comercial ?? null,
   };
 
   const allProfileRfcs = (profiles.data ?? []).map((p) => p.rfc).filter(Boolean);
@@ -170,6 +175,8 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
     margenPercent,
     pageNumber: 2,
     totalPages: TOTAL_PAGES,
+    logoUrl: currentUser?.user?.logo_url ?? null,
+    nombreComercial: currentUser?.user?.nombre_comercial ?? null,
   };
 
   return (

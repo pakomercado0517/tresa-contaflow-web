@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, Lock, Loader2 } from "lucide-react";
+import { User, Mail, Phone, Lock, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
     apellido: user?.apellido || "",
     email: user?.email || "",
     telefono: user?.telefono || "",
+    nombre_comercial: user?.nombre_comercial || "",
   });
 
   // Actualizar el estado cuando cambie el prop user
@@ -32,6 +33,7 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
         apellido: user.apellido || "",
         email: user.email || "",
         telefono: user.telefono || "",
+        nombre_comercial: user.nombre_comercial || "",
       });
     }
   }, [user]);
@@ -47,9 +49,9 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
         nombre?: string;
         apellido?: string;
         telefono?: string;
+        nombre_comercial?: string;
       } = {};
 
-      // Solo incluir campos que tienen valor
       if (formData.nombre.trim()) {
         updateData.nombre = formData.nombre.trim();
       }
@@ -59,9 +61,16 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
       if (formData.telefono.trim()) {
         updateData.telefono = formData.telefono.trim();
       }
+      if (formData.nombre_comercial.trim()) {
+        updateData.nombre_comercial = formData.nombre_comercial.trim();
+      }
 
-      // Verificar que al menos un campo tenga valor
-      if (Object.keys(updateData).length === 0) {
+      if (
+        updateData.nombre === undefined &&
+        updateData.apellido === undefined &&
+        updateData.telefono === undefined &&
+        updateData.nombre_comercial === undefined
+      ) {
         setError("Debes proporcionar al menos un campo para actualizar");
         setIsLoading(false);
         return;
@@ -76,6 +85,7 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
           apellido: response.user.apellido || "",
           email: response.user.email,
           telefono: response.user.telefono || "",
+          nombre_comercial: response.user.nombre_comercial || "",
         });
       }
 
@@ -92,12 +102,12 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
   };
 
   const handleCancel = () => {
-    // Restaurar valores originales
     setFormData({
       nombre: user?.nombre || "",
       apellido: user?.apellido || "",
       email: user?.email || "",
       telefono: user?.telefono || "",
+      nombre_comercial: user?.nombre_comercial || "",
     });
     setError(null);
     setIsEditing(false);
@@ -182,6 +192,26 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
               disabled={!isEditing || isLoading}
               placeholder="+52 55 1234 5678"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nombre_comercial" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Nombre comercial
+            </Label>
+            <Input
+              id="nombre_comercial"
+              name="nombre_comercial"
+              value={formData.nombre_comercial}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre_comercial: e.target.value })
+              }
+              disabled={!isEditing || isLoading}
+              placeholder="Despacho Contable XYZ"
+            />
+            <p className="text-xs text-muted-foreground">
+              Nombre de tu despacho o empresa para reportes y PDFs
+            </p>
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
