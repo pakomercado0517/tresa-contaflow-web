@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Wallet, Check, ArrowUpRight, FileText, BarChart3 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils/format';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 
 interface MetricsCardsProps {
@@ -11,14 +12,6 @@ interface MetricsCardsProps {
   mes?: number;
   año?: number;
 }
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
 
 function buildQueryString(profileId?: string, mes?: number, año?: number): string {
   const params = new URLSearchParams();
@@ -89,8 +82,8 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
               {ingresosSinConciliar > 0 && (
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300/90">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                  Incluye {formatCurrency(ingresosSinConciliar)} de complementos sin conciliar
-                  (ya incluido en este total)
+                  Incluye {formatCurrency(ingresosSinConciliar)} de complementos sin conciliar (ya
+                  incluido en este total)
                 </p>
               )}
             </CardContent>
@@ -111,8 +104,8 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
               {egresosSinConciliar > 0 && (
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300/90">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                  Incluye {formatCurrency(egresosSinConciliar)} de complementos sin conciliar
-                  (ya incluido en este total)
+                  Incluye {formatCurrency(egresosSinConciliar)} de complementos sin conciliar (ya
+                  incluido en este total)
                 </p>
               )}
             </CardContent>
@@ -164,7 +157,7 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
             Por conciliar
           </Badge>
         </div>
-        <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2">
+        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
           <Card className="border-amber-500/20 bg-[hsl(38,35%,14%)] shadow-sm">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">

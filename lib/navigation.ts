@@ -1,10 +1,4 @@
-import {
-  LayoutDashboard,
-  FileText,
-  Receipt,
-  Search,
-  ShieldCheck,
-} from 'lucide-react';
+import { LayoutDashboard, FileText, Receipt, Search, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
