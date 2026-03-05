@@ -2,6 +2,7 @@ import "./report-pdf.css";
 import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
+import { getCurrentUser } from "@/lib/api/auth.server";
 import { ExpensesReportPreviewContent } from "./components/ExpensesReportPreviewContent";
 import type { ReporteGastosData, FilaGastoReporte } from "./components/ReporteGastosTemplate";
 
@@ -47,7 +48,7 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
     : currentDate.getFullYear();
 
-  const [profilesRes, expensesRes, regimenesCatalog] = await Promise.all([
+  const [profilesRes, expensesRes, regimenesCatalog, currentUser] = await Promise.all([
     getProfiles(),
     getExpenses({
       profileId,
@@ -59,6 +60,7 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
       search,
     }),
     getRegimenesFiscales(),
+    getCurrentUser(),
   ]);
 
   const profiles = profilesRes.data ?? [];
@@ -133,6 +135,8 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     totalRetencionesIva,
     totalRetencionesIsr,
     filas,
+    logoUrl: currentUser?.user?.logo_url ?? null,
+    nombreComercial: currentUser?.user?.nombre_comercial ?? null,
   };
 
   return (
