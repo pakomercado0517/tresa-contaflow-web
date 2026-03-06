@@ -1,8 +1,4 @@
-import type {
-  Plan,
-  PlanLimits,
-  AvailablePlan,
-} from "@/lib/types/subscription";
+import type { Plan, PlanLimits, AvailablePlan } from '@/lib/types/subscription';
 
 export interface PlanFeature {
   label: string;
@@ -20,85 +16,90 @@ export interface PlanDetails {
   icon: string; // Nombre del icono de lucide-react
   features: PlanFeature[];
   isPopular?: boolean;
-  xmlLimit: number | "unlimited";
-  profilesLimit: number | "unlimited";
+  xmlLimit: number | 'unlimited';
+  profilesLimit: number | 'unlimited';
 }
 
 export const PLANS: PlanDetails[] = [
   {
-    id: "FREE",
-    name: "Free",
-    description: "Para freelancers que inician.",
+    id: 'FREE',
+    name: 'Free',
+    description: 'Para freelancers que inician.',
     price: {
       monthly: 0,
       annual: 0,
     },
-    icon: "Leaf",
+    icon: 'Leaf',
     features: [
-      { label: "RFC Emisor", value: 1 },
-      { label: "Archivos XML / mes", value: 50 },
-      { label: "Validación básica", value: "Sí" },
+      { label: 'RFC Emisor', value: 1 },
+      { label: 'Archivos XML ilimitados', value: 'Sí' },
+      { label: 'Validación básica', value: 'Sí' },
     ],
-    xmlLimit: 50,
+    xmlLimit: 'unlimited',
     profilesLimit: 1,
   },
   {
-    id: "BASIC",
-    name: "Básico",
-    description: "Pequeños negocios en crecimiento.",
+    id: 'BASIC',
+    name: 'Básico',
+    description: 'Pequeños negocios en crecimiento.',
     price: {
-      monthly: 300,
-      annual: 240, // 20% descuento
+      monthly: 299,
+      annual: 249, // ~$2,999/año (2 meses gratis)
     },
-    icon: "Rocket",
+    icon: 'Rocket',
     features: [
-      { label: "RFCs Emisores", value: 3 },
-      { label: "Archivos XML / mes", value: 500 },
-      { label: "Exportación PDF", value: "Sí" },
-      { label: "Reportes completos", value: "Sí" },
-      { label: "Soporte por email", value: "Sí" },
+      { label: 'RFCs Emisores', value: 5 },
+      { label: 'Archivos XML ilimitados', value: 'Sí' },
+      { label: 'Exportación PDF', value: 'Sí' },
+      { label: 'Reportes públicos', value: 'Máx. 10 activos' },
+      { label: 'Reportes completos', value: 'Sí' },
+      { label: 'Soporte por email', value: 'Sí' },
     ],
-    xmlLimit: 500,
-    profilesLimit: 3,
+    xmlLimit: 'unlimited',
+    profilesLimit: 5,
   },
   {
-    id: "PRO",
-    name: "Pro",
-    description: "Contadores y despachos.",
+    id: 'PRO',
+    name: 'Pro',
+    description: 'Contadores y despachos.',
     price: {
-      monthly: 800,
-      annual: 640, // 20% descuento
+      monthly: 799,
+      annual: 666, // ~$7,999/año (2 meses gratis)
     },
-    icon: "Gem",
+    icon: 'Gem',
     features: [
-      { label: "RFCs Emisores", value: 10 },
-      { label: "Archivos XML ilimitados", value: "Sí" },
-      { label: "Exportación PDF y Excel", value: "Sí" },
-      { label: "Acceso a API", value: "Sí" },
-      { label: "Soporte Prioritario", value: "Sí" },
+      { label: 'RFCs Emisores', value: 20 },
+      { label: 'Archivos XML ilimitados', value: 'Sí' },
+      { label: 'Exportación PDF y Excel', value: 'Sí' },
+      { label: 'Reportes públicos', value: 'Máx. 50 activos' },
+      { label: 'Descarga masiva SAT (FIEL)', value: 'Sí' },
+      { label: 'Acceso a API', value: 'Sí' },
+      { label: 'Soporte Prioritario', value: 'Sí' },
     ],
     isPopular: true,
-    xmlLimit: "unlimited",
-    profilesLimit: 10,
+    xmlLimit: 'unlimited',
+    profilesLimit: 20,
   },
   {
-    id: "ENTERPRISE",
-    name: "Empresarial",
-    description: "Grandes volúmenes y equipos.",
+    id: 'ENTERPRISE',
+    name: 'Empresarial',
+    description: 'Grandes volúmenes y equipos.',
     price: {
-      monthly: 1200,
-      annual: 960, // 20% descuento
+      monthly: 1499,
+      annual: 1249, // ~$14,999/año (2 meses gratis)
     },
-    icon: "Building2",
+    icon: 'Building2',
     features: [
-      { label: "RFCs Emisores", value: "Ilimitados" },
-      { label: "Archivos XML", value: "Ilimitados" },
-      { label: "Multi-usuario (Roles)", value: "Sí" },
-      { label: "Gerente de cuenta", value: "Sí" },
-      { label: "Integraciones personalizadas", value: "Sí" },
+      { label: 'RFCs Emisores', value: 'Ilimitados' },
+      { label: 'Archivos XML ilimitados', value: 'Sí' },
+      { label: 'Reportes públicos', value: 'Ilimitados' },
+      { label: 'Descarga masiva SAT (FIEL)', value: 'Sí' },
+      { label: 'Acceso a API', value: 'Sí' },
+      { label: 'Multi-usuario (Roles)', value: 'Sí' },
+      { label: 'Soporte Dedicado', value: 'Sí' },
     ],
-    xmlLimit: "unlimited",
-    profilesLimit: "unlimited",
+    xmlLimit: 'unlimited',
+    profilesLimit: 'unlimited',
   },
 ];
 
@@ -107,9 +108,9 @@ export function getPlanDetails(planId: Plan): PlanDetails {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency: "MXN",
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
     minimumFractionDigits: 0,
   }).format(price);
 }
@@ -124,10 +125,10 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
 
   // RFCs Emisores (Profiles)
   if (limits.profiles === null) {
-    features.push({ label: "RFCs Emisores", value: "Ilimitados" });
+    features.push({ label: 'RFCs Emisores', value: 'Ilimitados' });
   } else {
     features.push({
-      label: limits.profiles === 1 ? "RFC Emisor" : "RFCs Emisores",
+      label: limits.profiles === 1 ? 'RFC Emisor' : 'RFCs Emisores',
       value: limits.profiles,
     });
   }
@@ -135,52 +136,67 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
   // Archivos XML al mes (Facturas + Gastos)
   const invoicesLimit = limits.invoicesPerMonth;
   const expensesLimit = limits.expensesPerMonth;
-  
+
   if (invoicesLimit === null && expensesLimit === null) {
-    features.push({ label: "Archivos XML ilimitados", value: "Sí" });
+    features.push({ label: 'Archivos XML ilimitados', value: 'Sí' });
   } else {
     // Calcular límite total si ambos tienen límite
     const totalLimit =
-      invoicesLimit !== null && expensesLimit !== null
-        ? invoicesLimit + expensesLimit
-        : null;
+      invoicesLimit !== null && expensesLimit !== null ? invoicesLimit + expensesLimit : null;
 
     if (totalLimit === null) {
-      features.push({ label: "Archivos XML ilimitados", value: "Sí" });
+      features.push({ label: 'Archivos XML ilimitados', value: 'Sí' });
     } else {
-      features.push({ label: "Archivos XML / mes", value: totalLimit });
+      features.push({ label: 'Archivos XML / mes', value: totalLimit });
     }
   }
 
   // Exportación PDF
   if (limits.exportPDF) {
-    features.push({ label: "Exportación PDF", value: "Sí" });
+    features.push({ label: 'Exportación PDF', value: 'Sí' });
   }
 
   // Exportación Excel
   if (limits.exportExcel) {
-    features.push({ label: "Exportación Excel", value: "Sí" });
+    features.push({ label: 'Exportación Excel', value: 'Sí' });
   }
 
   // Reportes
-  if (limits.reports === "basic") {
-    features.push({ label: "Validación básica", value: "Sí" });
-  } else if (limits.reports === "complete") {
-    features.push({ label: "Reportes completos", value: "Sí" });
-  } else if (limits.reports === "advanced") {
-    features.push({ label: "Reportes avanzados", value: "Sí" });
+  if (limits.reports === 'basic') {
+    features.push({ label: 'Validación básica', value: 'Sí' });
+  } else if (limits.reports === 'complete') {
+    features.push({ label: 'Reportes completos', value: 'Sí' });
+  } else if (limits.reports === 'advanced') {
+    features.push({ label: 'Reportes avanzados', value: 'Sí' });
   }
 
   // Soporte
-  if (limits.support === "email") {
-    features.push({ label: "Soporte por email", value: "Sí" });
-  } else if (limits.support === "priority") {
-    features.push({ label: "Soporte Prioritario", value: "Sí" });
+  if (limits.support === 'email') {
+    features.push({ label: 'Soporte por email', value: 'Sí' });
+  } else if (limits.support === 'priority') {
+    features.push({ label: 'Soporte Prioritario', value: 'Sí' });
+  } else if (limits.support === 'dedicated') {
+    features.push({ label: 'Soporte Dedicado', value: 'Sí' });
+  }
+
+  // Reportes públicos (link compartible)
+  if (limits.publicReports) {
+    const activeLimit = limits.publicReportsActiveLimit;
+    const limitLabel =
+      activeLimit === null || activeLimit === undefined
+        ? 'Ilimitado'
+        : `Máx. ${activeLimit} activos`;
+    features.push({ label: 'Reportes públicos', value: limitLabel });
+  }
+
+  // Descarga masiva SAT (FIEL / e.firma)
+  if (limits.satDownload) {
+    features.push({ label: 'Descarga masiva SAT (FIEL)', value: 'Sí' });
   }
 
   // Acceso a API
   if (limits.apiAccess) {
-    features.push({ label: "Acceso a API", value: "Sí" });
+    features.push({ label: 'Acceso a API', value: 'Sí' });
   }
 
   // Buscador SAT - Valores por defecto según plan (si el backend no envía los campos)
@@ -311,10 +327,10 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
   // Buscador SAT - Búsquedas básicas
   if (satBasicSearches !== undefined) {
     if (satBasicSearches === null) {
-      features.push({ label: "Búsquedas SAT básicas", value: "Ilimitadas" });
+      features.push({ label: 'Búsquedas SAT básicas', value: 'Ilimitadas' });
     } else {
       features.push({
-        label: "Búsquedas SAT básicas / mes",
+        label: 'Búsquedas SAT básicas / mes',
         value: satBasicSearches,
       });
     }
@@ -323,10 +339,10 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
   // Buscador SAT - Búsquedas con IA
   if (satAISearches !== undefined) {
     if (satAISearches === null) {
-      features.push({ label: "Búsquedas SAT con IA", value: "Ilimitadas" });
+      features.push({ label: 'Búsquedas SAT con IA', value: 'Ilimitadas' });
     } else {
       features.push({
-        label: "Búsquedas SAT con IA / mes",
+        label: 'Búsquedas SAT con IA / mes',
         value: satAISearches,
       });
     }
@@ -336,12 +352,12 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
   if (satMaxResults !== undefined) {
     if (satMaxResults === null) {
       features.push({
-        label: "Resultados SAT por búsqueda",
-        value: "Ilimitados",
+        label: 'Resultados SAT por búsqueda',
+        value: 'Ilimitados',
       });
     } else {
       features.push({
-        label: "Resultados SAT por búsqueda",
+        label: 'Resultados SAT por búsqueda',
         value: `Hasta ${satMaxResults}`,
       });
     }
@@ -350,34 +366,34 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
   // Buscador SAT - Explicaciones IA
   if (satHasAIExplanations) {
     features.push({
-      label: "Explicaciones de sugerencias IA",
-      value: "Sí",
+      label: 'Explicaciones de sugerencias IA',
+      value: 'Sí',
     });
   }
 
   // Buscador SAT - Historial
   if (satHasHistory) {
-    features.push({ label: "Historial de búsquedas SAT", value: "Sí" });
+    features.push({ label: 'Historial de búsquedas SAT', value: 'Sí' });
   }
 
   // Buscador SAT - Favoritos
   if (satHasFavorites) {
-    features.push({ label: "Favoritos SAT", value: "Sí" });
+    features.push({ label: 'Favoritos SAT', value: 'Sí' });
   }
 
   // Buscador SAT - Alertas
   if (satHasAlerts) {
-    features.push({ label: "Alertas fiscales SAT", value: "Sí" });
+    features.push({ label: 'Alertas fiscales SAT', value: 'Sí' });
   }
 
   // Buscador SAT - Aprendizaje
   if (satHasLearning) {
-    features.push({ label: "Aprendizaje por RFC", value: "Sí" });
+    features.push({ label: 'Aprendizaje por RFC', value: 'Sí' });
   }
 
   // Buscador SAT - Ranking avanzado
   if (satHasAdvancedRanking) {
-    features.push({ label: "Ranking avanzado SAT", value: "Sí" });
+    features.push({ label: 'Ranking avanzado SAT', value: 'Sí' });
   }
 
   return features;
@@ -386,31 +402,29 @@ export function generatePlanFeatures(limits: PlanLimits, planId?: Plan): PlanFea
 /**
  * Obtiene información detallada de un plan desde AvailablePlan
  */
-export function getPlanDetailsFromAvailable(
-  plan: AvailablePlan
-): PlanDetails {
+export function getPlanDetailsFromAvailable(plan: AvailablePlan): PlanDetails {
   const features = generatePlanFeatures(plan.limits, plan.id);
 
   // Mapear el nombre del plan a un formato más legible
   const planNames: Record<Plan, string> = {
-    FREE: "Free",
-    BASIC: "Básico",
-    PRO: "Pro",
-    ENTERPRISE: "Empresarial",
+    FREE: 'Free',
+    BASIC: 'Básico',
+    PRO: 'Pro',
+    ENTERPRISE: 'Empresarial',
   };
 
   const planDescriptions: Record<Plan, string> = {
-    FREE: "Para freelancers que inician.",
-    BASIC: "Pequeños negocios en crecimiento.",
-    PRO: "Contadores y despachos.",
-    ENTERPRISE: "Grandes volúmenes y equipos.",
+    FREE: 'Para freelancers que inician.',
+    BASIC: 'Pequeños negocios en crecimiento.',
+    PRO: 'Contadores y despachos.',
+    ENTERPRISE: 'Grandes volúmenes y equipos.',
   };
 
   const planIcons: Record<Plan, string> = {
-    FREE: "Leaf",
-    BASIC: "Rocket",
-    PRO: "Gem",
-    ENTERPRISE: "Building2",
+    FREE: 'Leaf',
+    BASIC: 'Rocket',
+    PRO: 'Gem',
+    ENTERPRISE: 'Building2',
   };
 
   return {
@@ -418,18 +432,16 @@ export function getPlanDetailsFromAvailable(
     name: planNames[plan.id],
     description: planDescriptions[plan.id],
     price: {
-      monthly: plan.billing === "monthly" ? plan.price : plan.originalPrice || plan.price,
-      annual: plan.billing === "annual" ? plan.price : plan.price * 12 * 0.85, // Aproximado para fallback
+      monthly: plan.billing === 'monthly' ? plan.price : plan.originalPrice || plan.price,
+      annual: plan.billing === 'annual' ? plan.price : plan.price * 12 * 0.85, // Aproximado para fallback
     },
     icon: planIcons[plan.id],
     features,
-    isPopular: plan.id === "PRO",
+    isPopular: plan.id === 'PRO',
     xmlLimit:
       plan.limits.invoicesPerMonth === null && plan.limits.expensesPerMonth === null
-        ? "unlimited"
+        ? 'unlimited'
         : (plan.limits.invoicesPerMonth || 0) + (plan.limits.expensesPerMonth || 0),
-    profilesLimit:
-      plan.limits.profiles === null ? "unlimited" : plan.limits.profiles,
+    profilesLimit: plan.limits.profiles === null ? 'unlimited' : plan.limits.profiles,
   };
 }
-

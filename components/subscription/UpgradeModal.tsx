@@ -59,7 +59,7 @@ export function UpgradeModal({
             <ul className="space-y-2">
               {planDetails.features.map((feature, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
-                  <Sparkles className="text-primary mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <Sparkles className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                   <span>
                     {typeof feature.value === 'number'
                       ? `${feature.value} ${feature.label}`

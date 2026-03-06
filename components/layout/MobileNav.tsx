@@ -15,13 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types/auth';
@@ -70,7 +64,7 @@ export function MobileNav({ user }: MobileNavProps) {
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="flex w-72 flex-col p-0 sm:max-w-[280px]"
+          className="flex w-72 flex-col p-0 sm:max-w-70"
           showCloseButton={false}
         >
           <SheetHeader className="border-border flex flex-row items-center gap-2.5 border-b px-6 py-4">
