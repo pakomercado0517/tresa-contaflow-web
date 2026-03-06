@@ -19,7 +19,7 @@ export interface PlanLimits {
   exportPDF: boolean; // Permite exportar PDF
   exportExcel: boolean; // Permite exportar Excel
   reports: 'basic' | 'complete' | 'advanced'; // Nivel de reportes
-  support: 'none' | 'email' | 'priority'; // Tipo de soporte
+  support: 'none' | 'email' | 'priority' | 'dedicated'; // Tipo de soporte
   apiAccess: boolean; // Acceso a la API
 
   /** Buscador SAT: búsquedas básicas/mes (null = ilimitadas) */
@@ -34,6 +34,13 @@ export interface PlanLimits {
   satHasAlerts?: boolean;
   satHasLearning?: boolean;
   satHasAdvancedRanking?: boolean;
+
+  /** Reportes públicos con link compartible (BASIC+) */
+  publicReports?: boolean;
+  /** Máx. reportes públicos activos simultáneamente (null = ilimitado) */
+  publicReportsActiveLimit?: number | null;
+  /** Descarga masiva SAT via FIEL / e.firma (PRO+) */
+  satDownload?: boolean;
 }
 
 export interface Subscription {

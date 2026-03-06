@@ -289,7 +289,9 @@ export function InvoicesListContent({
     if (!storedProfileId || storedProfileId === 'all') return;
     if (profiles.length === 0) return;
 
-    const storedProfileExists = profiles.some((profile) => profile.id === storedProfileId && !profile.frozen);
+    const storedProfileExists = profiles.some(
+      (profile) => profile.id === storedProfileId && !profile.frozen
+    );
     if (!storedProfileExists) {
       clearStoredProfileSelection();
       return;
@@ -759,13 +761,13 @@ export function InvoicesListContent({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[180px]">Concepto</TableHead>
-                      <TableHead className="min-w-[100px]">Fecha</TableHead>
-                      <TableHead className="min-w-[100px] text-right">Subtotal</TableHead>
-                      <TableHead className="min-w-[80px] text-right">IVA</TableHead>
-                      <TableHead className="min-w-[100px] text-right">Total</TableHead>
-                      <TableHead className="min-w-[90px]">Cobrado</TableHead>
-                      <TableHead className="min-w-[80px] text-right">Acciones</TableHead>
+                      <TableHead className="min-w-45">Concepto</TableHead>
+                      <TableHead className="min-w-25">Fecha</TableHead>
+                      <TableHead className="min-w-25 text-right">Subtotal</TableHead>
+                      <TableHead className="min-w-20 text-right">IVA</TableHead>
+                      <TableHead className="min-w-25 text-right">Total</TableHead>
+                      <TableHead className="min-w-22.5">Cobrado</TableHead>
+                      <TableHead className="min-w-20 text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -842,20 +844,20 @@ export function InvoicesListContent({
         {/* Invoices Table */}
         <div data-tour="invoices-table" className="bg-card overflow-hidden rounded-lg border">
           <div className="overflow-x-auto">
-            <div className="relative max-h-[600px] overflow-y-auto">
+            <div className="relative max-h-150 overflow-y-auto">
               <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                   <TableRow>
-                    <TableHead className="min-w-[200px]">UUID / FOLIO</TableHead>
-                    <TableHead className="min-w-[150px]">FECHA</TableHead>
-                    <TableHead className="min-w-[200px]">EMISOR</TableHead>
-                    <TableHead className="min-w-[200px]">RECEPTOR</TableHead>
-                    <TableHead className="min-w-[110px] text-right">MONTO</TableHead>
-                    <TableHead className="min-w-[100px] text-right">IVA TRASL.</TableHead>
-                    <TableHead className="min-w-[95px] text-right">RET. IVA</TableHead>
-                    <TableHead className="min-w-[95px] text-right">RET. ISR</TableHead>
-                    <TableHead className="min-w-[100px]">ESTADO</TableHead>
-                    <TableHead className="min-w-[100px] text-right">ACCIONES</TableHead>
+                    <TableHead className="min-w-50">UUID / FOLIO</TableHead>
+                    <TableHead className="min-w-37.5">FECHA</TableHead>
+                    <TableHead className="min-w-50">EMISOR</TableHead>
+                    <TableHead className="min-w-50">RECEPTOR</TableHead>
+                    <TableHead className="min-w-27.5 text-right">MONTO</TableHead>
+                    <TableHead className="min-w-25 text-right">IVA TRASL.</TableHead>
+                    <TableHead className="min-w-25 text-right">RET. IVA</TableHead>
+                    <TableHead className="min-w-25 text-right">RET. ISR</TableHead>
+                    <TableHead className="min-w-25">ESTADO</TableHead>
+                    <TableHead className="min-w-25 text-right">ACCIONES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -863,7 +865,7 @@ export function InvoicesListContent({
                     invoices.map((invoice) => (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-mono text-sm">
-                          <div className="max-w-[200px] truncate" title={invoice.uuid}>
+                          <div className="max-w-50 truncate" title={invoice.uuid}>
                             {invoice.uuid || `F-${invoice.id.slice(-4)}`}
                           </div>
                         </TableCell>
@@ -871,7 +873,7 @@ export function InvoicesListContent({
                           {formatDate(invoice.fecha)}
                         </TableCell>
                         <TableCell>
-                          <div className="max-w-[200px]">
+                          <div className="max-w-50">
                             <p
                               className="truncate text-sm font-medium"
                               title={invoice.nombre_emisor}
@@ -882,7 +884,7 @@ export function InvoicesListContent({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="max-w-[200px]">
+                          <div className="max-w-50">
                             <p
                               className="truncate text-sm font-medium"
                               title={invoice.nombre_receptor}
@@ -1141,7 +1143,7 @@ export function InvoicesListContent({
 
       {/* Add / Edit Manual Income Dialog */}
       <Dialog open={addManualIncomeOpen} onOpenChange={handleCloseManualIncomeDialog}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-105">
           <DialogHeader>
             <DialogTitle>
               {editingManualIncome ? 'Editar ingreso manual' : 'Agregar ingreso manual'}

@@ -1,22 +1,20 @@
-import type { Plan, Subscription } from "@/lib/types/subscription";
+import type { Plan, Subscription } from '@/lib/types/subscription';
 
 /** Feature de exportación para mensaje de actualización de plan */
-export type ExportFeature = "pdf_export" | "excel_export";
+export type ExportFeature = 'pdf_export' | 'excel_export';
 
 /**
  * Plan mínimo que incluye la funcionalidad (para mensajes de upgrade).
  * PDF: Básico; Excel: Pro.
  */
-export function getExportUpgradeMessage(
-  feature: ExportFeature
-): string {
+export function getExportUpgradeMessage(feature: ExportFeature): string {
   switch (feature) {
-    case "pdf_export":
-      return "Actualiza a Básico para exportar PDF";
-    case "excel_export":
-      return "Actualiza a Pro para exportar Excel";
+    case 'pdf_export':
+      return 'Actualiza a Básico para exportar PDF';
+    case 'excel_export':
+      return 'Actualiza a Pro para exportar Excel';
     default:
-      return "Actualiza tu plan para usar esta función";
+      return 'Actualiza tu plan para usar esta función';
   }
 }
 
@@ -25,10 +23,7 @@ export function getExportUpgradeMessage(
  * Si hay una suscripción con límites dinámicos, usa esos valores
  * De lo contrario, usa los límites hardcodeados como fallback
  */
-export function getProfileLimit(
-  plan: Plan,
-  subscription?: Subscription | null
-): number {
+export function getProfileLimit(plan: Plan, subscription?: Subscription | null): number {
   // Priorizar límites dinámicos del backend si están disponibles
   if (subscription?.limits?.profiles !== undefined) {
     return subscription.limits.profiles ?? Infinity;
@@ -37,8 +32,8 @@ export function getProfileLimit(
   // Fallback a límites hardcodeados si no hay suscripción o límites dinámicos
   const limits: Record<Plan, number> = {
     FREE: 1,
-    BASIC: 3,
-    PRO: 10,
+    BASIC: 5,
+    PRO: 20,
     ENTERPRISE: Infinity,
   };
 
@@ -78,31 +73,28 @@ export function getRemainingProfiles(
  * Obtiene un mensaje descriptivo del límite del plan
  * Si hay una suscripción con límites dinámicos, usa esos valores
  */
-export function getProfileLimitMessage(
-  plan: Plan,
-  subscription?: Subscription | null
-): string {
+export function getProfileLimitMessage(plan: Plan, subscription?: Subscription | null): string {
   // Priorizar límites dinámicos del backend si están disponibles
   if (subscription?.limits?.profiles !== undefined) {
     const limit = subscription.limits.profiles;
     const planNames: Record<Plan, string> = {
-      FREE: "Plan Gratuito",
-      BASIC: "Plan Básico",
-      PRO: "Plan Pro",
-      ENTERPRISE: "Plan Enterprise",
+      FREE: 'Plan Gratuito',
+      BASIC: 'Plan Básico',
+      PRO: 'Plan Pro',
+      ENTERPRISE: 'Plan Enterprise',
     };
     if (limit === null) {
       return `${planNames[plan]}: Perfiles ilimitados`;
     }
-    return `${planNames[plan]}: ${limit} ${limit === 1 ? "perfil" : "perfiles"}`;
+    return `${planNames[plan]}: ${limit} ${limit === 1 ? 'perfil' : 'perfiles'}`;
   }
 
   // Fallback a mensajes hardcodeados
   const messages: Record<Plan, string> = {
-    FREE: "Plan Gratuito: 1 perfil",
-    BASIC: "Plan Básico: 3 perfiles",
-    PRO: "Plan Pro: 10 perfiles",
-    ENTERPRISE: "Plan Enterprise: Perfiles ilimitados",
+    FREE: 'Plan Gratuito: 1 perfil',
+    BASIC: 'Plan Básico: 5 perfiles',
+    PRO: 'Plan Pro: 20 perfiles',
+    ENTERPRISE: 'Plan Enterprise: Perfiles ilimitados',
   };
 
   return messages[plan];
@@ -113,9 +105,9 @@ export function getProfileLimitMessage(
  */
 export function getRecommendedUpgradePlan(plan: Plan): Plan | null {
   const upgrades: Record<Plan, Plan | null> = {
-    FREE: "BASIC",
-    BASIC: "PRO",
-    PRO: "ENTERPRISE",
+    FREE: 'BASIC',
+    BASIC: 'PRO',
+    PRO: 'ENTERPRISE',
     ENTERPRISE: null,
   };
 
@@ -127,10 +119,10 @@ export function getRecommendedUpgradePlan(plan: Plan): Plan | null {
  */
 export function formatTrialEndDate(endDate: string): string {
   const date = new Date(endDate);
-  return date.toLocaleDateString("es-MX", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  return date.toLocaleDateString('es-MX', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 }
 
@@ -139,20 +131,17 @@ export function formatTrialEndDate(endDate: string): string {
  */
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("es-MX", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+  return date.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   });
 }
 
 /**
  * Calcula el porcentaje de progreso del trial (0-100)
  */
-export function getTrialProgress(
-  startDate: string | null,
-  endDate: string | null
-): number {
+export function getTrialProgress(startDate: string | null, endDate: string | null): number {
   if (!startDate || !endDate) return 0;
 
   const start = new Date(startDate).getTime();
@@ -168,32 +157,29 @@ export function getTrialProgress(
  * Determina el nivel de urgencia del trial según días restantes
  */
 export function getTrialUrgencyLevel(daysRemaining: number | null): {
-  level: "normal" | "warning" | "urgent";
+  level: 'normal' | 'warning' | 'urgent';
   color: string;
 } {
   if (daysRemaining === null) {
-    return { level: "normal", color: "blue" };
+    return { level: 'normal', color: 'blue' };
   }
 
   if (daysRemaining <= 3) {
-    return { level: "urgent", color: "red" };
+    return { level: 'urgent', color: 'red' };
   }
 
   if (daysRemaining <= 7) {
-    return { level: "warning", color: "orange" };
+    return { level: 'warning', color: 'orange' };
   }
 
-  return { level: "normal", color: "blue" };
+  return { level: 'normal', color: 'blue' };
 }
 
 /**
  * Obtiene el límite de facturas (invoices) por mes según el plan
  * Si hay una suscripción con límites dinámicos, usa esos valores
  */
-export function getInvoicesLimit(
-  plan: Plan,
-  subscription?: Subscription | null
-): number | null {
+export function getInvoicesLimit(plan: Plan, subscription?: Subscription | null): number | null {
   // Priorizar límites dinámicos del backend si están disponibles
   if (subscription?.limits?.invoicesPerMonth !== undefined) {
     return subscription.limits.invoicesPerMonth;
@@ -201,10 +187,10 @@ export function getInvoicesLimit(
 
   // Fallback a límites hardcodeados si no hay suscripción o límites dinámicos
   const limits: Record<Plan, number | null> = {
-    FREE: 25,
-    BASIC: 300,
+    FREE: null, // Ilimitado
+    BASIC: null, // Ilimitado
     PRO: null, // Ilimitado
-    ENTERPRISE: 5000,
+    ENTERPRISE: null, // Ilimitado
   };
 
   return limits[plan];
@@ -214,10 +200,7 @@ export function getInvoicesLimit(
  * Obtiene el límite de gastos (expenses) por mes según el plan
  * Si hay una suscripción con límites dinámicos, usa esos valores
  */
-export function getExpensesLimit(
-  plan: Plan,
-  subscription?: Subscription | null
-): number | null {
+export function getExpensesLimit(plan: Plan, subscription?: Subscription | null): number | null {
   // Priorizar límites dinámicos del backend si están disponibles
   if (subscription?.limits?.expensesPerMonth !== undefined) {
     return subscription.limits.expensesPerMonth;
@@ -225,9 +208,36 @@ export function getExpensesLimit(
 
   // Fallback a límites hardcodeados si no hay suscripción o límites dinámicos
   const limits: Record<Plan, number | null> = {
-    FREE: 25,
-    BASIC: 300,
+    FREE: null, // Ilimitado
+    BASIC: null, // Ilimitado
     PRO: null, // Ilimitado
+    ENTERPRISE: null, // Ilimitado
+  };
+
+  return limits[plan];
+}
+
+/**
+ * Obtiene el límite de reportes públicos activos simultáneamente
+ * null = ilimitado; undefined/false = sin acceso al feature
+ */
+export function getPublicReportsActiveLimit(
+  plan: Plan,
+  subscription?: Subscription | null
+): number | null | undefined {
+  // Sin acceso en FREE
+  if (!subscription?.limits?.publicReports && plan === 'FREE') return undefined;
+
+  // Priorizar límite dinámico del backend
+  if (subscription?.limits?.publicReportsActiveLimit !== undefined) {
+    return subscription.limits.publicReportsActiveLimit;
+  }
+
+  // Fallback hardcodeado
+  const limits: Record<Plan, number | null | undefined> = {
+    FREE: undefined, // Sin acceso
+    BASIC: 10,
+    PRO: 50,
     ENTERPRISE: null, // Ilimitado
   };
 
@@ -293,4 +303,3 @@ export function getRemainingExpenses(
   }
   return Math.max(0, limit - currentCount);
 }
-

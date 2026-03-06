@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Share2,
   Copy,
@@ -26,7 +27,11 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { generatePublicReport } from '@/lib/api/public-reports';
+import { apiClient } from '@/lib/api/client';
+import { ApiError } from '@/lib/api/client';
+import { UpgradeModal } from '@/components/subscription/UpgradeModal';
 import type { GeneratePublicReportResponse } from '@/lib/types/public-reports';
+import type { Subscription } from '@/lib/types/subscription';
 
 const MONTHS_ES = [
   'enero',
@@ -60,6 +65,15 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GeneratePublicReportResponse | null>(null);
   const [hasCopied, setHasCopied] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  const { data: subscriptionData } = useQuery<Subscription>({
+    queryKey: ['subscription'],
+    queryFn: () => apiClient<Subscription>('/api/subscription', { requireAuth: true }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const currentPlan = subscriptionData?.plan ?? 'FREE';
 
   const isDisabled = !profileId;
   const monthLabel = `${MONTHS_ES[(mes - 1) % 12]} ${año}`;
@@ -96,8 +110,22 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
         ...(sendToEmail.trim() && { send_to_email: sendToEmail.trim() }),
       });
       setResult(response);
-    } catch {
-      setError('No se pudo generar el link. Intenta de nuevo.');
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        const data = err.data as { error?: string; message?: string } | undefined;
+        const serverMsg = data?.message ?? '';
+        const isLimitError = serverMsg.toLowerCase().includes('límite');
+        if (isLimitError) {
+          setError(
+            serverMsg ||
+              'Has alcanzado el límite de reportes activos. Revoca uno existente para crear uno nuevo.'
+          );
+        } else {
+          setIsUpgradeModalOpen(true);
+        }
+      } else {
+        setError('No se pudo generar el link. Intenta de nuevo.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -318,6 +346,14 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
           )}
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        currentPlan={currentPlan}
+        feature="Los reportes públicos no están disponibles en tu plan actual. Actualiza a Básico o superior para compartir reportes con tus clientes."
+        recommendedPlan="BASIC"
+      />
     </>
   );
 }

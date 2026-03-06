@@ -25,8 +25,8 @@ export function useProfileFreezeDetector({
 }: UseProfileFreezeDetectorProps): FreezeDetectionResult {
   const planLimits: Record<Plan, number> = {
     FREE: 1,
-    BASIC: 3,
-    PRO: 10,
+    BASIC: 5,
+    PRO: 20,
     ENTERPRISE: Infinity,
   };
 
