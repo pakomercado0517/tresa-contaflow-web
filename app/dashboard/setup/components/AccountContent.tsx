@@ -1,9 +1,8 @@
 import { UserProfileCard } from '../account/components/UserProfileCard';
 import { PersonalInformationCard } from '../account/components/PersonalInformationCard';
 import { SubscriptionCard } from '../account/components/SubscriptionCard';
-import { PreferencesCard } from '../account/components/PreferencesCard';
 import { AddNewCompanyCard } from '../account/components/AddNewCompanyCard';
-import { SetupFooter } from './SetupFooter';
+import { TourResetButton } from '@/components/tour/TourResetButton';
 import type { Subscription } from '@/lib/types/subscription';
 import type { User } from '@/lib/types/auth';
 
@@ -25,16 +24,13 @@ export function AccountContent({ subscription, user }: AccountContentProps) {
           <PersonalInformationCard user={user} />
         </div>
 
-        {/* Right Column - Subscription and Preferences */}
-        <div className="space-y-6">
+        {/* Right Column - Subscription, Add Company, Tour */}
+        <div className="flex flex-col gap-6">
           <SubscriptionCard subscription={subscription} />
-          <PreferencesCard />
           <AddNewCompanyCard />
+          <TourResetButton />
         </div>
       </div>
-
-      {/* Footer with Logout Button */}
-      <SetupFooter />
     </div>
   );
 }

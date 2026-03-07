@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { ExternalLink, Loader2, Clock, Calendar } from "lucide-react";
-import { logger } from "@/lib/utils/logger";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { getPlanDetails, formatPrice } from "@/lib/utils/plans";
-import { createPortalSessionClient } from "@/lib/api/subscription.client";
-import type { Subscription, SubscriptionStatus } from "@/lib/types/subscription";
-import { getTrialDaysRemaining } from "@/lib/hooks/useSubscription";
-import { formatDate, getTrialProgress } from "@/lib/utils/subscription";
+import { useState, useEffect } from 'react';
+import { ExternalLink, Loader2, Calendar } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { getPlanDetails, formatPrice } from '@/lib/utils/plans';
+import { createPortalSessionClient } from '@/lib/api/subscription.client';
+import type { Subscription, SubscriptionStatus } from '@/lib/types/subscription';
+import { getTrialDaysRemaining } from '@/lib/hooks/useSubscription';
+import { formatDate, getTrialProgress } from '@/lib/utils/subscription';
 
 interface CurrentPlanCardProps {
   subscription: Subscription | null;
@@ -19,31 +19,21 @@ interface CurrentPlanCardProps {
 
 function getStatusBadge(status: SubscriptionStatus) {
   switch (status) {
-    case "ACTIVE":
-      return (
-        <Badge className="bg-green-500 hover:bg-green-600">Activo</Badge>
-      );
-    case "TRIALING":
-      return (
-        <Badge className="bg-blue-500 hover:bg-blue-600 text-white">
-          Período de Prueba
-        </Badge>
-      );
-    case "PAST_DUE":
-      return (
-        <Badge className="bg-orange-500 hover:bg-orange-600">
-          Pago Pendiente
-        </Badge>
-      );
-    case "UNPAID":
+    case 'ACTIVE':
+      return <Badge className="bg-green-500 hover:bg-green-600">Activo</Badge>;
+    case 'TRIALING':
+      return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Período de Prueba</Badge>;
+    case 'PAST_DUE':
+      return <Badge className="bg-orange-500 hover:bg-orange-600">Pago Pendiente</Badge>;
+    case 'UNPAID':
       return <Badge variant="destructive">Pago Fallido</Badge>;
-    case "CANCELLED":
+    case 'CANCELLED':
       return (
         <Badge variant="outline" className="border-red-500 text-red-500">
           Cancelado
         </Badge>
       );
-    case "EXPIRED":
+    case 'EXPIRED':
       return (
         <Badge variant="outline" className="border-gray-500 text-gray-500">
           Expirado
@@ -54,16 +44,15 @@ function getStatusBadge(status: SubscriptionStatus) {
   }
 }
 
-
 export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
-  const plan = subscription?.plan || "FREE";
+  const plan = subscription?.plan || 'FREE';
   const planDetails = getPlanDetails(plan);
   const price = subscription?.planPrice || planDetails.price.monthly;
-  const status = subscription?.status || "ACTIVE";
-  const isTrial = status === "TRIALING";
+  const status = subscription?.status || 'ACTIVE';
+  const isTrial = status === 'TRIALING';
 
   // Calcular días restantes del trial con actualización automática
   useEffect(() => {
@@ -95,14 +84,13 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
     : null;
 
   const trialProgress = subscription
-    ? getTrialProgress(
-        subscription.currentPeriodStart,
-        subscription.currentPeriodEnd
-      )
+    ? getTrialProgress(subscription.currentPeriodStart, subscription.currentPeriodEnd)
     : 0;
 
+  const canManagePlan = subscription && ['BASIC', 'PRO', 'ENTERPRISE'].includes(subscription.plan);
+
   const handleStripePortal = async () => {
-    if (!subscription?.stripeCustomerId) return;
+    if (!canManagePlan) return;
 
     setIsLoading(true);
     try {
@@ -113,11 +101,11 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
         window.location.href = data.url;
       }
     } catch (error) {
-      logger.error("Error al crear portal session", error);
+      logger.error('Error al crear portal session', error);
       alert(
         error instanceof Error
           ? error.message
-          : "Error al abrir el portal. Por favor, intenta nuevamente."
+          : 'Error al abrir el portal. Por favor, intenta nuevamente.'
       );
     } finally {
       setIsLoading(false);
@@ -128,36 +116,29 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Plan Actual</h3>
+          <h3 className="text-sm font-medium tracking-wide uppercase">Plan Actual</h3>
           {getStatusBadge(status)}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <p className="text-3xl font-bold">{planDetails.name}</p>
-          <p className="text-lg text-muted-foreground mt-1">
-            {formatPrice(price)} / mes
+        <div className="border-b pb-4">
+          <p className="text-5xl font-bold">{planDetails.name}</p>
+          <p className="text-muted-foreground mt-1 text-lg">
+            <span className="text-md font-extrabold">{formatPrice(price)}</span> / mes
           </p>
         </div>
 
         {/* Información del Trial */}
         {isTrial && subscription?.currentPeriodEnd && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600" />
-              <h4 className="font-semibold text-blue-900 dark:text-blue-100">
-                Periodo de Prueba Activo
-              </h4>
-            </div>
-
+          <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:bg-blue-950/20">
             {currentDaysRemaining !== null && currentDaysRemaining > 0 && (
               <div>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Te quedan{" "}
+                  Te quedan{' '}
                   <strong className="text-base">
                     {currentDaysRemaining} día
-                    {currentDaysRemaining !== 1 ? "s" : ""}
-                  </strong>{" "}
+                    {currentDaysRemaining !== 1 ? 's' : ''}
+                  </strong>{' '}
                   restantes de tu periodo de prueba.
                 </p>
               </div>
@@ -172,16 +153,13 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
             </div>
 
             <div className="flex items-start gap-2 pt-1">
-              <Calendar className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+              <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <div className="text-xs text-blue-700 dark:text-blue-300">
                 <p>
-                  El cobro de <strong>{formatPrice(price)} MXN</strong> se
-                  realizará automáticamente el{" "}
-                  <strong>{nextRenewal}</strong>.
+                  El cobro de <strong>{formatPrice(price)} MXN</strong> se realizará automáticamente
+                  el <strong>{nextRenewal}</strong>.
                 </p>
-                <p className="mt-1 opacity-90">
-                  Puedes cancelar en cualquier momento sin costo.
-                </p>
+                <p className="mt-1 opacity-90">Puedes cancelar en cualquier momento sin costo.</p>
               </div>
             </div>
           </div>
@@ -189,28 +167,27 @@ export function CurrentPlanCard({ subscription }: CurrentPlanCardProps) {
 
         {/* Información de renovación para suscripciones activas */}
         {!isTrial && nextRenewal && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4" />
             <span>Próximo cobro: {nextRenewal}</span>
           </div>
         )}
 
-        {subscription?.stripeCustomerId && (
+        {canManagePlan && (
           <Button
-            variant="outline"
-            className="w-full"
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
             onClick={handleStripePortal}
             disabled={isLoading}
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Cargando...
               </>
             ) : (
               <>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Administrar facturación en Stripe
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Gestionar plan
               </>
             )}
           </Button>

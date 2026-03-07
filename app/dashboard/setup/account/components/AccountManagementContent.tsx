@@ -1,26 +1,23 @@
-import Link from "next/link";
-import { Home } from "lucide-react";
-import { UserProfileCard } from "./UserProfileCard";
-import { PersonalInformationCard } from "./PersonalInformationCard";
-import { SubscriptionCard } from "./SubscriptionCard";
-import { PreferencesCard } from "./PreferencesCard";
-import { AddNewCompanyCard } from "./AddNewCompanyCard";
-import type { Subscription } from "@/lib/types/subscription";
-import type { User } from "@/lib/types/auth";
+import Link from 'next/link';
+import { Home } from 'lucide-react';
+import { UserProfileCard } from './UserProfileCard';
+import { PersonalInformationCard } from './PersonalInformationCard';
+import { SubscriptionCard } from './SubscriptionCard';
+import { AddNewCompanyCard } from './AddNewCompanyCard';
+import { TourResetButton } from '@/components/tour/TourResetButton';
+import type { Subscription } from '@/lib/types/subscription';
+import type { User } from '@/lib/types/auth';
 
 interface AccountManagementContentProps {
   subscription: Subscription | null;
   user: User;
 }
 
-export function AccountManagementContent({
-  subscription,
-  user,
-}: AccountManagementContentProps) {
+export function AccountManagementContent({ subscription, user }: AccountManagementContentProps) {
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <Link href="/dashboard" className="hover:text-foreground transition-colors">
           <Home className="h-4 w-4" />
         </Link>
@@ -42,18 +39,17 @@ export function AccountManagementContent({
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Personal Information */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <PersonalInformationCard />
         </div>
 
-        {/* Right Column - Subscription and Preferences */}
-        <div className="space-y-6">
+        {/* Right Column - Subscription, Add Company, Tour */}
+        <div className="flex flex-col gap-6">
           <SubscriptionCard subscription={subscription} />
-          <PreferencesCard />
           <AddNewCompanyCard />
+          <TourResetButton />
         </div>
       </div>
     </div>
   );
 }
-
