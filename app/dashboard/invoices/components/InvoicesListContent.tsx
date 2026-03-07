@@ -698,7 +698,7 @@ export function InvoicesListContent({
   };
 
   return (
-    <div className="min-w-0 w-full overflow-x-hidden">
+    <div className="w-full min-w-0 overflow-x-hidden">
       <InvoicesHeader
         profiles={profiles}
         selectedProfileId={selectedProfileId}
@@ -724,7 +724,7 @@ export function InvoicesListContent({
         manualIncomeDisabledReason={manualIncomeDisabledReason}
       />
 
-      <div className="min-w-0 w-full space-y-6 p-4 md:p-6 lg:p-8">
+      <div className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
         {/* Summary Cards */}
         <SummaryCards
           totalCount={metrics.totalFacturas}
@@ -842,7 +842,10 @@ export function InvoicesListContent({
         )}
 
         {/* Invoices Table */}
-        <div data-tour="invoices-table" className="bg-card min-w-0 overflow-hidden rounded-lg border">
+        <div
+          data-tour="invoices-table"
+          className="bg-card min-w-0 overflow-hidden rounded-lg border"
+        >
           <div className="min-w-0 overflow-x-auto">
             <div className="relative max-h-150 overflow-y-auto">
               <Table>

@@ -14,6 +14,10 @@ interface PageHeaderProps {
   filters?: ReactNode;
   /** data-tour attribute para la barra de filtros */
   filtersTourId?: string;
+  /** Clases para top cuando es sticky (ej: "top-16 lg:top-0" para móvil con nav superior) */
+  stickyTop?: string;
+  /** Si true, usa position:fixed para que el header permanezca visible al hacer scroll */
+  fixed?: boolean;
 }
 
 /**
@@ -29,14 +33,22 @@ export function PageHeader({
   actions,
   filters,
   filtersTourId,
+  stickyTop = 'top-0',
+  fixed = false,
 }: PageHeaderProps) {
+  const positionClasses = fixed
+    ? 'fixed top-16 left-0 right-0 z-40 lg:top-0 lg:left-64 lg:w-[calc(100vw-16rem)]'
+    : `sticky ${stickyTop}`;
+
   return (
-    <header className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-40 min-w-0 w-full max-w-full backdrop-blur">
+    <header
+      className={`bg-background/95 supports-backdrop-filter:bg-background/60 min-w-0 w-full max-w-full backdrop-blur z-40 ${positionClasses}`}
+    >
       {/* Fila 1: Título + Acciones */}
       <div className="border-border flex flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between md:px-6 md:py-5 lg:px-8">
-        <div className="flex min-w-0 shrink-0 items-start gap-3">
+        <div className="flex min-w-0 flex-1 shrink items-start gap-3 overflow-hidden">
           <Icon className="text-primary mt-0.5 h-5 w-5 shrink-0" />
-          <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
             {subtitle && (
               <span className="text-muted-foreground text-sm">{subtitle}</span>
@@ -45,7 +57,7 @@ export function PageHeader({
         </div>
 
         {actions && (
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+          <div className="flex min-w-0 w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:shrink-0">
             {actions}
           </div>
         )}

@@ -84,13 +84,15 @@ export async function DashboardContent({
         activeProfile={activeProfile}
         companyName={selectedCompanyName}
       />
-      <main className="w-full min-w-0 flex-1 space-y-6 p-4 md:p-6 lg:p-8">
+      <main className="w-full min-w-0 flex-1 space-y-6 p-4 pt-60 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
         {/* Trial Banner - Solo se muestra si el usuario está en trial */}
         <TrialBannerWrapper />
 
-        <div className="flex items-center justify-between">
-          <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0 flex-1">
+            <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <ShareReportButton
               profileId={profileId}
               clientName={activeProfile?.nombre}

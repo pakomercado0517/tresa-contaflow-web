@@ -88,9 +88,10 @@ export function ExpensesHeader({
       icon={Receipt}
       title="Gestión de Gastos"
       subtitle="(Egresos y gastos devengados)"
+      fixed
       actions={
         <>
-          <div data-tour="expenses-profile-selector">
+          <div data-tour="expenses-profile-selector" className="min-w-0 max-w-full">
             <ProfileSelector
               profiles={profiles}
               selectedProfileId={selectedProfileId}

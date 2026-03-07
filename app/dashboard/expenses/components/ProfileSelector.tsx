@@ -22,7 +22,7 @@ export function ProfileSelector({
 }: ProfileSelectorProps) {
   return (
     <Select value={selectedProfileId || "all"} onValueChange={onProfileChange}>
-      <SelectTrigger className="w-full min-w-0 sm:w-[200px] md:w-[280px]">
+      <SelectTrigger className="w-full max-w-full min-w-0 overflow-hidden sm:w-[200px] sm:max-w-none md:w-[280px] [&>span]:truncate">
         <SelectValue placeholder="SELECCIONAR EMPRESA / RFC" />
       </SelectTrigger>
       <SelectContent>

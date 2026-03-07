@@ -22,12 +22,15 @@ interface ProfileSelectorProps {
   selectedProfileId?: string;
   /** Params a eliminar de la URL al cambiar de perfil (ej: regimen_fiscal) */
   clearParamsOnChange?: string[];
+  /** Clases adicionales para el trigger del select */
+  triggerClassName?: string;
 }
 
 export function ProfileSelector({
   profiles,
   selectedProfileId,
   clearParamsOnChange = [],
+  triggerClassName,
 }: ProfileSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -82,7 +85,7 @@ export function ProfileSelector({
       value={selectedProfileId || 'all'}
       onValueChange={(value) => handleProfileChange(value === 'all' ? '' : value)}
     >
-      <SelectTrigger className="w-50">
+      <SelectTrigger className={triggerClassName ?? 'min-w-[9rem] w-52'}>
         <SelectValue placeholder="Seleccionar empresa" />
       </SelectTrigger>
       <SelectContent>
