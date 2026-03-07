@@ -2,6 +2,7 @@ import { SetupTabs } from "./components/SetupTabs";
 import { ProfilesSection } from "./components/ProfilesSection";
 import { AccountContent } from "./components/AccountContent";
 import { SubscriptionContent } from "./components/SubscriptionContent";
+import { SATDownloadContent } from "./components/SATDownloadContent";
 import { getSubscription } from "@/lib/api/subscription";
 import { getProfiles } from "@/lib/api/profiles";
 import { getCurrentUser } from "@/lib/api/auth.server";
@@ -45,6 +46,9 @@ export default async function SetupPage() {
               xmlUsed={xmlUsed}
               satPlanInfo={satStats?.planInfo}
             />
+          }
+          satDownloadContent={
+            <SATDownloadContent profiles={profiles.data || []} />
           }
         />
       </div>

@@ -3,19 +3,21 @@
 import { ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, CreditCard, Settings } from "lucide-react";
+import { User, CreditCard, Settings, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SetupTabsProps {
   profilesContent: ReactNode;
   accountContent: ReactNode;
   subscriptionContent: ReactNode;
+  satDownloadContent: ReactNode;
 }
 
 export function SetupTabs({
   profilesContent,
   accountContent,
   subscriptionContent,
+  satDownloadContent,
 }: SetupTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -26,6 +28,7 @@ export function SetupTabs({
     const tabParam = searchParams?.get("tab");
     if (tabParam === "account") return "account";
     if (tabParam === "subscription") return "subscription";
+    if (tabParam === "sat-download") return "sat-download";
     if (pathname?.includes("/profiles")) return "profiles";
     if (pathname?.includes("/account")) return "account";
     if (pathname?.includes("/subscription")) return "subscription";
@@ -36,12 +39,13 @@ export function SetupTabs({
 
   const handleTabChange = (value: string) => {
     // Actualizar la URL sin recargar la página
-    const newPath =
-      value === "profiles"
-        ? "/dashboard/setup"
-        : value === "account"
-          ? "/dashboard/setup?tab=account"
-          : "/dashboard/setup?tab=subscription";
+    const tabPaths: Record<string, string> = {
+      profiles: "/dashboard/setup",
+      account: "/dashboard/setup?tab=account",
+      subscription: "/dashboard/setup?tab=subscription",
+      "sat-download": "/dashboard/setup?tab=sat-download",
+    };
+    const newPath = tabPaths[value] ?? "/dashboard/setup";
     router.push(newPath, { scroll: false });
   };
 
@@ -75,6 +79,13 @@ export function SetupTabs({
             <CreditCard className="h-4 w-4" />
             Suscripción
           </TabsTrigger>
+          <TabsTrigger
+            value="sat-download"
+            className="flex items-center gap-2 rounded-md px-4 py-2 transition-all border-none bg-transparent text-white data-[state=active]:bg-[#00ff80]! data-[state=active]:text-gray-900! data-[state=active]:shadow-none dark:data-[state=active]:bg-[#00ff80]! dark:data-[state=active]:text-gray-900! [&_svg]:text-gray-400 [&_svg]:data-[state=active]:text-gray-900!"
+          >
+            <Download className="h-4 w-4" />
+            SAT Descarga
+          </TabsTrigger>
         </TabsList>
       </div>
 
@@ -88,6 +99,10 @@ export function SetupTabs({
 
       <TabsContent value="subscription" className="mt-6">
         {subscriptionContent}
+      </TabsContent>
+
+      <TabsContent value="sat-download" className="mt-6">
+        {satDownloadContent}
       </TabsContent>
     </Tabs>
   );
