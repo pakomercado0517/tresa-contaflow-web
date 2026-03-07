@@ -31,17 +31,17 @@ export function PageHeader({
   filtersTourId,
 }: PageHeaderProps) {
   return (
-    <header className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-40 w-full backdrop-blur">
+    <header className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-40 min-w-0 w-full max-w-full backdrop-blur">
       {/* Fila 1: Título + Acciones */}
-      <div className="border-border flex flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between md:px-6 lg:px-8">
-        <div className="flex min-w-0 shrink-0 items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Icon className="text-primary h-5 w-5 shrink-0" />
+      <div className="border-border flex flex-col gap-4 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between md:px-6 md:py-5 lg:px-8">
+        <div className="flex min-w-0 shrink-0 items-start gap-3">
+          <Icon className="text-primary mt-0.5 h-5 w-5 shrink-0" />
+          <div className="flex min-w-0 flex-col gap-0.5">
             <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
+            {subtitle && (
+              <span className="text-muted-foreground text-sm">{subtitle}</span>
+            )}
           </div>
-          {subtitle && (
-            <span className="text-muted-foreground hidden text-sm md:inline">{subtitle}</span>
-          )}
         </div>
 
         {actions && (

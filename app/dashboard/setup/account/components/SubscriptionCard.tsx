@@ -4,43 +4,17 @@ import { RefreshCw, Rocket, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { getPlanDetails, formatPrice } from "@/lib/utils/plans";
 import type { Subscription } from "@/lib/types/subscription";
 
 interface SubscriptionCardProps {
   subscription: Subscription | null;
-  cfdiUsed?: number; // Uso de CFDI del mes actual
 }
 
-export function SubscriptionCard({ subscription, cfdiUsed }: SubscriptionCardProps) {
+export function SubscriptionCard({ subscription }: SubscriptionCardProps) {
   const plan = subscription?.plan || "FREE";
   const planDetails = getPlanDetails(plan);
   const price = subscription?.planPrice || planDetails.price.monthly;
-
-  // Usar límites dinámicos del backend si están disponibles
-  // Fallback a límites hardcodeados si no hay suscripción o límites dinámicos
-  const invoicesLimit = subscription?.limits?.invoicesPerMonth ?? null;
-  const expensesLimit = subscription?.limits?.expensesPerMonth ?? null;
-  
-  // Calcular límite total de CFDI (facturas + gastos)
-  const getTotalCfdiLimit = (): number | null => {
-    if (invoicesLimit === null && expensesLimit === null) {
-      return null; // Ambos ilimitados = ilimitado total
-    }
-    if (invoicesLimit === null || expensesLimit === null) {
-      return null; // Uno ilimitado = ilimitado total
-    }
-    return invoicesLimit + expensesLimit; // Sumar límites si ambos tienen límite
-  };
-
-  const cfdiLimit = getTotalCfdiLimit();
-  const cfdiLimitValue = cfdiLimit === null ? Infinity : cfdiLimit;
-  
-  // Si no se proporciona cfdiUsed, usar 0
-  const cfdiUsedValue = cfdiUsed ?? 0;
-  
-  const usagePercentage = cfdiLimitValue === Infinity ? 0 : (cfdiUsedValue / cfdiLimitValue) * 100;
 
   const nextRenewal = subscription?.currentPeriodEnd
     ? new Date(subscription.currentPeriodEnd).toLocaleDateString("es-MX", {
@@ -75,16 +49,6 @@ export function SubscriptionCard({ subscription, cfdiUsed }: SubscriptionCardPro
             <span>Próxima renovación: {nextRenewal}</span>
           </div>
         )}
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Uso de Folios CFDI</span>
-            <span className="font-medium">
-              {cfdiUsedValue} / {cfdiLimitValue === Infinity ? "∞" : cfdiLimitValue}
-            </span>
-          </div>
-          <Progress value={usagePercentage} className="h-2" />
-        </div>
 
         <div className="space-y-2 pt-2">
           <Button className="w-full" size="sm">

@@ -580,7 +580,7 @@ export function ExpensesListContent({
   }, 0);
 
   return (
-    <>
+    <div className="min-w-0 w-full overflow-x-hidden">
       <ExpensesHeader
         profiles={profiles}
         selectedProfileId={selectedProfileId}
@@ -606,7 +606,7 @@ export function ExpensesListContent({
         manualExpenseDisabledReason={manualExpenseDisabledReason}
       />
 
-      <div className="space-y-6 p-4 md:p-6 lg:p-8">
+      <div className="min-w-0 w-full space-y-6 p-4 md:p-6 lg:p-8">
         {/* Summary Cards */}
         <ExpensesSummaryCards
           totalExpenses={totalExpensesAmount}
@@ -620,13 +620,13 @@ export function ExpensesListContent({
 
         {/* Gastos manuales del período */}
         {canAddManualExpense ? (
-          <div className="bg-card overflow-hidden rounded-lg border">
+          <div className="bg-card min-w-0 overflow-hidden rounded-lg border">
             <div className="border-b px-4 py-3">
               <h2 className="text-muted-foreground text-sm font-medium">
                 Gastos manuales (sin factura CFDI)
               </h2>
             </div>
-            <div className="relative overflow-x-auto">
+            <div className="relative min-w-0 overflow-x-auto">
               {manualExpensesState === 'loading' ? (
                 <div className="p-6">
                   <TableRowsSkeleton rows={3} />
@@ -724,8 +724,8 @@ export function ExpensesListContent({
         )}
 
         {/* Expenses Table */}
-        <div data-tour="expenses-table" className="bg-card overflow-hidden rounded-lg border">
-          <div className="overflow-x-auto">
+        <div data-tour="expenses-table" className="bg-card min-w-0 overflow-hidden rounded-lg border">
+          <div className="min-w-0 overflow-x-auto">
             <div className="relative max-h-150 overflow-y-auto">
               <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -1098,6 +1098,6 @@ export function ExpensesListContent({
           </DialogContent>
         </Dialog>
       </div>
-    </>
+    </div>
   );
 }
