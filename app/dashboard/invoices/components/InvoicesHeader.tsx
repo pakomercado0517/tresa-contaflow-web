@@ -88,9 +88,10 @@ export function InvoicesHeader({
       icon={FileText}
       title="Gestión de Egresos"
       subtitle="(Facturas y egresos devengados)"
+      fixed
       actions={
         <>
-          <div data-tour="invoices-profile-selector">
+          <div data-tour="invoices-profile-selector" className="min-w-0 max-w-full">
             <ProfileSelector
               profiles={profiles}
               selectedProfileId={selectedProfileId}

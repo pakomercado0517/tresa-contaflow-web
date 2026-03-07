@@ -183,7 +183,8 @@ export function ExpensesListContent({
     const params = new URLSearchParams();
     params.set('mes', String(selectedMes));
     params.set('año', String(selectedAño));
-    if (selectedProfileId && selectedProfileId !== 'all') params.set('profileId', selectedProfileId);
+    if (selectedProfileId && selectedProfileId !== 'all')
+      params.set('profileId', selectedProfileId);
     if (selectedRegimenFiscal && selectedRegimenFiscal !== 'all')
       params.set('regimen_fiscal', selectedRegimenFiscal);
     if (search?.trim()) params.set('search', search.trim());
@@ -235,7 +236,9 @@ export function ExpensesListContent({
     if (!storedProfileId || storedProfileId === 'all') return;
     if (profiles.length === 0) return;
 
-    const storedProfileExists = profiles.some((profile) => profile.id === storedProfileId && !profile.frozen);
+    const storedProfileExists = profiles.some(
+      (profile) => profile.id === storedProfileId && !profile.frozen
+    );
     if (!storedProfileExists) {
       clearStoredProfileSelection();
       return;
@@ -580,7 +583,7 @@ export function ExpensesListContent({
   }, 0);
 
   return (
-    <div className="min-w-0 w-full overflow-x-hidden">
+    <div className="w-full min-w-0 overflow-x-hidden">
       <ExpensesHeader
         profiles={profiles}
         selectedProfileId={selectedProfileId}
@@ -606,7 +609,7 @@ export function ExpensesListContent({
         manualExpenseDisabledReason={manualExpenseDisabledReason}
       />
 
-      <div className="min-w-0 w-full space-y-6 p-4 md:p-6 lg:p-8">
+      <div className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
         {/* Summary Cards */}
         <ExpensesSummaryCards
           totalExpenses={totalExpensesAmount}
@@ -724,7 +727,10 @@ export function ExpensesListContent({
         )}
 
         {/* Expenses Table */}
-        <div data-tour="expenses-table" className="bg-card min-w-0 overflow-hidden rounded-lg border">
+        <div
+          data-tour="expenses-table"
+          className="bg-card min-w-0 overflow-hidden rounded-lg border"
+        >
           <div className="min-w-0 overflow-x-auto">
             <div className="relative max-h-150 overflow-y-auto">
               <Table>

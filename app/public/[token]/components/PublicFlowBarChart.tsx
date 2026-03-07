@@ -74,9 +74,9 @@ export function PublicFlowBarChart({ metrics }: PublicFlowBarChartProps) {
           ))}
         </div>
 
-        <div className="relative h-72">
+        <div className="relative h-72 min-w-0 w-full">
           {hasData ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={288}>
               <BarChart
                 data={chartData}
                 margin={{ top: 8, right: 8, left: 0, bottom: 0 }}

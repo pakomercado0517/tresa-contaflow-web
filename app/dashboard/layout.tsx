@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="bg-background flex min-h-screen">
           <MobileNav user={currentUser.user} />
           <Sidebar user={currentUser.user} />
-            <div className="flex min-w-0 flex-1 flex-col w-full overflow-x-hidden pt-16 lg:ml-64 lg:pt-0 print:ml-0 print:pt-0">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col w-full overflow-x-hidden overflow-y-auto pt-16 lg:ml-64 lg:pt-0 print:ml-0 print:pt-0">
             <DashboardRouteTransition>{children}</DashboardRouteTransition>
             <DashboardFooter />
           </div>

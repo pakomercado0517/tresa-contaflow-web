@@ -80,11 +80,12 @@ export function DashboardHeader({
     <PageHeader
       icon={LayoutDashboard}
       title="Resumen General"
+      fixed
       subtitle={
         companyName ? (
           <span className="border-border/60 bg-muted/50 text-muted-foreground hidden items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs md:inline-flex">
             <Building2 className="h-3 w-3 shrink-0" />
-            <span className="max-w-45 truncate">{companyName}</span>
+            <span className="max-w-32 truncate md:max-w-40">{companyName}</span>
           </span>
         ) : undefined
       }
@@ -96,6 +97,7 @@ export function DashboardHeader({
                 profiles={profiles}
                 selectedProfileId={selectedProfileId}
                 clearParamsOnChange={['regimen_fiscal']}
+                triggerClassName="min-w-[10rem] w-56"
               />
             </div>
           )}
