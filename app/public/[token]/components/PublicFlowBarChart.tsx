@@ -12,6 +12,7 @@ import {
   Cell,
 } from 'recharts';
 import { formatCurrencyCompact } from '@/lib/utils/format';
+import type { ImpuestosMetrics } from '@/lib/types/metrics';
 import type { PublicReportMetrics } from '@/lib/types/public-reports';
 import { TrendingUp } from 'lucide-react';
 
@@ -24,7 +25,21 @@ const BAR_DATA_CONFIG = [
   { key: 'egresos_pagados', label: 'Egresos pagados', color: '#ef4444' },
   { key: 'ingresos_devengados', label: 'Ingresos devengados', color: '#14b8a6' },
   { key: 'egresos_devengados', label: 'Egresos devengados', color: '#f97316' },
+  { key: 'iva_trasladado', label: 'IVA trasladado', color: '#8b5cf6' },
+  { key: 'retenciones_iva', label: 'Ret. IVA', color: '#6366f1' },
+  { key: 'retenciones_isr', label: 'Ret. ISR', color: '#0ea5e9' },
+  { key: 'iva_acreditable', label: 'IVA acreditable', color: '#06b6d4' },
 ] as const;
+
+function getImpuestosDevengado(imp?: ImpuestosMetrics | null) {
+  const i = imp ?? { iva_trasladado: {}, iva_acreditable: {}, retenciones_iva: {}, retenciones_isr: {} };
+  return {
+    iva_trasladado: i.iva_trasladado?.devengado ?? i.iva_trasladado?.cobrado ?? 0,
+    retenciones_iva: i.retenciones_iva?.devengado ?? i.retenciones_iva?.cobrado ?? 0,
+    retenciones_isr: i.retenciones_isr?.devengado ?? i.retenciones_isr?.cobrado ?? 0,
+    iva_acreditable: i.iva_acreditable?.devengado ?? i.iva_acreditable?.pagado ?? 0,
+  };
+}
 
 export function PublicFlowBarChart({ metrics }: PublicFlowBarChartProps) {
   const flujo = metrics?.flujo ?? { ingresos_cobrados: 0, egresos_pagados: 0, flujo_neto: 0 };
@@ -33,19 +48,20 @@ export function PublicFlowBarChart({ metrics }: PublicFlowBarChartProps) {
     egresos_devengados: 0,
     resultado_devengado: 0,
   };
+  const impuestos = getImpuestosDevengado(metrics?.impuestos);
 
-  const chartData = BAR_DATA_CONFIG.map(({ key, label, color }) => ({
-    name: label,
-    value:
-      key === 'ingresos_cobrados'
-        ? flujo.ingresos_cobrados
-        : key === 'egresos_pagados'
-          ? flujo.egresos_pagados
-          : key === 'ingresos_devengados'
-            ? devengado.ingresos_devengados
-            : devengado.egresos_devengados,
-    color,
-  }));
+  const chartData = BAR_DATA_CONFIG.map(({ key, label, color }) => {
+    let value = 0;
+    if (key === 'ingresos_cobrados') value = flujo.ingresos_cobrados;
+    else if (key === 'egresos_pagados') value = flujo.egresos_pagados;
+    else if (key === 'ingresos_devengados') value = devengado.ingresos_devengados;
+    else if (key === 'egresos_devengados') value = devengado.egresos_devengados;
+    else if (key === 'iva_trasladado') value = impuestos.iva_trasladado;
+    else if (key === 'retenciones_iva') value = impuestos.retenciones_iva;
+    else if (key === 'retenciones_isr') value = impuestos.retenciones_isr;
+    else if (key === 'iva_acreditable') value = impuestos.iva_acreditable;
+    return { name: label, value, color };
+  });
 
   const hasData = chartData.some((d) => d.value > 0);
 
