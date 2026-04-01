@@ -93,17 +93,17 @@ export function FinalCTA() {
       <div className="flex flex-col gap-12 lg:flex-row lg:items-center lg:gap-16">
         <div className="flex-1 space-y-6">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Claridad contable sin Excel ni caos
+            Controla tus CFDI sin Excel ni caos
           </h2>
           <p className="text-muted-foreground max-w-xl text-lg">
-            Convierte tus XML en información contable clara para tomar decisiones. Organiza
-            ingresos y egresos, administra múltiples RFCs y genera reportes en PDF o Excel desde un
-            solo panel. Empieza gratis y decide después.
+            Convierte tus XML CFDI en información clara para revisar ingresos, egresos y utilidades.
+            Administra múltiples RFCs y genera reportes en PDF o Excel desde un solo panel.
+            Empieza gratis y evalúa si encaja con tu operación.
           </p>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="text-primary h-5 w-5" />
-              <span className="text-foreground">No requiere instalación</span>
+              <span className="text-foreground">Centraliza tus CFDI en minutos</span>
             </div>
             <div className="flex items-center gap-3">
               <CheckCircle2 className="text-primary h-5 w-5" />

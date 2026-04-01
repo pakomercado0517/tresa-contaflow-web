@@ -51,16 +51,16 @@ export function DashboardPreview() {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="flex-1 space-y-6">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Visualización mensual de ingresos y egresos
+            Una vista consolidada de tus ingresos y egresos
           </h2>
           <p className="text-muted-foreground max-w-xl text-lg">
-            Todo tu control contable en un solo panel. Revisa ingresos, egresos y utilidades por mes
-            desde tus XML, sin Excel ni archivos dispersos. Ideal para negocios y contadores que
-            necesitan claridad financiera al instante.
+            Revisa ingresos, egresos y utilidades por mes desde tus XML CFDI, sin Excel ni archivos
+            dispersos. Ideal para negocios y contadores que necesitan consolidar información y
+            generar reportes con rapidez.
           </p>
           <p className="text-muted-foreground text-sm italic">
             <span className="font-bold">
-              Menos tiempo en hojas de cálculo. Más tiempo tomando decisiones.
+              Menos tiempo consolidando CFDI. Más tiempo tomando decisiones.
             </span>
           </p>
         </div>
