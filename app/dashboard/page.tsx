@@ -1,4 +1,5 @@
 import { DashboardContent } from './components/DashboardContent';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 // Forzar renderizado dinámico y evitar caché para datos siempre frescos
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,7 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const currentDate = new Date();
+  const { mes: defaultMes, año: defaultAño } = getCurrentMonthYearInAppTimezone();
   const params = await searchParams;
 
   const profileId = params?.profileId;
@@ -25,11 +26,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ? params.regimen_fiscal
       : undefined;
 
-  const mesNumber = mesParam ? Number(mesParam) : currentDate.getMonth() + 1;
-  const añoNumber = añoParam ? Number(añoParam) : currentDate.getFullYear();
+  const mesNumber = mesParam ? Number(mesParam) : defaultMes;
+  const añoNumber = añoParam ? Number(añoParam) : defaultAño;
 
-  const mes = Number.isFinite(mesNumber) ? mesNumber : currentDate.getMonth() + 1;
-  const año = Number.isFinite(añoNumber) ? añoNumber : currentDate.getFullYear();
+  const mes = Number.isFinite(mesNumber) ? mesNumber : defaultMes;
+  const año = Number.isFinite(añoNumber) ? añoNumber : defaultAño;
 
   return (
     <DashboardContent

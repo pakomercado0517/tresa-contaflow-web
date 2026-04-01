@@ -13,6 +13,7 @@ import type {
 } from "./components/DetalleOperacionesDevengadasTemplate";
 import type { Invoice } from "@/lib/types/invoices";
 import type { Expense } from "@/lib/types/expenses";
+import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 const TOTAL_PAGES = 2;
 
@@ -61,18 +62,18 @@ function buildEgresosRows(expenses: Expense[]): FilaEgresoDevengado[] {
 
 export default async function ReportePreviewPage({ searchParams }: PreviewPageProps) {
   const params = await searchParams;
-  const currentDate = new Date();
+  const { mes: defaultMes, año: defaultAño } = getCurrentMonthYearInAppTimezone();
   const profileId = params?.profileId;
   const mesParam = params?.mes;
   const añoParam = params?.año;
 
-  const mes = mesParam ? Number(mesParam) : currentDate.getMonth() + 1;
-  const año = añoParam ? Number(añoParam) : currentDate.getFullYear();
+  const mes = mesParam ? Number(mesParam) : defaultMes;
+  const año = añoParam ? Number(añoParam) : defaultAño;
 
   const mesValid =
-    Number.isFinite(mes) && mes >= 1 && mes <= 12 ? mes : currentDate.getMonth() + 1;
+    Number.isFinite(mes) && mes >= 1 && mes <= 12 ? mes : defaultMes;
   const añoValid =
-    Number.isFinite(año) && año >= 2000 && año <= 2100 ? año : currentDate.getFullYear();
+    Number.isFinite(año) && año >= 2000 && año <= 2100 ? año : defaultAño;
 
   const [metrics, profiles, invoicesRes, expensesRes, regimenesCatalog, currentUser] =
     await Promise.all([

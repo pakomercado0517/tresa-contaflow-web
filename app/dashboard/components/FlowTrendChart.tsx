@@ -32,6 +32,7 @@ import type { TrendPeriodView } from '@/lib/api/invoices';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Filter } from 'lucide-react';
 import { formatCurrencyCompact } from '@/lib/utils/format';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 const MONTHS_SHORT = [
   'Ene',
@@ -90,7 +91,8 @@ export function FlowTrendChart({
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
   const [fetchedData, setFetchedData] = useState<TrendDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const selectedYear = año ?? new Date().getFullYear();
+  const { año: appBusinessAño } = getCurrentMonthYearInAppTimezone();
+  const selectedYear = año ?? appBusinessAño;
   const selectedMonth = mes;
   const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
@@ -140,10 +142,9 @@ export function FlowTrendChart({
     };
   }, []);
 
-  const currentYear = new Date().getFullYear();
   const chartData = data.map((item) => {
     const monthLabel = MONTHS_SHORT[item.mes - 1];
-    const label = item.año === currentYear ? monthLabel : `${monthLabel} ${item.año}`;
+    const label = item.año === appBusinessAño ? monthLabel : `${monthLabel} ${item.año}`;
     return {
       fecha: label,
       ingresos_cobrados: item.ingresos_cobrados,
@@ -197,7 +198,7 @@ export function FlowTrendChart({
                   {periodViewLabels['últimos-12-meses']}
                 </SelectItem>
                 <SelectItem value="año-completo">{periodViewLabels['año-completo']}</SelectItem>
-                {selectedYear === currentYear && (
+                {selectedYear === appBusinessAño && (
                   <SelectItem value="comparar-anterior">
                     {periodViewLabels['comparar-anterior']}
                   </SelectItem>

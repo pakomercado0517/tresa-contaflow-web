@@ -5,6 +5,7 @@ import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
 import { InvoicesReportPreviewContent } from "./components/InvoicesReportPreviewContent";
 import type { ReporteFacturasData, FilaFacturaReporte } from "./components/ReporteFacturasTemplate";
+import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -35,7 +36,7 @@ function shortUuid(uuid: string): string {
 
 export default async function InvoicesReportePreviewPage({ searchParams }: PreviewPageProps) {
   const params = await searchParams;
-  const currentDate = new Date();
+  const { mes: defaultMes, año: defaultAño } = getCurrentMonthYearInAppTimezone();
   const profileId = params?.profileId && params.profileId !== "all" ? params.profileId : undefined;
   const mesParam = params?.mes;
   const añoParam = params?.año;
@@ -44,10 +45,10 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     : undefined;
   const search = params?.search ?? undefined;
 
-  const mes = mesParam ? Math.min(12, Math.max(1, toNumber(mesParam))) : currentDate.getMonth() + 1;
+  const mes = mesParam ? Math.min(12, Math.max(1, toNumber(mesParam))) : defaultMes;
   const año = añoParam
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
-    : currentDate.getFullYear();
+    : defaultAño;
 
   const [profilesRes, invoicesRes, regimenesCatalog, currentUser] = await Promise.all([
     getProfiles(),

@@ -6,6 +6,10 @@ import type {
 } from '@/lib/types/invoices';
 import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 import type { TrendPeriodView } from './invoices';
+import {
+  getCurrentMonthYearInAppTimezone,
+  getLast12CalendarMonthsAscending,
+} from '@/lib/utils/app-calendar';
 
 export interface GetInvoicesClientParams {
   profileId?: string;
@@ -87,9 +91,7 @@ export async function getTrendDataClient(
   mesCorte?: number,
   regimenFiscal?: string
 ): Promise<TrendDataPoint[]> {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1; // getMonth() retorna 0-11
+  const { mes: currentMonth, año: currentYear } = getCurrentMonthYearInAppTimezone();
   const year = año || currentYear;
 
   const clampedMesCorte = mesCorte ? Math.min(12, Math.max(1, mesCorte)) : undefined;
@@ -135,14 +137,7 @@ export async function getTrendDataClient(
 
   // Si necesitamos los últimos 12 meses, calcular qué meses/años necesitamos
   if (shouldFetchLast12Months) {
-    const months: Array<{ mes: number; año: number }> = [];
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - 1 - i, 1);
-      months.push({
-        mes: date.getMonth() + 1,
-        año: date.getFullYear(),
-      });
-    }
+    const months = getLast12CalendarMonthsAscending(currentMonth, currentYear);
 
     const promises = months.map(({ mes, año }) =>
       getMetricsClient(profileId, mes, año, regimenFiscal)

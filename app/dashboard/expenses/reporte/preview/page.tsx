@@ -5,6 +5,7 @@ import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
 import { ExpensesReportPreviewContent } from "./components/ExpensesReportPreviewContent";
 import type { ReporteGastosData, FilaGastoReporte } from "./components/ReporteGastosTemplate";
+import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -35,7 +36,7 @@ function shortUuid(uuid: string | null): string {
 
 export default async function ExpensesReportePreviewPage({ searchParams }: PreviewPageProps) {
   const params = await searchParams;
-  const currentDate = new Date();
+  const { mes: defaultMes, año: defaultAño } = getCurrentMonthYearInAppTimezone();
   const profileId = params?.profileId && params.profileId !== "all" ? params.profileId : undefined;
   const mesParam = params?.mes;
   const añoParam = params?.año;
@@ -43,10 +44,10 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     params?.regimen_fiscal && params.regimen_fiscal !== "all" ? params.regimen_fiscal : undefined;
   const search = params?.search ?? undefined;
 
-  const mes = mesParam ? Math.min(12, Math.max(1, toNumber(mesParam))) : currentDate.getMonth() + 1;
+  const mes = mesParam ? Math.min(12, Math.max(1, toNumber(mesParam))) : defaultMes;
   const año = añoParam
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
-    : currentDate.getFullYear();
+    : defaultAño;
 
   const [profilesRes, expensesRes, regimenesCatalog, currentUser] = await Promise.all([
     getProfiles(),

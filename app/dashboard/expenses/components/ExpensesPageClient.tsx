@@ -13,6 +13,7 @@ import type { GetExpensesResponse, GetAccruedExpensesResponse } from '@/lib/type
 import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import { ExpensesListContent } from './ExpensesListContent';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,11 +36,11 @@ interface NormalizedExpenseParams {
 }
 
 function getDefaultMes(): number {
-  return new Date().getMonth() + 1;
+  return getCurrentMonthYearInAppTimezone().mes;
 }
 
 function getDefaultAño(): number {
-  return new Date().getFullYear();
+  return getCurrentMonthYearInAppTimezone().año;
 }
 
 function toNumber(value: string | null, fallback: number): number {
