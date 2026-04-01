@@ -50,18 +50,18 @@ export function HeroSection() {
         <div className="flex flex-1 flex-col gap-6">
           <div className="bg-primary/10 inline-flex w-fit items-center gap-2 rounded-full px-4 py-1.5">
             <span className="text-primary text-sm font-medium">
-              Gestión contable basada en XML (CFDI)
+              Control y reportes desde tus XML CFDI
             </span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-            Organiza tu contabilidad automáticamente desde tus XML —{' '}
-            <span className="text-primary">sin Excel</span>
+            Convierte tus XML CFDI en visibilidad financiera clara {' '}
+            <span className="text-primary">sin depender de Excel</span>
           </h1>
 
           <p className="text-muted-foreground max-w-xl text-lg">
-            Visualiza ingresos, egresos y utilidades mes a mes. Administra múltiples RFCs y genera
-            reportes en PDF o Excel desde un solo panel.
+            Centraliza ingresos, egresos y utilidades por mes. Administra multiples RFCs y genera
+            reportes en PDF o Excel desde un solo panel pensado para empresas y contadores.
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -158,7 +158,7 @@ export function HeroSection() {
                 <div className="flex-1">
                   <div className="font-medium">Resumen del mes listo</div>
                   <div className="text-muted-foreground text-sm">
-                    Ingresos y egresos organizados desde tus XML
+                    Ingresos y egresos consolidados desde tus XML
                   </div>
                 </div>
                 <div className="text-primary font-semibold">Listo</div>

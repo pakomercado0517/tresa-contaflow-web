@@ -25,17 +25,17 @@ interface PricingSectionProps {
 const planMetadata = {
   FREE: {
     icon: 'Leaf' as const,
-    description: 'Para empezar a organizar tus XML.',
+    description: 'Para empezar a centralizar tus XML.',
     isPopular: false,
   },
   BASIC: {
     icon: 'Rocket' as const,
-    description: 'Pequeños negocios y múltiples RFCs.',
+    description: 'Negocios con varios CFDI y multiples RFCs.',
     isPopular: false,
   },
   PRO: {
     icon: 'Gem' as const,
-    description: 'Contadores, reportes PDF/Excel y más.',
+    description: 'Contadores y equipos que necesitan reportes listos.',
     isPopular: true,
   },
   ENTERPRISE: {
@@ -154,11 +154,11 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
             </span>
           </div>
           <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            Elige el plan que se adapte a tu contabilidad
+            Elige el plan que se adapte a tu operación
           </h2>
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-            Más RFCs, exportación PDF/Excel y búsqueda SAT con IA según el plan. Sin compromisos;
-            cancela cuando quieras. Prueba gratis 30 días.
+            Más RFCs, exportación PDF/Excel y búsqueda SAT con IA según el plan. Escala tu control
+            y reporting sin compromisos; cancela cuando quieras. Prueba gratis 30 días.
           </p>
         </div>
 
@@ -185,11 +185,11 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
           </span>
         </div>
         <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-          Elige el plan que se adapte a tu contabilidad
+          Elige el plan que se adapte a tu operación
         </h2>
         <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-          Más RFCs, exportación PDF/Excel y búsqueda SAT con IA según el plan. Sin compromisos;
-          cancela cuando quieras. Prueba gratis 30 días.
+          Más RFCs, exportación PDF/Excel y búsqueda SAT con IA según el plan. Escala tu control y
+          reporting sin compromisos; cancela cuando quieras. Prueba gratis 30 días.
         </p>
       </div>
 

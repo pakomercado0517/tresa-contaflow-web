@@ -15,25 +15,25 @@ const empresarioFeatures: Feature[] = [
     icon: <BarChart3 className="h-6 w-6" />,
     title: "Ingresos y egresos mes a mes",
     description:
-      "Visualiza resultados por periodo desde tus XML. Sin Excel manual ni hojas dispersas: todo en un solo panel.",
+      "Visualiza resultados por periodo desde tus XML CFDI. Sin hojas dispersas ni consolidaciones manuales: todo en un solo panel.",
   },
   {
     icon: <Download className="h-6 w-6" />,
     title: "Reportes en PDF y Excel",
     description:
-      "Exporta reportes listos para descargar según tu plan. Información contable clara, sin armar cuadros a mano.",
+      "Exporta reportes listos para compartir o revisar segun tu plan, sin armar resúmenes a mano.",
   },
   {
     icon: <CheckCircle2 className="h-6 w-6" />,
-    title: "Organización automática desde XML",
+    title: "Consolidación automática desde XML",
     description:
-      "Sube tus CFDI y deja que la plataforma organice ingresos, egresos y complementos de pago por ti.",
+      "Sube tus CFDI y deja que la plataforma consolide ingresos, egresos y complementos de pago en una vista clara.",
   },
   {
     icon: <Users className="h-6 w-6" />,
     title: "Varios RFCs en una sola cuenta",
     description:
-      "Administra múltiples negocios o razones sociales desde un solo lugar, con información separada y ordenada.",
+      "Administra múltiples negocios o razones sociales desde un solo lugar, con información separada y fácil de consultar.",
   },
 ];
 
@@ -42,7 +42,7 @@ const contadorFeatures: Feature[] = [
     icon: <Users className="h-6 w-6" />,
     title: "Múltiples RFCs en un solo panel",
     description:
-      "Gestiona todos tus clientes desde una cuenta. Cambia entre RFCs sin duplicar trabajo ni perder claridad.",
+      "Gestiona todos tus clientes desde una cuenta. Cambia entre RFCs sin duplicar trabajo ni perder contexto.",
   },
   {
     icon: <BarChart3 className="h-6 w-6" />,
@@ -83,8 +83,8 @@ export function FeaturesSection() {
             Beneficios claros según cómo trabajas
           </h2>
           <p className="text-muted-foreground mx-auto max-w-2xl">
-            Deja atrás el caos de XML sueltos y Excel manual. Organiza tu contabilidad desde tus CFDI
-            y obtén claridad financiera sin procesos complicados.
+            Deja atrás el caos de XML sueltos y reportes manuales. Centraliza tus CFDI, ordena la
+            información por RFC y obtén claridad financiera sin procesos complicados.
           </p>
         </div>
 
