@@ -9,6 +9,7 @@ import { FilterBar } from '@/components/common/FilterBar';
 import { Plus, Building2, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import type { Profile } from '@/lib/types/profiles';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 interface DashboardHeaderProps {
   profiles?: Profile[];
@@ -31,9 +32,9 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentDate = new Date();
-  const currentMonth = selectedMonth || currentDate.getMonth() + 1;
-  const currentYear = selectedYear || currentDate.getFullYear();
+  const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
+  const currentMonth = selectedMonth ?? appMes;
+  const currentYear = selectedYear ?? appAño;
 
   function updateFilters(month?: number, year?: number, regimenFiscal?: string) {
     const params = new URLSearchParams(searchParams.toString());

@@ -2,6 +2,7 @@
 
 import { Wallet, FileText, Edit, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 interface ExpensesSummaryCardsProps {
   totalExpenses: number;
@@ -35,8 +36,10 @@ export function ExpensesSummaryCards({
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
   ];
 
-  // Usar el mes seleccionado o el mes actual
-  const monthIndex = selectedMonth ? selectedMonth - 1 : new Date().getMonth();
+  // Usar el mes seleccionado o el mes actual (calendario de negocio CDMX)
+  const monthIndex = selectedMonth
+    ? selectedMonth - 1
+    : getCurrentMonthYearInAppTimezone().mes - 1;
   const monthName = MONTHS[monthIndex];
 
   return (

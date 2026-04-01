@@ -2,10 +2,10 @@ import { getProfiles } from "@/lib/api/profiles";
 import { getSubscription } from "@/lib/api/subscription";
 import { getInvoices } from "@/lib/api/invoices";
 import { UploadInvoicesContent } from "./components/UploadInvoicesContent";
+import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 export default async function UploadInvoicesPage() {
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+  const { mes: currentMonth, año: currentYear } = getCurrentMonthYearInAppTimezone();
 
   const [profiles, subscription, invoicesRes] = await Promise.all([
     getProfiles(),

@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { ReactNode } from 'react';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 interface FilterBarProps {
   /** Valor del mes seleccionado */
@@ -66,7 +67,8 @@ export function FilterBar({
   onClearFilters,
   extraFilters,
 }: FilterBarProps) {
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+  const { año: appYear } = getCurrentMonthYearInAppTimezone();
+  const years = Array.from({ length: 5 }, (_, i) => appYear - 2 + i);
 
   return (
     <>

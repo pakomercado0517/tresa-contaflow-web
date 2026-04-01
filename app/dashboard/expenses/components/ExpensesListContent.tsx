@@ -56,6 +56,7 @@ import {
   getStoredProfileSelection,
   setStoredProfileSelection,
 } from '@/lib/storage/profile-selection';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -145,8 +146,12 @@ export function ExpensesListContent({
   const isSyncingFromUrlRef = useRef(false);
   const [search, setSearch] = useState(initialSearch || '');
   const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
-  const [selectedMes, setSelectedMes] = useState(initialMes || new Date().getMonth() + 1);
-  const [selectedAño, setSelectedAño] = useState(initialAño || new Date().getFullYear());
+  const [selectedMes, setSelectedMes] = useState(
+    initialMes ?? getCurrentMonthYearInAppTimezone().mes
+  );
+  const [selectedAño, setSelectedAño] = useState(
+    initialAño ?? getCurrentMonthYearInAppTimezone().año
+  );
   const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(initialRegimenFiscal || 'all');
 
   const selectedProfile = useMemo(
@@ -252,9 +257,10 @@ export function ExpensesListContent({
 
   // Sincronizar estado interno con URL (permite back/forward sin desalineación)
   useEffect(() => {
+    const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
     const urlProfileId = searchParams.get('profileId') ?? 'all';
-    const urlMes = Number(searchParams.get('mes') ?? new Date().getMonth() + 1);
-    const urlAño = Number(searchParams.get('año') ?? new Date().getFullYear());
+    const urlMes = Number(searchParams.get('mes') ?? String(appMes));
+    const urlAño = Number(searchParams.get('año') ?? String(appAño));
     const urlRegimen = searchParams.get('regimen_fiscal') ?? 'all';
     const urlSearch = searchParams.get('search') ?? '';
 
@@ -299,16 +305,17 @@ export function ExpensesListContent({
   }, [search]); // SOLO search como dependencia
 
   const handleClearFilters = () => {
+    const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
     setSearch('');
-    setSelectedMes(new Date().getMonth() + 1);
-    setSelectedAño(new Date().getFullYear());
+    setSelectedMes(appMes);
+    setSelectedAño(appAño);
     setSelectedRegimenFiscal('all');
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
     if (selectedProfileId && selectedProfileId !== 'all')
       params.set('profileId', selectedProfileId);
-    params.set('mes', (new Date().getMonth() + 1).toString());
-    params.set('año', new Date().getFullYear().toString());
+    params.set('mes', String(appMes));
+    params.set('año', String(appAño));
     params.set('page', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   };

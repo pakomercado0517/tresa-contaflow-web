@@ -9,10 +9,10 @@ import { getCurrentUser } from "@/lib/api/auth.server";
 import { getInvoices } from "@/lib/api/invoices";
 import { getExpenses } from "@/lib/api/expenses";
 import { getSATStats } from "@/lib/api/sat";
+import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 export default async function SetupPage() {
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+  const { mes: currentMonth, año: currentYear } = getCurrentMonthYearInAppTimezone();
 
   const [subscription, profiles, currentUser, invoicesRes, expensesRes, satStats] =
     await Promise.all([
