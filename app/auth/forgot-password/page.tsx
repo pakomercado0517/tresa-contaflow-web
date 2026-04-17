@@ -1,5 +1,5 @@
 import { ForgotPasswordForm } from "./components/ForgotPasswordForm";
-import { AuthFooter } from "../login/components/AuthFooter";
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { AuthLogo } from "../login/components/AuthLogo";
 
 export default function ForgotPasswordPage() {
@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <ForgotPasswordForm />
       </div>
-      <AuthFooter />
+      <SiteFooter variant="muted" />
     </div>
   );
 }

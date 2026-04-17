@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { RegisterForm } from "./components/RegisterForm";
-import { AuthFooter } from "../login/components/AuthFooter";
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { AuthLogo } from "../login/components/AuthLogo";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
@@ -13,7 +13,7 @@ export default function RegisterPage() {
           <RegisterForm />
         </Suspense>
       </div>
-      <AuthFooter />
+      <SiteFooter variant="muted" />
     </div>
   );
 }
