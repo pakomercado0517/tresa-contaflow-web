@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { AuthFooter } from "../login/components/AuthFooter";
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { AuthLogo } from "../login/components/AuthLogo";
 import { ResetPasswordForm } from "./components/ResetPasswordForm";
 
@@ -36,7 +36,7 @@ export default async function ResetPasswordPage({
           )}
         </Suspense>
       </div>
-      <AuthFooter />
+      <SiteFooter variant="muted" />
     </div>
   );
 }

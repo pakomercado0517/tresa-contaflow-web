@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { VerifyEmailContent } from "./components/VerifyEmailContent";
-import { AuthFooter } from "../login/components/AuthFooter";
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { AuthLogo } from "../login/components/AuthLogo";
 
 interface VerifyEmailPageProps {
@@ -22,7 +22,7 @@ export default async function VerifyEmailPage({
           <VerifyEmailContent token={token} email={email} />
         </Suspense>
       </div>
-      <AuthFooter />
+      <SiteFooter variant="muted" />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { VerificationSuccessCard } from './components/VerificationSuccessCard';
 import { AuthLogo } from '@/app/auth/login/components/AuthLogo';
-import { AuthFooter } from '@/app/auth/login/components/AuthFooter';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 
 export default function VerificationSuccessPage() {
   return (
@@ -9,7 +9,7 @@ export default function VerificationSuccessPage() {
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
         <VerificationSuccessCard />
       </div>
-      <AuthFooter />
+      <SiteFooter variant="muted" />
     </div>
   );
 }

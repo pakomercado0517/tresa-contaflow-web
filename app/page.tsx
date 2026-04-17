@@ -5,7 +5,7 @@ import { FeaturesSection } from './components/FeaturesSection';
 import { DashboardPreview } from './components/DashboardPreview';
 import { PricingSection } from './components/PricingSection';
 import { FinalCTA } from './components/FinalCTA';
-import { Footer } from './components/Footer';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { getPublicPlans } from '@/lib/api/subscription';
 import type { PublicPlansResponse } from '@/lib/types/subscription';
 
@@ -41,7 +41,7 @@ export default function HomePage() {
         <PricingSectionWrapper />
       </Suspense>
       <FinalCTA />
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

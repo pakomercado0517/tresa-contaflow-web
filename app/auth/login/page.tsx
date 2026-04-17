@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { LoginForm } from "./components/LoginForm";
-import { AuthFooter } from "./components/AuthFooter";
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { AuthLogo } from "./components/AuthLogo";
 
 function LoginFormFallback() {
@@ -24,7 +24,7 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
       </div>
-      <AuthFooter />
+      <SiteFooter variant="muted" />
     </div>
   );
 }
