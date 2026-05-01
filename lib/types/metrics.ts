@@ -38,9 +38,28 @@ export interface ImpuestosMetrics {
   retenciones_isr: ImpuestosItem;
 }
 
+/** Desglose fiscal asociado a saldos pendientes por cobrar o por pagar (CXC / CXP). */
+export interface PendientesImpuestosBreakdown {
+  iva: number;
+  retenciones_iva: number;
+  retenciones_isr: number;
+}
+
 export interface PendientesMetrics {
   por_cobrar: number;
   por_pagar: number;
+  por_cobrar_impuestos?: PendientesImpuestosBreakdown;
+  por_pagar_impuestos?: PendientesImpuestosBreakdown;
+}
+
+export function mergePendientesImpuestosDefaults(
+  breakdown?: PendientesImpuestosBreakdown
+): PendientesImpuestosBreakdown {
+  return {
+    iva: breakdown?.iva ?? 0,
+    retenciones_iva: breakdown?.retenciones_iva ?? 0,
+    retenciones_isr: breakdown?.retenciones_isr ?? 0,
+  };
 }
 
 export interface PeriodMetricsResponse {
@@ -68,5 +87,10 @@ export const DEFAULT_PERIOD_METRICS: PeriodMetricsResponse = {
     retenciones_iva: {},
     retenciones_isr: {},
   },
-  pendientes: { por_cobrar: 0, por_pagar: 0 },
+  pendientes: {
+    por_cobrar: 0,
+    por_pagar: 0,
+    por_cobrar_impuestos: { iva: 0, retenciones_iva: 0, retenciones_isr: 0 },
+    por_pagar_impuestos: { iva: 0, retenciones_iva: 0, retenciones_isr: 0 },
+  },
 };

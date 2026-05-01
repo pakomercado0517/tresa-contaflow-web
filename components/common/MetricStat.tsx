@@ -5,14 +5,16 @@ interface MetricStatProps {
   label: string;
   value: number;
   description?: string;
+  /** Nota breve bajo la descripción (p. ej. aclaración de subtotal vs impuestos). */
+  subNote?: string;
   valueClassName?: string;
 }
 
 /**
  * Bloque reutilizable de estadística: etiqueta + valor monetario + descripción opcional.
- * Usado en MetricsCards (dashboard) y PublicMetricsCards (vista pública).
+ * Usado en PublicMetricsCards (vista pública); el dashboard duplica el layout con `subNote` inline.
  */
-export function MetricStat({ label, value, description, valueClassName }: MetricStatProps) {
+export function MetricStat({ label, value, description, subNote, valueClassName }: MetricStatProps) {
   return (
     <div className="min-w-0">
       <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
@@ -22,6 +24,9 @@ export function MetricStat({ label, value, description, valueClassName }: Metric
         {formatCurrency(value)}
       </p>
       {description && <p className="text-muted-foreground mt-1 text-sm">{description}</p>}
+      {subNote && (
+        <p className="text-muted-foreground mt-1 text-xs leading-snug">{subNote}</p>
+      )}
     </div>
   );
 }
