@@ -3,9 +3,14 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { PendientesImpuestosMetrics } from '@/components/common/PendientesImpuestosMetrics';
+import { SplitIngresosEgresosImpuestos } from '@/components/common/SplitIngresosEgresosImpuestos';
+import { MetricStat } from '@/components/common/MetricStat';
 import { Wallet, FileText, BarChart3 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
-import { MetricStat } from '@/components/common/MetricStat';
+import { DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION } from '@/lib/constants/metrics-copy';
+import { splitImpuestosIngresosEgresos } from '@/lib/utils/split-impuestos-ingresos-egresos';
+import { mergePendientesImpuestosDefaults } from '@/lib/types/metrics';
 import type { ImpuestosMetrics } from '@/lib/types/metrics';
 import type { PublicReportMetrics } from '@/lib/types/public-reports';
 
@@ -61,6 +66,12 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
     resultado_devengado: 0,
   };
   const pendientes = metrics?.pendientes ?? { por_cobrar: 0, por_pagar: 0 };
+  const pendientesImpuestosCobrar = mergePendientesImpuestosDefaults(
+    pendientes.por_cobrar_impuestos
+  );
+  const pendientesImpuestosPagar = mergePendientesImpuestosDefaults(
+    pendientes.por_pagar_impuestos
+  );
 
   const flujoNeto = flujo.flujo_neto;
   const ingresosCobrados = flujo.ingresos_cobrados;
@@ -76,6 +87,8 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
   };
   const impuestosFlujo = getImpuestosFlujo(imp);
   const impuestosDevengado = getImpuestosDevengado(imp);
+  const flujoImpSplit = splitImpuestosIngresosEgresos(impuestosFlujo);
+  const devengadoImpSplit = splitImpuestosIngresosEgresos(impuestosDevengado);
 
   return (
     <div className="w-full space-y-8">
@@ -114,6 +127,9 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
                     Efectivo recibido por cobros
                   </p>
                 )}
+                <p className="text-muted-foreground mt-1 text-xs leading-snug">
+                  {DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
+                </p>
               </div>
               <div className="min-w-0">
                 <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
@@ -132,6 +148,9 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
                     Efectivo pagado por gastos
                   </p>
                 )}
+                <p className="text-muted-foreground mt-1 text-xs leading-snug">
+                  {DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
+                </p>
               </div>
               <div className="min-w-0">
                 <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
@@ -156,39 +175,27 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
                     Ingresos menos egresos
                   </p>
                 )}
+                <p className="text-muted-foreground mt-1 text-xs leading-snug">
+                  {DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
+                </p>
               </div>
             </div>
-            <div className="border-border/50 mt-6 border-t pt-6">
-              <p className="text-muted-foreground mb-4 text-xs font-medium tracking-wider uppercase">
-                Impuestos del flujo (cobrado / pagado)
-              </p>
-              <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">IVA trasladado cobrado</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosFlujo.ivaTrasladado)}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">Retenciones IVA cobradas</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosFlujo.retencionesIva)}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">Retenciones ISR cobradas</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosFlujo.retencionesIsr)}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">IVA acreditable pagado</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosFlujo.ivaAcreditable)}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <SplitIngresosEgresosImpuestos
+              ingresosTitle="Impuestos del flujo — cobros"
+              egresosTitle="Impuestos del flujo — pagos"
+              ingresos={flujoImpSplit.ingresos}
+              egresos={flujoImpSplit.egresos}
+              ingresosLabels={{
+                iva: 'IVA trasladado cobrado',
+                retencionesIva: 'Retenciones IVA cobradas',
+                retencionesIsr: 'Retenciones ISR cobradas',
+              }}
+              egresosLabels={{
+                iva: 'IVA acreditable pagado',
+                retencionesIva: 'Retenciones IVA pagadas',
+                retencionesIsr: 'Retenciones ISR pagadas',
+              }}
+            />
           </CardContent>
         </Card>
       </section>
@@ -211,13 +218,19 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
                 label="Ingresos por cobrar"
                 value={pendientes.por_cobrar}
                 description="Facturas pendientes de cobro"
+                subNote={DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
               />
               <MetricStat
                 label="Egresos por pagar"
                 value={pendientes.por_pagar}
                 description="Gastos autorizados pendientes"
+                subNote={DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
               />
             </div>
+            <PendientesImpuestosMetrics
+              porCobrarImpuestos={pendientesImpuestosCobrar}
+              porPagarImpuestos={pendientesImpuestosPagar}
+            />
           </CardContent>
         </Card>
       </section>
@@ -244,50 +257,38 @@ export function PublicMetricsCards({ metrics }: PublicMetricsCardsProps) {
                 label="Ingresos devengados"
                 value={devengado.ingresos_devengados}
                 description="Suma total de facturas emitidas"
+                subNote={DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
               />
               <MetricStat
                 label="Egresos devengados"
                 value={devengado.egresos_devengados}
                 description="Suma total de gastos recibidos"
+                subNote={DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
               />
               <MetricStat
                 label="Resultado devengado"
                 value={devengado.resultado_devengado}
                 description="Utilidad antes de impuestos – estimada"
+                subNote={DASHBOARD_MAIN_METRIC_SUBTOTAL_CAPTION}
                 valueClassName="text-blue-400"
               />
             </div>
-            <div className="border-border/50 mt-6 border-t pt-6">
-              <p className="text-muted-foreground mb-4 text-xs font-medium tracking-wider uppercase">
-                Impuestos devengados
-              </p>
-              <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">IVA trasladado</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosDevengado.ivaTrasladado)}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">Retenciones IVA</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosDevengado.retencionesIva)}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">Retenciones ISR</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosDevengado.retencionesIsr)}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-muted-foreground text-xs">IVA acreditable</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {formatCurrency(impuestosDevengado.ivaAcreditable)}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <SplitIngresosEgresosImpuestos
+              ingresosTitle="Impuestos devengados — ingresos"
+              egresosTitle="Impuestos devengados — egresos"
+              ingresos={devengadoImpSplit.ingresos}
+              egresos={devengadoImpSplit.egresos}
+              ingresosLabels={{
+                iva: 'IVA trasladado',
+                retencionesIva: 'Retenciones IVA',
+                retencionesIsr: 'Retenciones ISR',
+              }}
+              egresosLabels={{
+                iva: 'IVA acreditable',
+                retencionesIva: 'Retenciones IVA',
+                retencionesIsr: 'Retenciones ISR',
+              }}
+            />
           </CardContent>
         </Card>
       </section>
