@@ -73,6 +73,28 @@ function truncate(str: string, max: number): string {
   return str.length <= max ? str : `${str.slice(0, max)}...`;
 }
 
+function displayConcepto(concepto: string): string {
+  const trimmed = concepto?.trim();
+  return trimmed ? trimmed : "—";
+}
+
+/** Anchos fijos para que el concepto haga salto de línea sin invadir otras columnas (PDF/html2canvas). */
+const DETALLE_TABLE_CLASS = "table-fixed w-full";
+
+const TH_FECHA = "w-[11%] font-semibold text-gray-700";
+const TH_FOLIO = "w-[22%] font-semibold text-gray-700";
+const TH_RFC = "w-[16%] font-semibold text-gray-700";
+const TH_CONCEPTO =
+  "w-[36%] min-w-0 whitespace-normal font-semibold text-gray-700";
+const TH_MONTO = "w-[15%] text-right font-semibold text-gray-700";
+
+const TD_FECHA = "w-[11%] whitespace-nowrap text-gray-900";
+const TD_FOLIO = "w-[22%] max-w-0 truncate font-mono text-xs text-gray-700";
+const TD_RFC = "w-[16%] text-gray-700";
+const TD_CONCEPTO =
+  "report-detalle-concepto w-[36%] min-w-0 whitespace-normal break-words align-top text-gray-700";
+const TD_MONTO = "w-[15%] whitespace-nowrap text-right font-medium text-gray-900";
+
 interface DetalleOperacionesDevengadasTemplateProps {
   data: DetalleOperacionesDevengadasData;
   /** Ocultar footer durante captura PDF (jsPDF dibuja footer en cada página) */
@@ -146,14 +168,14 @@ export function DetalleOperacionesDevengadasTemplate({
             <ArrowUpCircle className="h-4 w-4 text-emerald-600" />
             Ingresos devengados (ventas)
           </h2>
-          <Table>
+          <Table className={DETALLE_TABLE_CLASS}>
             <TableHeader>
               <TableRow className="border-gray-200 bg-gray-100 hover:bg-gray-100">
-                <TableHead className="font-semibold text-gray-700">Fecha</TableHead>
-                <TableHead className="font-semibold text-gray-700">Folio / UUID</TableHead>
-                <TableHead className="font-semibold text-gray-700">RFC receptor</TableHead>
-                <TableHead className="font-semibold text-gray-700">Concepto principal</TableHead>
-                <TableHead className="text-right font-semibold text-gray-700">Monto total</TableHead>
+                <TableHead className={TH_FECHA}>Fecha</TableHead>
+                <TableHead className={TH_FOLIO}>Folio / UUID</TableHead>
+                <TableHead className={TH_RFC}>RFC receptor</TableHead>
+                <TableHead className={TH_CONCEPTO}>Concepto principal</TableHead>
+                <TableHead className={TH_MONTO}>Monto total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,15 +194,15 @@ export function DetalleOperacionesDevengadasTemplate({
                       idx % 2 === 1 && "bg-gray-50/80"
                     )}
                   >
-                    <TableCell className="text-gray-900">{formatDate(row.fecha)}</TableCell>
-                    <TableCell className="font-mono text-xs text-gray-700">
+                    <TableCell className={TD_FECHA}>{formatDate(row.fecha)}</TableCell>
+                    <TableCell className={TD_FOLIO} title={row.folioUuid}>
                       {truncate(row.folioUuid, 20)}
                     </TableCell>
-                    <TableCell className="text-gray-700">{truncate(row.rfcReceptor, 18)}</TableCell>
-                    <TableCell className="max-w-[200px] text-gray-700">
-                      {truncate(row.concepto, 35)}
+                    <TableCell className={TD_RFC}>{row.rfcReceptor || "—"}</TableCell>
+                    <TableCell className={TD_CONCEPTO}>
+                      {displayConcepto(row.concepto)}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-gray-900">
+                    <TableCell className={TD_MONTO}>
                       {formatCurrency(row.montoTotal)}
                     </TableCell>
                   </TableRow>
@@ -209,14 +231,14 @@ export function DetalleOperacionesDevengadasTemplate({
             <ArrowDownCircle className="h-4 w-4 text-red-600" />
             Egresos devengados (gastos)
           </h2>
-          <Table>
+          <Table className={DETALLE_TABLE_CLASS}>
             <TableHeader>
               <TableRow className="border-gray-200 bg-gray-100 hover:bg-gray-100">
-                <TableHead className="font-semibold text-gray-700">Fecha</TableHead>
-                <TableHead className="font-semibold text-gray-700">Folio / UUID</TableHead>
-                <TableHead className="font-semibold text-gray-700">RFC emisor</TableHead>
-                <TableHead className="font-semibold text-gray-700">Concepto principal</TableHead>
-                <TableHead className="text-right font-semibold text-gray-700">Monto total</TableHead>
+                <TableHead className={TH_FECHA}>Fecha</TableHead>
+                <TableHead className={TH_FOLIO}>Folio / UUID</TableHead>
+                <TableHead className={TH_RFC}>RFC emisor</TableHead>
+                <TableHead className={TH_CONCEPTO}>Concepto principal</TableHead>
+                <TableHead className={TH_MONTO}>Monto total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -235,15 +257,15 @@ export function DetalleOperacionesDevengadasTemplate({
                       idx % 2 === 1 && "bg-gray-50/80"
                     )}
                   >
-                    <TableCell className="text-gray-900">{formatDate(row.fecha)}</TableCell>
-                    <TableCell className="font-mono text-xs text-gray-700">
+                    <TableCell className={TD_FECHA}>{formatDate(row.fecha)}</TableCell>
+                    <TableCell className={TD_FOLIO} title={row.folioUuid}>
                       {truncate(row.folioUuid, 20)}
                     </TableCell>
-                    <TableCell className="text-gray-700">{truncate(row.rfcEmisor, 18)}</TableCell>
-                    <TableCell className="max-w-[200px] text-gray-700">
-                      {truncate(row.concepto, 35)}
+                    <TableCell className={TD_RFC}>{row.rfcEmisor || "—"}</TableCell>
+                    <TableCell className={TD_CONCEPTO}>
+                      {displayConcepto(row.concepto)}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-gray-900">
+                    <TableCell className={TD_MONTO}>
                       {formatCurrency(row.montoTotal)}
                     </TableCell>
                   </TableRow>

@@ -9,6 +9,13 @@
   margin: 15mm;
 }
 
+/* Concepto principal: salto de línea en preview, impresión y captura html2canvas */
+[data-reporte-pagina-2] .report-detalle-concepto {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 @media print {
   body {
     margin: 0 !important;

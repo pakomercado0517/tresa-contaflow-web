@@ -14,7 +14,11 @@ import {
 import { ReporteMensualTemplate, type ReporteMensualData } from './ReporteMensualTemplate';
 import { DetalleOperacionesDevengadasTemplate } from './DetalleOperacionesDevengadasTemplate';
 import type { DetalleOperacionesDevengadasData } from './DetalleOperacionesDevengadasTemplate';
-import { exportReportElementToPDF } from '@/lib/pdf';
+import {
+  exportReportElementToPDF,
+  prepareReportElementForCapture,
+  shareReportPdf,
+} from '@/lib/pdf';
 import { useSubscription, hasFeatureAccess } from '@/lib/hooks/useSubscription';
 
 const MESES = [
@@ -55,6 +59,10 @@ export function ReportePreviewContent({
   const [isExporting, setIsExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const reportFileName = `contafy-reporte-${MESES[data.mes - 1].toLowerCase()}-${data.año}.pdf`;
+  const reportShareTitle = `Reporte Contafy - ${MESES[data.mes - 1]} ${data.año}`;
+  const reportShareText = `Reporte mensual de operaciones - ${data.profileName}`;
+
   const handleExport = async (asBlob: boolean) => {
     const el = reportRef.current;
     if (!el) return;
@@ -62,12 +70,7 @@ export function ReportePreviewContent({
     setErrorMessage(null);
 
     try {
-      // Esperar al re-render de React (isExporting=true oculta header/footer)
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      await new Promise((r) => setTimeout(r, 300));
-
-      el.scrollIntoView({ behavior: 'instant', block: 'start' });
-      await new Promise((r) => setTimeout(r, 200));
+      await prepareReportElementForCapture(el);
 
       if (asBlob) {
         const { exportReportElementToPDFBlob } = await import('@/lib/pdf');
@@ -79,8 +82,7 @@ export function ReportePreviewContent({
         }
         setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
       } else {
-        const fileName = `contafy-reporte-${MESES[data.mes - 1].toLowerCase()}-${data.año}.pdf`;
-        await exportReportElementToPDF(el, fileName);
+        await exportReportElementToPDF(el, reportFileName);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -95,20 +97,27 @@ export function ReportePreviewContent({
   const handlePrint = () => handleExport(true);
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Reporte Contafy - ${MESES[data.mes - 1]} ${data.año}`,
-          text: `Reporte mensual de operaciones - ${data.profileName}`,
-        });
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Error al compartir', err);
-        }
-      }
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
-      alert('Enlace copiado al portapapeles.');
+    const el = reportRef.current;
+    if (!el || !canExportPDF) return;
+
+    setIsExporting(true);
+    setErrorMessage(null);
+
+    try {
+      await prepareReportElementForCapture(el);
+      await shareReportPdf({
+        element: el,
+        fileName: reportFileName,
+        title: reportShareTitle,
+        text: reportShareText,
+        shareUrl: window.location.href,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error al compartir PDF', error);
+      setErrorMessage(message);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -159,9 +168,10 @@ export function ReportePreviewContent({
           </Button>
           <Button
             size="icon"
-            className="h-12 w-12 rounded-full bg-emerald-600 shadow-lg hover:bg-emerald-700"
+            className="h-12 w-12 rounded-full bg-emerald-600 shadow-lg hover:bg-emerald-700 disabled:opacity-50"
             onClick={handleShare}
-            title="Compartir"
+            disabled={!canExportPDF}
+            title={canExportPDF ? 'Compartir PDF' : 'Disponible en plan Básico o superior'}
           >
             <Share2 className="h-5 w-5" />
           </Button>
