@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { EditProfileForm } from "./components/EditProfileForm";
+import { ProfileFiscalSettingsSection } from "./components/ProfileFiscalSettingsSection";
 import { getProfile } from "@/lib/api/profiles";
 import { ServerApiError } from "@/lib/api/server-client";
 
@@ -49,6 +50,7 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
           </p>
         </div>
         <EditProfileForm profile={profile} />
+        <ProfileFiscalSettingsSection profile={profile} />
       </div>
     </main>
   );

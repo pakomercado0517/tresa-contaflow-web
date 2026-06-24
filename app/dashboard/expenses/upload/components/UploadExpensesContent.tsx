@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertSourceBadge } from '@/components/common/AlertSourceBadge';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import type { Profile } from '@/lib/types/profiles';
@@ -333,7 +334,10 @@ export function UploadExpensesContent({
                     : 'text-muted-foreground'
             }`}
           />
-          <AlertTitle>Uso de Gastos del Mes</AlertTitle>
+          <AlertTitle className="flex flex-wrap items-center gap-2">
+            <span>Uso de Gastos del Mes</span>
+            <AlertSourceBadge source="planLimit" />
+          </AlertTitle>
           <AlertDescription className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span>

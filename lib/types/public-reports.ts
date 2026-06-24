@@ -1,4 +1,5 @@
 import type { PeriodMetricsResponse } from './metrics';
+import type { TaxEstimateResult } from './tax-estimates';
 
 export interface GeneratePublicReportRequest {
   profile_id: string;
@@ -30,6 +31,7 @@ export interface PublicReportProfile {
 export interface PublicReportMetricsByRegimen {
   regimen: string;
   metrics: PublicReportMetrics | null;
+  tax_estimate: TaxEstimateResult | null;
 }
 
 export interface PublicReportNomina {

@@ -2,9 +2,12 @@
 
 import { type ReactNode } from 'react';
 import Image from 'next/image';
-import { BarChart3, Building2, DollarSign, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { BarChart3, Building2, Calculator, DollarSign, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { TaxEstimatePanel } from '@/components/common/TaxEstimatePanel';
+import { TAX_ESTIMATE_PANEL_COPY, TAX_ESTIMATE_REPORT_FOOTER_NOTE } from '@/lib/constants/tax-estimate-field-labels';
+import type { TaxEstimateResult } from '@/lib/types/tax-estimates';
 import { cn } from '@/lib/utils';
 
 const MESES = [
@@ -40,6 +43,12 @@ export interface EstadoPorRegimen {
   utilidadNeta: number;
 }
 
+export interface ReporteTaxEstimateItem {
+  regimen: string;
+  nombreRegimen: string;
+  tax_estimate: TaxEstimateResult | null;
+}
+
 export interface ReporteMensualData {
   profileName: string;
   rfc: string;
@@ -73,6 +82,8 @@ export interface ReporteMensualData {
   logoUrl?: string | null;
   /** Nombre comercial del despacho (branding en PDF) */
   nombreComercial?: string | null;
+  /** Estimación fiscal informativa por régimen (preview/PDF) */
+  estimacionesFiscales?: ReporteTaxEstimateItem[];
 }
 
 function formatCurrency(amount: number): string {
@@ -450,6 +461,30 @@ export function ReporteMensualTemplate({
         </section>
       )}
 
+      {data.estimacionesFiscales && data.estimacionesFiscales.length > 0 ? (
+        <section className="px-6 pb-6" data-reporte-seccion-estimacion-fiscal>
+          <div className="mb-4 pt-6">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-bold tracking-wide text-gray-700 uppercase">
+              <Calculator className="h-4 w-4" />
+              {TAX_ESTIMATE_PANEL_COPY.title}
+            </h3>
+            <p className="text-xs text-gray-600">{TAX_ESTIMATE_PANEL_COPY.subtitle}</p>
+          </div>
+          <div className="space-y-8">
+            {data.estimacionesFiscales.map((item) => (
+              <div key={item.regimen} data-reporte-regimen>
+                <TaxEstimatePanel
+                  panelKey={item.regimen}
+                  regimenLabel={item.nombreRegimen}
+                  estimate={item.tax_estimate}
+                  appearance="report"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {/* Footer: oculto durante captura PDF (jsPDF dibuja footer en cada página) */}
       {!hideFooterForCapture && (
         <footer
@@ -474,6 +509,9 @@ export function ReporteMensualTemplate({
             <p className="max-w-md text-center md:text-right">
               Este documento es para fines informativos y de gestión interna. Sujeto a cambios
               basados en conciliaciones bancarias.
+              {data.estimacionesFiscales && data.estimacionesFiscales.length > 0 ? (
+                <span className="mt-2 block">{TAX_ESTIMATE_REPORT_FOOTER_NOTE}</span>
+              ) : null}
             </p>
             <p className="text-right font-medium">
               Página {pageNumber} de {totalPages}

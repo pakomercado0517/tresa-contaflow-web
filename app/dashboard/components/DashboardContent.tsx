@@ -39,6 +39,24 @@ const FlowTrendChart = dynamic(
   }
 );
 
+const DashboardTaxEstimateSection = dynamic(
+  () =>
+    import('./DashboardTaxEstimateSection').then((mod) => ({
+      default: mod.DashboardTaxEstimateSection,
+    })),
+  {
+    loading: () => <div className="bg-muted h-64 w-full animate-pulse rounded-lg" />,
+  }
+);
+
+const DashboardTaxEstimateCriticalBanner = dynamic(
+  () =>
+    import('./DashboardTaxEstimateCriticalBanner').then((mod) => ({
+      default: mod.DashboardTaxEstimateCriticalBanner,
+    })),
+  { loading: () => null }
+);
+
 interface DashboardContentProps {
   profileId?: string;
   mes: number;
@@ -88,6 +106,13 @@ export async function DashboardContent({
         {/* Trial Banner - Solo se muestra si el usuario está en trial */}
         <TrialBannerWrapper />
 
+        <DashboardTaxEstimateCriticalBanner
+          profileId={profileId}
+          mes={mes}
+          año={año}
+          regimenFiscal={regimenFiscal}
+        />
+
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
             <DashboardGreeting userName={userName} companyName={selectedCompanyName} />
@@ -103,6 +128,13 @@ export async function DashboardContent({
           </div>
         </div>
         <MetricsCards metrics={metrics} profileId={profileId} mes={mes} año={año} />
+        <DashboardTaxEstimateSection
+          profileId={profileId}
+          mes={mes}
+          año={año}
+          regimenFiscal={regimenFiscal}
+          regimenesFiscales={activeProfile?.regimenes_fiscales}
+        />
         <Suspense
           fallback={
             <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
