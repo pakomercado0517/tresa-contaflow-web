@@ -49,6 +49,14 @@ const DashboardTaxEstimateSection = dynamic(
   }
 );
 
+const DashboardTaxEstimateCriticalBanner = dynamic(
+  () =>
+    import('./DashboardTaxEstimateCriticalBanner').then((mod) => ({
+      default: mod.DashboardTaxEstimateCriticalBanner,
+    })),
+  { loading: () => null }
+);
+
 interface DashboardContentProps {
   profileId?: string;
   mes: number;
@@ -97,6 +105,13 @@ export async function DashboardContent({
       <main className="w-full min-w-0 flex-1 space-y-6 p-4 pt-60 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
         {/* Trial Banner - Solo se muestra si el usuario está en trial */}
         <TrialBannerWrapper />
+
+        <DashboardTaxEstimateCriticalBanner
+          profileId={profileId}
+          mes={mes}
+          año={año}
+          regimenFiscal={regimenFiscal}
+        />
 
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 flex-1">

@@ -16,6 +16,7 @@ import type { SATProductServiceAttributes, SATPlanInfo } from '@/lib/types/sat';
 import type { Plan } from '@/lib/types/subscription';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertSourceBadge } from '@/components/common/AlertSourceBadge';
 
 const RESULTS_PER_PAGE = 5;
 
@@ -167,7 +168,10 @@ export function SATSearchContent() {
         {(planInfo?.aiSearchesRemaining === 0 || limitReached) && (
           <Alert className="border-amber-500/50 bg-amber-500/10">
             <Sparkles className="size-4 text-amber-600 dark:text-amber-400" />
-            <AlertTitle>Límite de sugerencia inteligente alcanzado</AlertTitle>
+            <AlertTitle className="flex flex-wrap items-center gap-2">
+              <span>Límite de sugerencia inteligente alcanzado</span>
+              <AlertSourceBadge source="satSearch" />
+            </AlertTitle>
             <AlertDescription className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>{LIMIT_REACHED_MESSAGE}</span>
               <Button

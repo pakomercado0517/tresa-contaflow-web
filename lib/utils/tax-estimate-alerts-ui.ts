@@ -1,6 +1,7 @@
 import type {
   TaxEstimateAlert,
   TaxEstimateAlertSeverity,
+  TaxEstimateRegimenItem,
 } from '@/lib/types/tax-estimates';
 
 export const TAX_ESTIMATE_ALERT_SEVERITY_ORDER: TaxEstimateAlertSeverity[] = [
@@ -50,4 +51,41 @@ export function getAlertClassForSeverity(severity: TaxEstimateAlertSeverity): st
     return 'border-border bg-muted/30';
   }
   return '';
+}
+
+export interface TaxEstimateAlertWithRegimen {
+  regimen: string;
+  alert: TaxEstimateAlert;
+}
+
+const CRITICAL_SEVERITIES: TaxEstimateAlertSeverity[] = ['error', 'warning'];
+
+function criticalSeverityRank(severity: TaxEstimateAlertSeverity): number {
+  return severity === 'error' ? 0 : 1;
+}
+
+export function collectCriticalTaxEstimateAlerts(
+  estimates: TaxEstimateRegimenItem[]
+): TaxEstimateAlertWithRegimen[] {
+  const seen = new Set<string>();
+  const collected: TaxEstimateAlertWithRegimen[] = [];
+
+  estimates.forEach((item) => {
+    const alerts = item.tax_estimate?.alerts ?? [];
+    alerts.forEach((alert) => {
+      if (!CRITICAL_SEVERITIES.includes(alert.severity)) {
+        return;
+      }
+      const dedupeKey = `${item.regimen}:${alert.code}`;
+      if (seen.has(dedupeKey)) {
+        return;
+      }
+      seen.add(dedupeKey);
+      collected.push({ regimen: item.regimen, alert });
+    });
+  });
+
+  return collected.sort(
+    (a, b) => criticalSeverityRank(a.alert.severity) - criticalSeverityRank(b.alert.severity)
+  );
 }

@@ -112,7 +112,7 @@ export function DashboardTaxEstimateSection({
       }));
 
   return (
-    <div className="space-y-6" data-tour="tax-estimate-section">
+    <div className="space-y-6" id="tax-estimate-section" data-tour="tax-estimate-section">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">Estimación fiscal del periodo</h2>
         <p className="text-muted-foreground max-w-3xl text-sm">

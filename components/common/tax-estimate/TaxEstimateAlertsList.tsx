@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertSourceBadge } from '@/components/common/AlertSourceBadge';
 import { TAX_ESTIMATE_PANEL_COPY } from '@/lib/constants/tax-estimate-field-labels';
 import { getTaxEstimateAlertMeta } from '@/lib/constants/tax-estimate-alerts';
 import type { TaxEstimateAlert } from '@/lib/types/tax-estimates';
@@ -25,6 +26,9 @@ export function TaxEstimateAlertsList({ alerts, profileId }: TaxEstimateAlertsLi
 
   return (
     <div className="space-y-4" aria-label="Alertas de la estimación fiscal">
+      <div className="flex flex-wrap items-center gap-2">
+        <AlertSourceBadge source="taxEstimate" />
+      </div>
       {groups.map((group) => {
         const groupId = `tax-alerts-${group.severity}`;
         return (
