@@ -4,8 +4,13 @@ import { getExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
+import { getTaxEstimates } from "@/lib/api/tax-estimates";
 import { ReportePreviewContent } from "./components/ReportePreviewContent";
-import type { ReporteMensualData, EstadoPorRegimen } from "./components/ReporteMensualTemplate";
+import type {
+  ReporteMensualData,
+  EstadoPorRegimen,
+  ReporteTaxEstimateItem,
+} from "./components/ReporteMensualTemplate";
 import type {
   DetalleOperacionesDevengadasData,
   FilaIngresoDevengado,
@@ -132,6 +137,25 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
     });
   }
 
+  let estimacionesFiscales: ReporteTaxEstimateItem[] | undefined;
+  if (profileId) {
+    try {
+      const taxResponse = await getTaxEstimates({
+        profileId,
+        mes: mesValid,
+        año: añoValid,
+        persist: false,
+      });
+      estimacionesFiscales = taxResponse.estimates.map((item) => ({
+        regimen: item.regimen,
+        nombreRegimen: catalogByClave.get(item.regimen) ?? `Régimen ${item.regimen}`,
+        tax_estimate: item.tax_estimate,
+      }));
+    } catch {
+      estimacionesFiscales = undefined;
+    }
+  }
+
   const reportData: ReporteMensualData = {
     profileName: activeProfile?.nombre ?? "Todos los perfiles",
     rfc: profileRfc ?? "",
@@ -149,6 +173,7 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
     estadoPorRegimen,
     logoUrl: currentUser?.user?.logo_url ?? null,
     nombreComercial: currentUser?.user?.nombre_comercial ?? null,
+    estimacionesFiscales,
   };
 
   const allProfileRfcs = (profiles.data ?? []).map((p) => p.rfc).filter(Boolean);

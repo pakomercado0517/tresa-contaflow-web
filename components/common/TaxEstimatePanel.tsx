@@ -10,14 +10,20 @@ import { TaxEstimateIsrSection } from './tax-estimate/TaxEstimateIsrSection';
 import { TaxEstimateIvaSection } from './tax-estimate/TaxEstimateIvaSection';
 import { TaxEstimatePanelHeader } from './tax-estimate/TaxEstimatePanelHeader';
 
+export type TaxEstimatePanelAppearance = 'default' | 'report';
+
 export interface TaxEstimatePanelProps {
   estimate: TaxEstimateResult | null;
   regimenLabel?: string;
   /** Identificador único para aria-labelledby cuando hay varios paneles en la página */
   panelKey?: string;
   profileId?: string;
+  appearance?: TaxEstimatePanelAppearance;
   className?: string;
 }
+
+const TAX_ESTIMATE_REPORT_ROOT_CLASS =
+  'tax-estimate-report-root bg-white text-gray-900 [&_.text-muted-foreground]:text-gray-500 [&_.text-foreground]:text-gray-900 [&_.border-border]:border-gray-200 [&_.bg-card]:bg-white [&_.bg-muted]:bg-gray-50';
 
 function getPanelTitleId(panelKey: string): string {
   return `tax-estimate-panel-title-${panelKey}`;
@@ -28,13 +34,22 @@ export function TaxEstimatePanel({
   regimenLabel,
   panelKey = 'default',
   profileId,
+  appearance = 'default',
   className,
 }: TaxEstimatePanelProps) {
   const panelTitleId = getPanelTitleId(panelKey);
+  const isReport = appearance === 'report';
+  const rootClass = isReport ? TAX_ESTIMATE_REPORT_ROOT_CLASS : undefined;
+  const cardClass = isReport
+    ? 'border-gray-200 bg-white w-full shadow-none'
+    : 'border-border w-full shadow-sm';
 
   if (estimate === null) {
     return (
-      <section aria-labelledby={panelTitleId} className={className}>
+      <section
+        aria-labelledby={panelTitleId}
+        className={cn(rootClass, className)}
+      >
         <div className="mb-4">
           <TaxEstimatePanelHeader
             panelTitleId={panelTitleId}
@@ -54,7 +69,10 @@ export function TaxEstimatePanel({
   const displayRegimenLabel = regimenLabel ?? estimate.regimen;
 
   return (
-    <section aria-labelledby={panelTitleId} className={cn('space-y-4', className)}>
+    <section
+      aria-labelledby={panelTitleId}
+      className={cn('space-y-4', rootClass, className)}
+    >
       <TaxEstimatePanelHeader
         panelTitleId={panelTitleId}
         regimenLabel={displayRegimenLabel}
@@ -64,7 +82,7 @@ export function TaxEstimatePanel({
 
       <TaxEstimateAlertsList alerts={estimate.alerts} profileId={profileId} />
 
-      <Card className="border-border w-full shadow-sm">
+      <Card className={cardClass}>
         <CardContent className="space-y-8 p-6">
           <TaxEstimateIsrSection estimate={estimate} />
           <TaxEstimateIvaSection iva={estimate.iva} />

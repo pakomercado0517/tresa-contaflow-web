@@ -118,6 +118,7 @@ export async function DashboardContent({
           mes={mes}
           año={año}
           regimenFiscal={regimenFiscal}
+          regimenesFiscales={activeProfile?.regimenes_fiscales}
         />
         <Suspense
           fallback={

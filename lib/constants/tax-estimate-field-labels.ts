@@ -17,6 +17,9 @@ export const TAX_ESTIMATE_PANEL_COPY = {
   fiscalSettingsLinkLabel: 'Configurar datos fiscales',
 } as const;
 
+export const TAX_ESTIMATE_REPORT_FOOTER_NOTE =
+  'Las estimaciones fiscales incluidas en este reporte son orientativas y no sustituyen la presentación de declaraciones ante el SAT ni asesoría fiscal profesional.';
+
 export const TAX_ESTIMATE_ISR_HIGHLIGHT_LABELS = {
   isr_neto_a_pagar: 'ISR neto a pagar',
   saldo_a_favor: 'Saldo a favor ISR',

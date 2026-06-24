@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Building2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -10,11 +11,23 @@ import { ApiError } from '@/lib/api/client';
 import { useTaxEstimates } from '@/lib/hooks/useTaxEstimates';
 import type { TaxEstimateApiErrorBody } from '@/lib/types/tax-estimates';
 
+const TaxEstimateHistorySection = dynamic(
+  () =>
+    import('./TaxEstimateHistorySection').then((mod) => ({
+      default: mod.TaxEstimateHistorySection,
+    })),
+  {
+    loading: () => <div className="bg-muted h-[28rem] w-full animate-pulse rounded-lg" />,
+    ssr: false,
+  }
+);
+
 interface DashboardTaxEstimateSectionProps {
   profileId?: string;
   mes: number;
   año: number;
   regimenFiscal?: string;
+  regimenesFiscales?: string[];
 }
 
 function getTaxEstimateErrorMessage(error: Error): string {
@@ -44,6 +57,7 @@ export function DashboardTaxEstimateSection({
   mes,
   año,
   regimenFiscal,
+  regimenesFiscales,
 }: DashboardTaxEstimateSectionProps) {
   const { data, isLoading, isError, error, refetch } = useTaxEstimates({
     profileId,
@@ -119,6 +133,15 @@ export function DashboardTaxEstimateSection({
           />
         ))}
       </div>
+
+      <TaxEstimateHistorySection
+        key={profileId}
+        profileId={profileId}
+        ejercicio={año}
+        mes={mes}
+        headerRegimenFiscal={regimenFiscal}
+        regimenesFiscales={regimenesFiscales}
+      />
     </div>
   );
 }

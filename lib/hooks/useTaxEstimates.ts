@@ -44,9 +44,10 @@ export function useTaxEstimates({
   });
 }
 
-export function invalidateTaxEstimatesForProfile(
+export async function invalidateTaxEstimatesForProfile(
   queryClient: QueryClient,
   profileId: string
 ): Promise<void> {
-  return queryClient.invalidateQueries({ queryKey: ['tax-estimates', profileId] });
+  await queryClient.invalidateQueries({ queryKey: ['tax-estimates', profileId] });
+  await queryClient.invalidateQueries({ queryKey: ['tax-estimate-history', profileId] });
 }
