@@ -36,6 +36,7 @@ export async function revokePublicReport(token: string): Promise<{ message: stri
  * Lanza un Error con el status HTTP como mensaje si falla (ej. "404", "500").
  * @param mes  Mes a consultar (1–12). Si se omite, el backend devuelve el mes actual.
  * @param año  Año a consultar (ej. 2026). Si se omite, el backend devuelve el año actual.
+ * Cada ítem de `metrics_by_regimen` puede incluir `tax_estimate` (estimación informativa ISR/IVA).
  */
 export async function getPublicReport(
   token: string,

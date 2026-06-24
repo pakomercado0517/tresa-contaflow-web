@@ -39,6 +39,16 @@ const FlowTrendChart = dynamic(
   }
 );
 
+const DashboardTaxEstimateSection = dynamic(
+  () =>
+    import('./DashboardTaxEstimateSection').then((mod) => ({
+      default: mod.DashboardTaxEstimateSection,
+    })),
+  {
+    loading: () => <div className="bg-muted h-64 w-full animate-pulse rounded-lg" />,
+  }
+);
+
 interface DashboardContentProps {
   profileId?: string;
   mes: number;
@@ -103,6 +113,12 @@ export async function DashboardContent({
           </div>
         </div>
         <MetricsCards metrics={metrics} profileId={profileId} mes={mes} año={año} />
+        <DashboardTaxEstimateSection
+          profileId={profileId}
+          mes={mes}
+          año={año}
+          regimenFiscal={regimenFiscal}
+        />
         <Suspense
           fallback={
             <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
