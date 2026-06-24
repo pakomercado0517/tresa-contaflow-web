@@ -186,7 +186,9 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
             <DialogDescription>
               Genera un link de acceso para que{' '}
               <span className="text-foreground font-medium">{clientName ?? 'el cliente'}</span>{' '}
-              pueda ver sus cifras sin necesidad de crear una cuenta.
+              pueda ver sus cifras del periodo y una estimación fiscal informativa (ISR y IVA
+              orientativos), sin necesidad de crear una cuenta. No sustituye declaraciones ante el
+              SAT.
             </DialogDescription>
           </DialogHeader>
 
@@ -204,7 +206,9 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                     </Badge>
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    El reporte mostrará las cifras del periodo seleccionado en el dashboard.
+                    El reporte mostrará las cifras del periodo seleccionado en el dashboard. El link
+                    público usa el mismo mes y año en la URL e incluye la estimación fiscal por
+                    régimen cuando esté disponible.
                   </p>
                 </div>
               </div>

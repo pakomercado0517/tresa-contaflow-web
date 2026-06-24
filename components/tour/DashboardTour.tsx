@@ -109,6 +109,18 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         pointerRadius: 10,
       },
       {
+        icon: '🧮',
+        title: 'Estimación fiscal informativa',
+        content:
+          'Aquí verás ISR e IVA netos orientativos según tus CFDI y la configuración fiscal del ejercicio. Es una guía para el mes, no reemplaza tu declaración oficial ante el SAT. Para mayor precisión (por ejemplo régimen 601 o pagos provisionales), completa los datos fiscales del perfil.',
+        selector: "[data-tour='tax-estimate-section']",
+        side: 'top',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        pointerRadius: 10,
+      },
+      {
         icon: '📈',
         title: 'Gráfico de Tendencias',
         content:
@@ -822,7 +834,8 @@ function TourController({ user }: { user?: User }) {
 
       const shouldForceDashboardEndScroll =
         pathname === '/dashboard' &&
-        (selector === "[data-tour='recent-invoices']" ||
+        (selector === "[data-tour='tax-estimate-section']" ||
+          selector === "[data-tour='recent-invoices']" ||
           selector === "[data-tour='recent-expenses']");
 
       if (shouldForceDashboardEndScroll || shouldAutoScrollToElement(targetElement)) {
