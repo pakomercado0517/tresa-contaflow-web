@@ -86,8 +86,8 @@ export function InfiniteTodosManual() {
       <h1>Infinite Todos (Manual)</h1>
 
       {/* Render all pages */}
-      {data.pages.map((page, i) => (
-        <div key={i}>
+      {data.pages.map((page) => (
+        <div key={`page-${page.previousCursor ?? 0}-${page.nextCursor ?? 'end'}`}>
           <h2>Page {i + 1}</h2>
           <ul>
             {page.data.map((todo) => (
@@ -167,8 +167,8 @@ export function InfiniteTodosAuto() {
       <h1>Infinite Todos (Auto)</h1>
 
       {/* Render all pages */}
-      {data.pages.map((page, i) => (
-        <div key={i}>
+      {data.pages.map((page) => (
+        <div key={`page-${page.previousCursor ?? 0}-${page.nextCursor ?? 'end'}`}>
           {page.data.map((todo) => (
             <div key={todo.id}>
               <input

@@ -354,7 +354,7 @@ export function ReporteMensualTemplate({
         <section className="px-6 pb-6" data-reporte-seccion-regimenes>
           <div className="space-y-6">
             {data.estadoPorRegimen.map((regimen, index) => (
-              <div key={index} data-reporte-regimen className={index === 0 ? '' : ''}>
+              <div key={regimen.nombreRegimen} data-reporte-regimen className={index === 0 ? '' : ''}>
                 {/* Título de sección incluido en el primer régimen para que el
                     salto de página ocurra antes del título, no entre título y card */}
                 {index === 0 && (

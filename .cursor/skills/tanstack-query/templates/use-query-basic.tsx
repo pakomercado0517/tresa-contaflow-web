@@ -1,42 +1,9 @@
 // src/hooks/useTodos.ts
-import { useQuery, queryOptions } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
-/**
- * Type definitions
- */
-export type Todo = {
-  id: number
-  title: string
-  completed: boolean
-  userId: number
-}
+import { todosQueryOptions, type Todo } from './use-query-basic-todos-options'
 
-/**
- * API function - keeps network logic separate
- */
-async function fetchTodos(): Promise<Todo[]> {
-  const response = await fetch('https://jsonplaceholder.typicode.com/todos')
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch todos: ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
-/**
- * Query options factory (v5 best practice)
- *
- * Benefits:
- * - Reusable across useQuery, useSuspenseQuery, prefetchQuery
- * - Perfect type inference
- * - Single source of truth for queryKey and queryFn
- */
-export const todosQueryOptions = queryOptions({
-  queryKey: ['todos'],
-  queryFn: fetchTodos,
-  staleTime: 1000 * 60, // 1 minute
-})
+export type { Todo }
 
 /**
  * Custom hook - encapsulates query logic
@@ -73,7 +40,7 @@ export function useTodo(id: number) {
   return useQuery({
     queryKey: ['todos', id],
     queryFn: () => fetchTodoById(id),
-    enabled: !!id, // Only fetch if id is truthy
+    enabled: !!id,
   })
 }
 

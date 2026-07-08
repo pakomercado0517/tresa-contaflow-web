@@ -1,7 +1,10 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getFirebaseApp } from "./config";
+"use server";
 
-const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+import { getFirebaseApp } from "@/lib/firebase/server-app";
+
+const MAX_SIZE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 function getImageExtension(mimeType: string): string {
@@ -14,15 +17,13 @@ function getImageExtension(mimeType: string): string {
   return map[mimeType] ?? "png";
 }
 
-/**
- * Sube el logo del usuario a Firebase Storage en users/{userId}/logo.{ext}
- * y devuelve la URL pública para enviar como logo_url al backend.
- */
-export async function uploadUserLogo(userId: string, file: File): Promise<string> {
+export async function uploadUserLogoAction(userId: string, formData: FormData): Promise<string> {
+  const file = formData.get("logo");
+  if (!(file instanceof File)) {
+    throw new Error("No se recibió ninguna imagen.");
+  }
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error(
-      "Formato no permitido. Usa JPEG, PNG, GIF o WebP."
-    );
+    throw new Error("Formato no permitido. Usa JPEG, PNG, GIF o WebP.");
   }
   if (file.size > MAX_SIZE_BYTES) {
     throw new Error("La imagen no debe superar 2 MB.");
@@ -30,10 +31,9 @@ export async function uploadUserLogo(userId: string, file: File): Promise<string
 
   const storage = getStorage(getFirebaseApp());
   const ext = getImageExtension(file.type);
-  const path = `users/${userId}/logo.${ext}`;
-  const storageRef = ref(storage, path);
+  const objectPath = `users/${userId}/logo.${ext}`;
+  const storageRef = ref(storage, objectPath);
 
   await uploadBytes(storageRef, file);
-  const downloadUrl = await getDownloadURL(storageRef);
-  return downloadUrl;
+  return getDownloadURL(storageRef);
 }

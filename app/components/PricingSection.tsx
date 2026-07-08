@@ -291,8 +291,8 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                 </div>
 
                 <ul className="space-y-2">
-                  {features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
+                  {features.map((feature) => (
+                    <li key={feature.label} className="flex items-start gap-2">
                       <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                       <span className="text-sm">
                         {feature.label}: {feature.value}

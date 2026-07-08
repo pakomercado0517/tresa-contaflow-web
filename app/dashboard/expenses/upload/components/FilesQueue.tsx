@@ -173,8 +173,8 @@ export function FilesQueue({
                     <div className="flex items-start gap-2 text-xs text-yellow-600 dark:text-yellow-500">
                       <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <div className="space-y-0.5">
-                        {file.validacion.advertencias.map((adv, idx) => (
-                          <p key={idx}>{adv}</p>
+                        {file.validacion.advertencias.map((adv) => (
+                          <p key={`${file.id}-adv-${adv}`}>{adv}</p>
                         ))}
                       </div>
                     </div>
@@ -185,8 +185,8 @@ export function FilesQueue({
                     <div className="flex items-start gap-2 text-xs text-destructive">
                       <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <div className="space-y-0.5">
-                        {file.validacion.errores.map((err, idx) => (
-                          <p key={idx}>{err}</p>
+                        {file.validacion.errores.map((err) => (
+                          <p key={`${file.id}-err-${err}`}>{err}</p>
                         ))}
                       </div>
                     </div>

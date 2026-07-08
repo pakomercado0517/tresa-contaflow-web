@@ -124,8 +124,8 @@ export function ReportPDFLayout({ data, detalleData, totalPages }: ReportPDFLayo
               <h3 className="report-pdf-section-title">Estado de resultados por régimen</h3>
               <p className="report-pdf-note">Basado en fecha de emisión CFDI</p>
               <div className="report-pdf-regimen-list">
-                {data.estadoPorRegimen.map((regimen, index) => (
-                  <div key={index} className="report-pdf-regimen-block" data-reporte-regimen>
+                {data.estadoPorRegimen.map((regimen) => (
+                  <div key={regimen.nombreRegimen} className="report-pdf-regimen-block" data-reporte-regimen>
                     <h4 className="report-pdf-regimen-name">{regimen.nombreRegimen}</h4>
                     <div className="report-pdf-regimen-rows">
                       <div className="report-pdf-row">

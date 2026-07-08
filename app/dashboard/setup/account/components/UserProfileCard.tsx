@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { updateProfile } from "@/lib/api/auth";
-import { uploadUserLogo } from "@/lib/firebase/storage";
+import { uploadUserLogoAction } from "../actions/upload-user-logo";
 import type { User } from "@/lib/types/auth";
 
 interface UserProfileCardProps {
@@ -45,7 +45,9 @@ export function UserProfileCard({ user }: UserProfileCardProps) {
     setUploadError(null);
 
     try {
-      const logoUrl = await uploadUserLogo(user.id, file);
+      const formData = new FormData();
+      formData.set("logo", file);
+      const logoUrl = await uploadUserLogoAction(user.id, formData);
       await updateProfile({ logo_url: logoUrl });
       router.refresh();
     } catch (err) {

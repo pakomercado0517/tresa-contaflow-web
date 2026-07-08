@@ -127,8 +127,8 @@ export function PublicFlowBarChart({ metrics }: PublicFlowBarChartProps) {
                   isAnimationActive={true}
                   animationDuration={450}
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.85} />
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} fillOpacity={0.85} />
                   ))}
                 </Bar>
               </BarChart>
