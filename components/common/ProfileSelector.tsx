@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import {
@@ -11,11 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Profile } from '@/lib/types/profiles';
-import {
-  clearStoredProfileSelection,
-  getStoredProfileSelection,
-  setStoredProfileSelection,
-} from '@/lib/storage/profile-selection';
+import { setStoredProfileSelection } from '@/lib/storage/profile-selection';
+import { useStoredProfileUrlRestoreRef } from '@/lib/navigation/use-stored-profile-url-restore-ref';
 
 interface ProfileSelectorProps {
   profiles: Profile[];
@@ -34,28 +30,7 @@ export function ProfileSelector({
 }: ProfileSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const urlProfileId = searchParams.get('profileId');
-    if (urlProfileId) {
-      setStoredProfileSelection(urlProfileId);
-      return;
-    }
-
-    const storedProfileId = getStoredProfileSelection();
-    if (!storedProfileId || storedProfileId === 'all') return;
-
-    const storedProfile = profiles.find((profile) => profile.id === storedProfileId);
-    if (!storedProfile || storedProfile.frozen) {
-      clearStoredProfileSelection();
-      return;
-    }
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('profileId', storedProfileId);
-    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
-    router.refresh();
-  }, [searchParams, profiles, router]);
+  const storedProfileUrlRestoreRef = useStoredProfileUrlRestoreRef('/dashboard', profiles);
 
   function handleProfileChange(profileId: string) {
     // Verificar que el perfil no esté congelado
@@ -81,29 +56,24 @@ export function ProfileSelector({
   }
 
   return (
-    <Select
-      value={selectedProfileId || 'all'}
-      onValueChange={(value) => handleProfileChange(value === 'all' ? '' : value)}
-    >
-      <SelectTrigger className={triggerClassName ?? 'min-w-[9rem] w-52'}>
-        <SelectValue placeholder="Seleccionar empresa" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">Todas las empresas</SelectItem>
-        {profiles.map((profile) => (
-          <SelectItem
-            key={profile.id}
-            value={profile.id}
-            disabled={profile.frozen}
-            className={profile.frozen ? 'text-gray-400' : ''}
-          >
-            <div className="flex items-center gap-2">
-              <span>{profile.nombre}</span>
-              {profile.frozen && <Lock className="h-4 w-4 text-orange-500" />}
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <>
+      <div ref={storedProfileUrlRestoreRef} className="hidden" aria-hidden />
+      <Select value={selectedProfileId || 'all'} onValueChange={handleProfileChange}>
+        <SelectTrigger className={triggerClassName}>
+          <SelectValue placeholder="Seleccionar perfil" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los perfiles</SelectItem>
+          {profiles.map((profile) => (
+            <SelectItem key={profile.id} value={profile.id} disabled={profile.frozen}>
+              <span className="flex items-center gap-2">
+                {profile.frozen && <Lock className="h-3 w-3" />}
+                {profile.nombre} ({profile.rfc})
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
   );
 }

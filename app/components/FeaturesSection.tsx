@@ -91,6 +91,7 @@ export function FeaturesSection() {
         <div className="flex justify-center">
           <div className="inline-flex rounded-lg bg-muted p-1">
             <button
+              type="button"
               onClick={() => setSelectedRole("empresario")}
               className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                 selectedRole === "empresario"
@@ -101,6 +102,7 @@ export function FeaturesSection() {
               Soy Empresario
             </button>
             <button
+              type="button"
               onClick={() => setSelectedRole("contador")}
               className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                 selectedRole === "contador"

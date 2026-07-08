@@ -197,6 +197,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
       <div className="mb-12 flex justify-center">
         <div className="bg-muted flex items-center gap-2 rounded-lg p-1">
           <button
+            type="button"
             onClick={() => setBillingCycle('monthly')}
             disabled={isLoading}
             className={`rounded-md px-6 py-2.5 text-sm font-medium transition-colors ${
@@ -208,6 +209,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
             Mensual
           </button>
           <button
+            type="button"
             onClick={() => setBillingCycle('annual')}
             disabled={isLoading}
             className={`rounded-md px-6 py-2.5 text-sm font-medium transition-colors ${

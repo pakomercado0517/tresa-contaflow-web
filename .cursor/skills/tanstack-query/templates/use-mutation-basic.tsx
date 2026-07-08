@@ -174,6 +174,7 @@ export function AddTodoForm() {
         placeholder="New todo..."
         required
         disabled={isPending}
+        aria-label="New todo title"
       />
       <button type="submit" disabled={isPending}>
         {isPending ? 'Adding...' : 'Add Todo'}

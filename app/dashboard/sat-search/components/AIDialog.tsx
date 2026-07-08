@@ -64,6 +64,7 @@ export function AIDialog({ isOpen, onClose, onSearch }: AIDialogProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={isSearching}
+              aria-label="Concepto a facturar"
               className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 min-h-[100px] w-full min-w-0 resize-none rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
               autoFocus
             />

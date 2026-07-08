@@ -92,8 +92,10 @@ export function FilterBar({
             />
             {search && (
               <button
+                type="button"
                 onClick={() => onSearchChange('')}
                 className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
+                aria-label="Limpiar búsqueda"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

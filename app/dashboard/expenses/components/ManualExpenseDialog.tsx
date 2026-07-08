@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Calendar, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import {
@@ -57,20 +57,25 @@ export function ManualExpenseDialog({
 }: ManualExpenseDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [selectedProfileId, setSelectedProfileId] = useState<string>(profileId);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [fecha, setFecha] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [total, setTotal] = useState('');
+  const [subtotal, setSubtotal] = useState('');
+  const [iva, setIva] = useState('');
+  const [concepto, setConcepto] = useState('');
+  const [categoria, setCategoria] = useState('');
 
-  // Todos los perfiles (incluyendo congelados, para mostrar en el selector)
-  const allProfiles = profiles;
-  // Perfiles disponibles para seleccionar (solo no congelados)
-  const availableProfiles = profiles.filter((p) => !p.frozen);
-
-  // Sincronizar selectedProfileId cuando cambia profileId o profiles
-  useEffect(() => {
-    if (isOpen && !selectedProfileId) {
-      // Cuando se abre el diálogo por primera vez, usar el profileId del prop
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
       setSelectedProfileId(profileId);
+      setError('');
     }
-  }, [isOpen, profileId, selectedProfileId]);
+  }
 
   // Calcular límites
   const plan = subscription?.plan || 'FREE';
@@ -82,16 +87,6 @@ export function ManualExpenseDialog({
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
   const isFrozen = selectedProfile?.frozen || false;
 
-  // Form fields
-  const [fecha, setFecha] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
-  const [total, setTotal] = useState('');
-  const [subtotal, setSubtotal] = useState('');
-  const [iva, setIva] = useState('');
-  const [concepto, setConcepto] = useState('');
-  const [categoria, setCategoria] = useState('');
   // Cálculo automático de IVA cuando cambia el total
   const handleTotalChange = (value: string) => {
     setTotal(value);
@@ -122,12 +117,10 @@ export function ManualExpenseDialog({
     }
   };
 
-  // Limpiar error cuando se abre el diálogo
-  useEffect(() => {
-    if (isOpen) {
-      setError('');
-    }
-  }, [isOpen]);
+  // Todos los perfiles (incluyendo congelados, para mostrar en el selector)
+  const allProfiles = profiles;
+  // Perfiles disponibles para seleccionar (solo no congelados)
+  const availableProfiles = profiles.filter((p) => !p.frozen);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,9 +202,14 @@ export function ManualExpenseDialog({
     }
   };
 
-  const handleClose = () => {
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setSelectedProfileId(profileId);
+      setError('');
+      return;
+    }
+
     if (!isSubmitting) {
-      // Reset form
       setFecha(new Date().toISOString().split('T')[0]);
       setTotal('');
       setSubtotal('');
@@ -224,7 +222,7 @@ export function ManualExpenseDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-125">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -417,7 +415,12 @@ export function ManualExpenseDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting || !canUpload}>

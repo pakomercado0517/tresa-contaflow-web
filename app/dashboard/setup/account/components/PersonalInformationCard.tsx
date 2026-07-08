@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { User, Mail, Phone, Lock, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,19 +24,18 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
     telefono: user?.telefono || "",
     nombre_comercial: user?.nombre_comercial || "",
   });
+  const [prevUser, setPrevUser] = useState(user);
 
-  // Actualizar el estado cuando cambie el prop user
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        nombre: user.nombre || "",
-        apellido: user.apellido || "",
-        email: user.email || "",
-        telefono: user.telefono || "",
-        nombre_comercial: user.nombre_comercial || "",
-      });
-    }
-  }, [user]);
+  if (user !== prevUser && !isEditing) {
+    setPrevUser(user);
+    setFormData({
+      nombre: user?.nombre || "",
+      apellido: user?.apellido || "",
+      email: user?.email || "",
+      telefono: user?.telefono || "",
+      nombre_comercial: user?.nombre_comercial || "",
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -203,61 +203,8 @@ export function UserList() {
   )
 }
 
-// Example 2: User detail page
-export function UserDetail({ id }: { id: number }) {
-  const { data: user, isPending } = useUser(id)
-  const { mutate: updateUser, isPending: isUpdating } = useUpdateUser()
-  const { mutate: deleteUser } = useDeleteUser()
-
-  if (isPending) return <div>Loading...</div>
-  if (!user) return <div>User not found</div>
-
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <p>Email: {user.email}</p>
-      <p>Phone: {user.phone}</p>
-
-      <button
-        onClick={() => updateUser({ id: user.id, name: 'Updated Name' })}
-        disabled={isUpdating}
-      >
-        Update Name
-      </button>
-
-      <button onClick={() => deleteUser(user.id)}>
-        Delete User
-      </button>
-    </div>
-  )
-}
-
-// Example 3: Search users
-export function UserSearch() {
-  const [search, setSearch] = useState('')
-  const { data: results, isFetching } = useUserSearch(search)
-
-  return (
-    <div>
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search users..."
-      />
-
-      {isFetching && <span>Searching...</span>}
-
-      {results && (
-        <ul>
-          {results.map((user) => (
-            <li key={user.id}>{user.name} - {user.email}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
+export { UserDetail } from './custom-hooks-pattern-user-detail'
+export { UserSearch } from './custom-hooks-pattern-user-search'
 
 /**
  * Key patterns demonstrated:

@@ -204,9 +204,11 @@ export function OptimisticTodoItem({ todo }: { todo: Todo }) {
         checked={todo.completed}
         onChange={(e) => updateTodo({ id: todo.id, completed: e.target.checked })}
         disabled={isUpdating || isDeleting}
+        aria-label={`Marcar "${todo.title}" como completado`}
       />
       <span>{todo.title}</span>
       <button
+        type="button"
         onClick={() => deleteTodo(todo.id)}
         disabled={isUpdating || isDeleting}
       >

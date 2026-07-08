@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api/client';
@@ -50,11 +50,14 @@ export function PaymentComplementDetailPageClient({
   const año = toNumber(searchParams.get('año'), new Date().getFullYear());
 
   const [resolvedProfileId, setResolvedProfileId] = useState<string | undefined>(urlProfileId);
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [prevUrlProfileId, setPrevUrlProfileId] = useState(urlProfileId);
+  const [profileDialogDismissed, setProfileDialogDismissed] = useState(false);
 
-  useEffect(() => {
+  if (urlProfileId !== prevUrlProfileId) {
+    setPrevUrlProfileId(urlProfileId);
     setResolvedProfileId(urlProfileId);
-  }, [urlProfileId]);
+    setProfileDialogDismissed(false);
+  }
 
   const profilesQuery = useQuery({
     queryKey: ['profiles'],
@@ -78,11 +81,8 @@ export function PaymentComplementDetailPageClient({
     return message.includes('profile_id');
   }, [detailQuery.error]);
 
-  useEffect(() => {
-    if (profileRequiredError && profilesQuery.data) {
-      setProfileDialogOpen(true);
-    }
-  }, [profileRequiredError, profilesQuery.data]);
+  const profileDialogOpen =
+    profileRequiredError && Boolean(profilesQuery.data) && !profileDialogDismissed;
 
   const listHref = buildListHref(listBasePath, urlProfileId ?? resolvedProfileId ?? null, mes, año);
 
@@ -140,10 +140,12 @@ export function PaymentComplementDetailPageClient({
       <ProfileRequiredDialog
         open={profileDialogOpen}
         profiles={profiles}
-        onOpenChange={setProfileDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setProfileDialogDismissed(true);
+        }}
         onConfirm={(profileId) => {
           setResolvedProfileId(profileId);
-          setProfileDialogOpen(false);
+          setProfileDialogDismissed(true);
           const params = new URLSearchParams(searchParams.toString());
           params.set('profileId', profileId);
           router.replace(`${detailRouteBase}/${complementId}?${params.toString()}`);

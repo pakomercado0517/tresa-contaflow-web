@@ -92,7 +92,12 @@ export function InfiniteTodosManual() {
           <ul>
             {page.data.map((todo) => (
               <li key={todo.id}>
-                <input type="checkbox" checked={todo.completed} readOnly />
+                <input
+                  type="checkbox"
+                  checked={todo.completed}
+                  readOnly
+                  aria-label={`Todo completado: ${todo.title}`}
+                />
                 {todo.title}
               </li>
             ))}
@@ -102,6 +107,7 @@ export function InfiniteTodosManual() {
 
       {/* Load more button */}
       <button
+        type="button"
         onClick={() => fetchNextPage()}
         disabled={!hasNextPage || isFetchingNextPage}
       >
@@ -165,7 +171,12 @@ export function InfiniteTodosAuto() {
         <div key={i}>
           {page.data.map((todo) => (
             <div key={todo.id}>
-              <input type="checkbox" checked={todo.completed} readOnly />
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                readOnly
+                aria-label={`Todo completado: ${todo.title}`}
+              />
               {todo.title}
             </div>
           ))}

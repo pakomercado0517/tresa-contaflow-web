@@ -78,6 +78,7 @@ class ErrorBoundaryClass extends Component<
           </details>
           <button
             onClick={this.handleReset}
+            type="button"
             style={{
               marginTop: '1rem',
               padding: '0.5rem 1rem',
@@ -117,44 +118,8 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
 }
 
 /**
- * Usage Examples
+ * Usage examples: see error-boundary-examples.tsx
  */
-
-// Example 1: Wrap entire app
-export function AppWithErrorBoundary() {
-  return (
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  )
-}
-
-// Example 2: Wrap specific features
-export function UserProfileWithErrorBoundary() {
-  return (
-    <ErrorBoundary>
-      <UserProfile />
-    </ErrorBoundary>
-  )
-}
-
-// Example 3: Custom error UI
-export function CustomErrorBoundary({ children }: { children: ReactNode }) {
-  return (
-    <ErrorBoundary
-      fallback={(error, reset) => (
-        <div className="error-container">
-          <h1>Oops!</h1>
-          <p>We encountered an error: {error.message}</p>
-          <button onClick={reset}>Retry</button>
-          <a href="/">Go Home</a>
-        </div>
-      )}
-    >
-      {children}
-    </ErrorBoundary>
-  )
-}
 
 /**
  * Using throwOnError with Queries
@@ -198,30 +163,8 @@ function ConditionalErrorThrowing({ id }: { id: number }) {
 }
 
 /**
- * Multiple Error Boundaries (Layered)
- *
- * Place boundaries at different levels for granular error handling
+ * Multiple Error Boundaries (Layered) — see error-boundary-examples.tsx
  */
-export function LayeredErrorBoundaries() {
-  return (
-    // App-level boundary
-    <ErrorBoundary fallback={(error) => <AppCrashScreen error={error} />}>
-      <Header />
-
-      {/* Feature-level boundary */}
-      <ErrorBoundary fallback={(error) => <FeatureError error={error} />}>
-        <UserProfile />
-      </ErrorBoundary>
-
-      {/* Another feature boundary */}
-      <ErrorBoundary>
-        <TodoList />
-      </ErrorBoundary>
-
-      <Footer />
-    </ErrorBoundary>
-  )
-}
 
 /**
  * Key concepts:
