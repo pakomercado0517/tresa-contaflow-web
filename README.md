@@ -62,8 +62,10 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 # URLs del Frontend
 NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 
-# Ruta Administrativa (Opcional - Solo para referencia personal)
-# Si no se configura, usa: internal/discount-management
+# Ruta pública del panel de códigos de descuento (solo servidor; reinicia `pnpm dev` tras cambiarla)
+# Debe coincidir con segmentos de URL, sin slash inicial. Ej: admin/mi-panel-descuentos
+# La página vive en app/internal/discount-management; Next reescribe esta ruta hacia ahí.
+# Si difiere del path interno, /internal/discount-management responde 404.
 ADMIN_DISCOUNT_ROUTE=internal/discount-management
 ```
 

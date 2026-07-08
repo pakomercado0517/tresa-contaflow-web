@@ -599,11 +599,10 @@ function TourController({ user }: { user?: User }) {
   const { startNextStep, isNextStepVisible, currentTour, currentStep } = useNextStep();
   const pathname = usePathname();
   const isAuthenticated = Boolean(user);
-  const userKey = user?.id ?? 'guest';
   const hasStartedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const tourStartedRef = useRef<(typeof TOUR_IDS)[keyof typeof TOUR_IDS] | null>(null);
-  const hasCheckedStatusRef = useRef(false);
+  const lastCheckedUserId = useRef<string | null>(null);
   const lastPathnameRef = useRef(pathname);
   const hasFinishedAllToursRef = useRef(false);
   const isManualRunRef = useRef(false);
@@ -611,12 +610,13 @@ function TourController({ user }: { user?: User }) {
   const latestIsTourCompletedRef = useRef(isTourCompleted);
 
   useEffect(() => {
-    if (userKey === 'guest' && hasCheckedStatusRef.current) {
+    if (!user || user.id === lastCheckedUserId.current) {
       return;
     }
-    checkTourStatus(user ?? null);
-    hasCheckedStatusRef.current = true;
-  }, [userKey, user, checkTourStatus]);
+    lastCheckedUserId.current = user.id;
+    checkTourStatus(user);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, checkTourStatus]);
 
   useEffect(() => {
     latestIsCompletedRef.current = isCompleted;
@@ -638,6 +638,7 @@ function TourController({ user }: { user?: User }) {
 
   useEffect(() => {
     const handleReset = () => {
+      lastCheckedUserId.current = null;
       isManualRunRef.current = true;
       hasFinishedAllToursRef.current = false;
       hasStartedRef.current = false;
