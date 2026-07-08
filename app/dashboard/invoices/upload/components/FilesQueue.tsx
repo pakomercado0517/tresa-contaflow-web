@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FileText, X, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -149,10 +150,18 @@ export function FilesQueue({
 
               {/* Mostrar mensaje de error */}
               {file.status === "error" && file.errorMessage && (
-                <div className="pl-14 pr-2">
+                <div className="pl-14 pr-2 space-y-1">
                   <p className="text-xs text-destructive">
                     {file.errorMessage}
                   </p>
+                  {file.duplicateListHref && (
+                    <Link
+                      href={file.duplicateListHref}
+                      className="text-primary text-xs font-medium hover:underline"
+                    >
+                      Buscar en el listado por UUID
+                    </Link>
+                  )}
                 </div>
               )}
 
@@ -185,9 +194,19 @@ export function FilesQueue({
 
                   {/* Información de validación exitosa */}
                   {file.status === "success" && file.validacion.valido && (
-                    <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-500">
-                      <CheckCircle2 className="h-3 w-3" />
-                      <p>Archivo procesado y guardado correctamente</p>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-500">
+                        <CheckCircle2 className="h-3 w-3" />
+                        <p>Archivo procesado y guardado correctamente</p>
+                      </div>
+                      {file.complementViewHref && (
+                        <Link
+                          href={file.complementViewHref}
+                          className="text-primary text-xs font-medium hover:underline"
+                        >
+                          Ver complemento de pago
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>

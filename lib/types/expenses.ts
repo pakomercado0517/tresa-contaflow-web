@@ -1,4 +1,4 @@
-import type { EstadoPagoDetalle } from './invoices';
+import type { EstadoPagoDetalle, UploadComplementSavedResponse } from './invoices';
 
 export interface Expense {
   id: string;
@@ -85,12 +85,14 @@ export interface ValidationState {
   valido: boolean;
 }
 
-export interface UploadExpenseResponse {
+export interface UploadExpenseDocumentResponse {
   message: string;
   data: Expense;
   validacion: ValidationState;
   tipo: 'gasto';
 }
+
+export type UploadExpenseResponse = UploadExpenseDocumentResponse | UploadComplementSavedResponse;
 
 export interface CreateExpenseRequest {
   profileId: string;

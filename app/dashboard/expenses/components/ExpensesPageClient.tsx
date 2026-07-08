@@ -8,8 +8,13 @@ import { getProfilesClient } from '@/lib/api/profiles.client';
 import { getExpensesClient } from '@/lib/api/expenses.client';
 import { getAccruedExpensesClient } from '@/lib/api/accrued-expenses.client';
 import { getMetricsClient } from '@/lib/api/invoices.client';
+import {
+  listPaymentComplementsClient,
+  profileIdToSnakeQuery,
+} from '@/lib/api/payment-complements.client';
 import { useSubscription } from '@/lib/hooks/useSubscription';
 import type { GetExpensesResponse, GetAccruedExpensesResponse } from '@/lib/types/expenses';
+import type { ListPaymentComplementsResponse } from '@/lib/types/payment-complements';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import { ExpensesListContent } from './ExpensesListContent';
@@ -32,6 +37,7 @@ interface NormalizedExpenseParams {
   año: number;
   regimen_fiscal?: string;
   page: number;
+  complementPage: number;
   search?: string;
 }
 
@@ -62,6 +68,7 @@ export function ExpensesPageClient() {
       año: toNumber(searchParams.get('año'), getDefaultAño()),
       regimen_fiscal: regimenFiscalParam && regimenFiscalParam !== 'all' ? regimenFiscalParam : undefined,
       page: toNumber(searchParams.get('page'), 1),
+      complementPage: toNumber(searchParams.get('complementPage'), 1),
       search: searchParams.get('search') ?? undefined,
     };
   }, [searchParams]);
@@ -119,6 +126,27 @@ export function ExpensesPageClient() {
     placeholderData: keepPreviousData,
   });
 
+  const paymentComplementsQuery = useQuery<ListPaymentComplementsResponse, Error>({
+    queryKey: [
+      'payment-complements',
+      'EGRESO',
+      normalizedParams.profileId ?? null,
+      normalizedParams.mes,
+      normalizedParams.año,
+      normalizedParams.complementPage,
+    ],
+    queryFn: () =>
+      listPaymentComplementsClient({
+        role: 'EGRESO',
+        profile_id: profileIdToSnakeQuery(normalizedParams.profileId),
+        mes: normalizedParams.mes,
+        año: normalizedParams.año,
+        page: normalizedParams.complementPage,
+        limit: 50,
+      }),
+    placeholderData: keepPreviousData,
+  });
+
   const fatalError =
     profilesQuery.error ??
     expensesQuery.error ??
@@ -159,6 +187,24 @@ export function ExpensesPageClient() {
   const manualExpenseDisabledReason =
     !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
 
+  const paymentComplements = paymentComplementsQuery.data?.data ?? [];
+  const paymentComplementsPagination =
+    paymentComplementsQuery.data?.pagination ??
+    ({
+      total: 0,
+      page: normalizedParams.complementPage,
+      limit: 50,
+      totalPages: 1,
+    } as const);
+
+  const paymentComplementsState = paymentComplementsQuery.isPending && !paymentComplementsQuery.data
+    ? 'loading'
+    : paymentComplementsQuery.isError
+      ? 'error'
+      : paymentComplementsQuery.isFetching
+        ? 'updating'
+        : 'idle';
+
   return (
     <ExpensesListContent
       expenses={expenses}
@@ -185,6 +231,11 @@ export function ExpensesPageClient() {
       initialRegimenFiscal={normalizedParams.regimen_fiscal ?? 'all'}
       initialSearch={normalizedParams.search}
       tableState={tableState}
+      paymentComplements={paymentComplements}
+      paymentComplementsPagination={paymentComplementsPagination}
+      paymentComplementsState={paymentComplementsState}
+      paymentComplementsError={paymentComplementsQuery.error?.message}
+      complementPage={normalizedParams.complementPage}
     />
   );
 }

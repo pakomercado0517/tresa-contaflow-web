@@ -1,3 +1,5 @@
+import type { ComplementoPago } from '@/lib/types/payment-complements';
+
 export type EstadoPago = 'PAGADO' | 'PAGO_PARCIAL' | 'NO_PAGADO';
 
 export interface EstadoPagoDetalle {
@@ -123,11 +125,36 @@ export interface ValidationState {
   valido: boolean;
 }
 
-export interface UploadInvoiceResponse {
+export interface UploadInvoiceDocumentResponse {
   message: string;
   data: Invoice;
   validacion: ValidationState;
   tipo: 'factura' | 'gasto';
+}
+
+export interface PaymentComplementMatchingSummary {
+  applied?: number;
+  skipped?: number;
+  warnings?: string[];
+}
+
+export interface UploadComplementSavedResponse {
+  saved: true;
+  complementId: string;
+  message?: string;
+  data: ComplementoPago;
+  validacion: ValidationState;
+  matching?: PaymentComplementMatchingSummary;
+}
+
+export type UploadInvoiceResponse = UploadInvoiceDocumentResponse | UploadComplementSavedResponse;
+
+export function isUploadComplementSavedResponse(
+  response: unknown
+): response is UploadComplementSavedResponse {
+  if (typeof response !== 'object' || response === null) return false;
+  const record = response as UploadComplementSavedResponse;
+  return record.saved === true && typeof record.complementId === 'string';
 }
 
 export interface DeleteInvoiceResponse {
