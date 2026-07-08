@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:all": "pnpm lint && pnpm typecheck && pnpm build",
-    "verify:ci": "pnpm lint && pnpm typecheck"
+    "verify:ci": "pnpm lint && pnpm typecheck",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
