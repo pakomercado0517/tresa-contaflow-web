@@ -7,7 +7,12 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { getProfilesClient } from '@/lib/api/profiles.client';
 import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
 import { getManualIncomesClient } from '@/lib/api/manual-incomes.client';
+import {
+  listPaymentComplementsClient,
+  profileIdToSnakeQuery,
+} from '@/lib/api/payment-complements.client';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
+import type { ListPaymentComplementsResponse } from '@/lib/types/payment-complements';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import type { GetManualIncomesResponse } from '@/lib/types/manual-incomes';
@@ -36,6 +41,7 @@ interface NormalizedInvoiceParams {
   año: number;
   regimen_fiscal?: string;
   page: number;
+  complementPage: number;
   search?: string;
 }
 
@@ -65,6 +71,7 @@ export function InvoicesPageClient() {
       año: toNumber(searchParams.get('año'), getDefaultAño()),
       regimen_fiscal: regimenParam && regimenParam !== 'all' ? regimenParam : undefined,
       page: toNumber(searchParams.get('page'), 1),
+      complementPage: toNumber(searchParams.get('complementPage'), 1),
       search: searchParams.get('search') ?? undefined,
     };
   }, [searchParams]);
@@ -122,6 +129,27 @@ export function InvoicesPageClient() {
     placeholderData: keepPreviousData,
   });
 
+  const paymentComplementsQuery = useQuery<ListPaymentComplementsResponse, Error>({
+    queryKey: [
+      'payment-complements',
+      'INGRESO',
+      normalizedParams.profileId ?? null,
+      normalizedParams.mes,
+      normalizedParams.año,
+      normalizedParams.complementPage,
+    ],
+    queryFn: () =>
+      listPaymentComplementsClient({
+        role: 'INGRESO',
+        profile_id: profileIdToSnakeQuery(normalizedParams.profileId),
+        mes: normalizedParams.mes,
+        año: normalizedParams.año,
+        page: normalizedParams.complementPage,
+        limit: 50,
+      }),
+    placeholderData: keepPreviousData,
+  });
+
   const fatalError =
     profilesQuery.error ??
     invoicesQuery.error ??
@@ -168,6 +196,24 @@ export function InvoicesPageClient() {
   const manualIncomeDisabledReason =
     !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
 
+  const paymentComplements = paymentComplementsQuery.data?.data ?? [];
+  const paymentComplementsPagination =
+    paymentComplementsQuery.data?.pagination ??
+    ({
+      total: 0,
+      page: normalizedParams.complementPage,
+      limit: 50,
+      totalPages: 1,
+    } as const);
+
+  const paymentComplementsState = paymentComplementsQuery.isPending && !paymentComplementsQuery.data
+    ? 'loading'
+    : paymentComplementsQuery.isError
+      ? 'error'
+      : paymentComplementsQuery.isFetching
+        ? 'updating'
+        : 'idle';
+
   return (
     <InvoicesListContent
       invoices={invoices}
@@ -199,6 +245,11 @@ export function InvoicesPageClient() {
       initialRegimenFiscal={normalizedParams.regimen_fiscal}
       initialSearch={normalizedParams.search}
       tableState={tableState}
+      paymentComplements={paymentComplements}
+      paymentComplementsPagination={paymentComplementsPagination}
+      paymentComplementsState={paymentComplementsState}
+      paymentComplementsError={paymentComplementsQuery.error?.message}
+      complementPage={normalizedParams.complementPage}
     />
   );
 }

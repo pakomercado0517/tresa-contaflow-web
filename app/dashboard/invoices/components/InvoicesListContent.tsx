@@ -50,6 +50,11 @@ import {
   setStoredProfileSelection,
 } from '@/lib/storage/profile-selection';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+import { PaymentComplementsSection } from '@/components/payment-complements/PaymentComplementsSection';
+import type {
+  PaymentComplementListItem,
+  PaymentComplementsPagination,
+} from '@/lib/types/payment-complements';
 
 interface InvoicesListContentProps {
   invoices: Invoice[];
@@ -78,6 +83,11 @@ interface InvoicesListContentProps {
   initialRegimenFiscal?: string;
   initialSearch?: string;
   tableState?: 'idle' | 'loading' | 'updating';
+  paymentComplements: PaymentComplementListItem[];
+  paymentComplementsPagination: PaymentComplementsPagination;
+  paymentComplementsState: 'idle' | 'loading' | 'updating' | 'error';
+  paymentComplementsError?: string;
+  complementPage: number;
 }
 
 export function InvoicesListContent({
@@ -96,6 +106,11 @@ export function InvoicesListContent({
   initialRegimenFiscal,
   initialSearch,
   tableState = 'idle',
+  paymentComplements,
+  paymentComplementsPagination,
+  paymentComplementsState,
+  paymentComplementsError,
+  complementPage,
 }: InvoicesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -280,6 +295,7 @@ export function InvoicesListContent({
       params.set('regimen_fiscal', selectedRegimenFiscal);
     if (search) params.set('search', search);
     params.set('page', '1');
+    params.set('complementPage', '1');
     router.push(`/dashboard/invoices?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
@@ -370,6 +386,7 @@ export function InvoicesListContent({
     params.set('mes', String(appMes));
     params.set('año', String(appAño));
     params.set('page', '1');
+    params.set('complementPage', '1');
     router.push(`/dashboard/invoices?${params.toString()}`);
   };
 
@@ -385,6 +402,7 @@ export function InvoicesListContent({
     }
     params.delete('regimen_fiscal');
     params.set('page', '1');
+    params.set('complementPage', '1');
     router.push(`/dashboard/invoices?${params.toString()}`);
   };
 
@@ -393,6 +411,14 @@ export function InvoicesListContent({
     params.set('page', newPage.toString());
     router.push(`/dashboard/invoices?${params.toString()}`);
   };
+
+  const handleComplementPageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('complementPage', newPage.toString());
+    router.push(`/dashboard/invoices?${params.toString()}`);
+  };
+
+  const showComplementProfileColumn = !profileId;
 
   const handleOpenAddManualIncome = () => {
     resetManualIncomeForm();
@@ -1029,6 +1055,21 @@ export function InvoicesListContent({
             </div>
           </div>
         )}
+
+        <PaymentComplementsSection
+          title="Complementos de cobro (REP emitidos)"
+          role="INGRESO"
+          items={paymentComplements}
+          pagination={paymentComplementsPagination}
+          complementPage={complementPage}
+          onComplementPageChange={handleComplementPageChange}
+          listState={paymentComplementsState}
+          errorMessage={paymentComplementsError}
+          showProfileColumn={showComplementProfileColumn}
+          detailBasePath="/dashboard/invoices/complementos"
+          mes={selectedMes}
+          año={selectedAño}
+        />
       </div>
       {/* end space-y-6 content wrapper */}
 

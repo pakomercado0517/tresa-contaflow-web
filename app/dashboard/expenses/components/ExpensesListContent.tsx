@@ -57,6 +57,11 @@ import {
   setStoredProfileSelection,
 } from '@/lib/storage/profile-selection';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+import { PaymentComplementsSection } from '@/components/payment-complements/PaymentComplementsSection';
+import type {
+  PaymentComplementListItem,
+  PaymentComplementsPagination,
+} from '@/lib/types/payment-complements';
 
 interface ExpensesListContentProps {
   expenses: Expense[];
@@ -80,6 +85,11 @@ interface ExpensesListContentProps {
   initialRegimenFiscal?: string;
   initialSearch?: string;
   tableState?: 'idle' | 'loading' | 'updating';
+  paymentComplements: PaymentComplementListItem[];
+  paymentComplementsPagination: PaymentComplementsPagination;
+  paymentComplementsState: 'idle' | 'loading' | 'updating' | 'error';
+  paymentComplementsError?: string;
+  complementPage: number;
 }
 
 /** Categorías para gastos manuales (edición y tabla). No confundir con el filtro de régimen fiscal. */
@@ -139,6 +149,11 @@ export function ExpensesListContent({
   initialRegimenFiscal,
   initialSearch,
   tableState = 'idle',
+  paymentComplements,
+  paymentComplementsPagination,
+  paymentComplementsState,
+  paymentComplementsError,
+  complementPage,
 }: ExpensesListContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -227,6 +242,7 @@ export function ExpensesListContent({
       params.set('regimen_fiscal', selectedRegimenFiscal);
     if (search) params.set('search', search);
     params.set('page', '1');
+    params.set('complementPage', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
@@ -317,6 +333,7 @@ export function ExpensesListContent({
     params.set('mes', String(appMes));
     params.set('año', String(appAño));
     params.set('page', '1');
+    params.set('complementPage', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
@@ -325,6 +342,14 @@ export function ExpensesListContent({
     params.set('page', newPage.toString());
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
+
+  const handleComplementPageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('complementPage', newPage.toString());
+    router.push(`/dashboard/expenses?${params.toString()}`);
+  };
+
+  const showComplementProfileColumn = !profileId;
 
   const canExportPDF = hasFeatureAccess(subscription ?? null, 'pdf_export');
   const canExportExcel = hasFeatureAccess(subscription ?? null, 'excel_export');
@@ -385,6 +410,7 @@ export function ExpensesListContent({
     }
     params.delete('regimen_fiscal');
     params.set('page', '1');
+    params.set('complementPage', '1');
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
@@ -913,6 +939,21 @@ export function ExpensesListContent({
             </div>
           </div>
         )}
+
+        <PaymentComplementsSection
+          title="Complementos de pago (REP recibidos)"
+          role="EGRESO"
+          items={paymentComplements}
+          pagination={paymentComplementsPagination}
+          complementPage={complementPage}
+          onComplementPageChange={handleComplementPageChange}
+          listState={paymentComplementsState}
+          errorMessage={paymentComplementsError}
+          showProfileColumn={showComplementProfileColumn}
+          detailBasePath="/dashboard/expenses/complementos"
+          mes={selectedMes}
+          año={selectedAño}
+        />
 
         {/* Manual Expense Dialog */}
         {selectedProfileId && periodId && (

@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { UploadZone } from './UploadZone';
 import { FilesQueue } from './FilesQueue';
 import { UploadSummary } from './UploadSummary';
@@ -24,6 +26,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import type { Profile } from '@/lib/types/profiles';
 import type { ValidationState } from '@/lib/types/invoices';
+import { isUploadComplementSavedResponse } from '@/lib/types/invoices';
 import type { Subscription } from '@/lib/types/subscription';
 import {
   canUploadInvoices,
@@ -45,7 +48,9 @@ export interface QueuedFile {
   errorMessage?: string;
   size: number;
   type?: string; // CFDI 3.3, CFDI 4.0, Nómina 1.2, etc.
-  validacion?: ValidationState; // Guardar validación de la API
+  validacion?: ValidationState;
+  complementViewHref?: string;
+  duplicateListHref?: string;
 }
 
 export function UploadInvoicesContent({
@@ -53,6 +58,7 @@ export function UploadInvoicesContent({
   subscription,
   invoicesUsed,
 }: UploadInvoicesContentProps) {
+  const queryClient = useQueryClient();
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -236,19 +242,57 @@ export function UploadInvoicesContent({
       try {
         const result = await uploadInvoice(queuedFile.file, selectedProfileId);
 
-        // Marcar como success
-        setQueuedFiles((prev) =>
-          prev.map((f) =>
-            f.id === queuedFile.id ? { ...f, status: 'success', validacion: result.validacion } : f
-          )
-        );
+        if (isUploadComplementSavedResponse(result)) {
+          const complementHref = `/dashboard/invoices/complementos/${result.complementId}?profileId=${selectedProfileId}`;
+          setQueuedFiles((prev) =>
+            prev.map((f) =>
+              f.id === queuedFile.id
+                ? {
+                    ...f,
+                    status: 'success',
+                    validacion: result.validacion,
+                    complementViewHref: complementHref,
+                  }
+                : f
+            )
+          );
+          toast.success('Complemento de pago guardado', {
+            description: 'El REP se registró y aplicó pagos a facturas PPD relacionadas.',
+            action: {
+              label: 'Ver complemento',
+              onClick: () => {
+                window.location.href = complementHref;
+              },
+            },
+          });
+        } else {
+          setQueuedFiles((prev) =>
+            prev.map((f) =>
+              f.id === queuedFile.id ? { ...f, status: 'success', validacion: result.validacion } : f
+            )
+          );
+        }
+        await queryClient.invalidateQueries({ queryKey: ['payment-complements'] });
         successCount++;
       } catch (error) {
         errorCount++;
         let errorMessage = 'Error al subir archivo';
+        let duplicateListHref: string | undefined;
 
         if (error instanceof ApiError) {
           errorMessage = error.message;
+          if (error.status === 409) {
+            const payload = error.data as { uuid?: string } | undefined;
+            if (payload?.uuid) {
+              errorMessage = 'Este complemento ya está registrado.';
+              const params = new URLSearchParams({
+                profileId: selectedProfileId,
+                search: payload.uuid,
+                page: '1',
+              });
+              duplicateListHref = `/dashboard/invoices?${params.toString()}`;
+            }
+          }
           // Si hay datos de validación en el error, guardarlos
           const validationData = (error.data as { validacion?: ValidationState })?.validacion;
 
@@ -260,6 +304,7 @@ export function UploadInvoicesContent({
                     status: 'error',
                     errorMessage,
                     validacion: validationData,
+                    duplicateListHref,
                   }
                 : f
             )
