@@ -47,7 +47,7 @@ export function UserProfileCard({ user }: UserProfileCardProps) {
     try {
       const formData = new FormData();
       formData.set("logo", file);
-      const logoUrl = await uploadUserLogoAction(user.id, formData);
+      const logoUrl = await uploadUserLogoAction(formData);
       await updateProfile({ logo_url: logoUrl });
       router.refresh();
     } catch (err) {

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { logger } from '@/lib/utils/logger';
 
-async function refreshSessionToken(): Promise<void> {
+async function refreshSessionToken(): Promise<null> {
   const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'include',
@@ -12,7 +12,7 @@ async function refreshSessionToken(): Promise<void> {
 
   if (response.ok) {
     logger.info('Token refrescado automáticamente');
-    return;
+    return null;
   }
 
   const data = (await response.json()) as { redirect?: boolean };
@@ -20,6 +20,8 @@ async function refreshSessionToken(): Promise<void> {
     logger.warn('Refresh token expirado, redirigiendo a login');
     window.location.href = '/auth/login';
   }
+
+  return null;
 }
 
 /**
