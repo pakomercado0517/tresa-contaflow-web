@@ -1,20 +1,15 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/card';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
-import { formatCurrencyCompact } from '@/lib/utils/format';
 import type { ImpuestosMetrics } from '@/lib/types/metrics';
 import type { PublicReportMetrics } from '@/lib/types/public-reports';
 import { TrendingUp } from 'lucide-react';
+
+const PublicFlowBarChartPlot = dynamic(() => import('./PublicFlowBarChartPlot'), {
+  ssr: false,
+  loading: () => <div className="bg-muted/30 h-full w-full animate-pulse rounded-lg" />,
+});
 
 interface PublicFlowBarChartProps {
   metrics: PublicReportMetrics | null;
@@ -92,47 +87,7 @@ export function PublicFlowBarChart({ metrics }: PublicFlowBarChartProps) {
 
         <div className="relative h-72 min-w-0 w-full">
           {hasData ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={288}>
-              <BarChart
-                data={chartData}
-                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-                barCategoryGap="30%"
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  stroke="#9ca3af"
-                  style={{ fontSize: '11px' }}
-                  tick={{ width: 90 }}
-                  interval={0}
-                />
-                <YAxis
-                  stroke="#9ca3af"
-                  style={{ fontSize: '11px' }}
-                  tickFormatter={(v) => formatCurrencyCompact(Number(v))}
-                  width={80}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                  }}
-                  formatter={(value) => [formatCurrencyCompact(Number(value)), 'Monto']}
-                  labelFormatter={(label) => String(label)}
-                />
-                <Bar
-                  dataKey="value"
-                  radius={[4, 4, 0, 0]}
-                  isAnimationActive={true}
-                  animationDuration={450}
-                >
-                  {chartData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} fillOpacity={0.85} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <PublicFlowBarChartPlot chartData={chartData} />
           ) : (
             <div className="bg-muted/30 flex h-full items-center justify-center rounded-lg">
               <div className="space-y-2 text-center">

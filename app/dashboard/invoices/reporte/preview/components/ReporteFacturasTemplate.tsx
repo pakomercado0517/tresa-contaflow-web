@@ -238,7 +238,7 @@ export function ReporteFacturasTemplate({
               ) : (
                 data.filas.map((fila, idx) => (
                   <tr
-                    key={`${fila.folio}-${idx}`}
+                    key={`${fila.folio}-${fila.fecha}-${fila.rfcReceptor}`}
                     className={cn('border-t border-gray-100', idx % 2 === 1 && 'bg-gray-50/50')}
                   >
                     <td className="px-4 py-2.5 text-gray-900">{formatDate(fila.fecha)}</td>

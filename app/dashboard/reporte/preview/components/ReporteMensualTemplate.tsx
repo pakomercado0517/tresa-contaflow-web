@@ -9,6 +9,7 @@ import { TaxEstimatePanel } from '@/components/common/TaxEstimatePanel';
 import { TAX_ESTIMATE_PANEL_COPY, TAX_ESTIMATE_REPORT_FOOTER_NOTE } from '@/lib/constants/tax-estimate-field-labels';
 import type { TaxEstimateResult } from '@/lib/types/tax-estimates';
 import { cn } from '@/lib/utils';
+import { ReportGeneratedAtLine } from '@/components/common/ReportGeneratedAtLine';
 
 const MESES = [
   'Enero',
@@ -494,17 +495,7 @@ export function ReporteMensualTemplate({
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <p>Generado por: Contafy</p>
-              <p suppressHydrationWarning>
-                Fecha de generación:{' '}
-                {new Date().toLocaleDateString('es-MX', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                })}
-              </p>
+              <ReportGeneratedAtLine />
             </div>
             <p className="max-w-md text-center md:text-right">
               Este documento es para fines informativos y de gestión interna. Sujeto a cambios

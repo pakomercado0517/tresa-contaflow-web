@@ -196,7 +196,13 @@ function isComplementoOrphan(invoice: Invoice, invoices: Invoice[]): boolean {
 
   if (relatedUuids.length === 0) return true;
 
-  return !invoices.some((item) => relatedUuids.includes(item.uuid));
+  const invoiceUuidSet = new Set(invoices.map((item) => item.uuid));
+  for (const uuid of relatedUuids) {
+    if (invoiceUuidSet.has(uuid)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function isInvoicePending(invoice: Invoice): boolean {

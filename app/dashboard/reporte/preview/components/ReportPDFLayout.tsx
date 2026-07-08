@@ -241,8 +241,8 @@ export function ReportPDFLayout({ data, detalleData, totalPages }: ReportPDFLayo
                       </td>
                     </tr>
                   ) : (
-                    detalleData.ingresos.map((row, idx) => (
-                      <tr key={`ing-${idx}-${row.folioUuid}`}>
+                    detalleData.ingresos.map((row) => (
+                      <tr key={row.folioUuid}>
                         <td>{formatDate(row.fecha)}</td>
                         <td className="report-pdf-td-mono">{truncate(row.folioUuid, 20)}</td>
                         <td>{truncate(row.rfcReceptor, 18)}</td>
@@ -286,8 +286,8 @@ export function ReportPDFLayout({ data, detalleData, totalPages }: ReportPDFLayo
                       </td>
                     </tr>
                   ) : (
-                    detalleData.egresos.map((row, idx) => (
-                      <tr key={`egr-${idx}-${row.folioUuid}`}>
+                    detalleData.egresos.map((row) => (
+                      <tr key={row.folioUuid}>
                         <td>{formatDate(row.fecha)}</td>
                         <td className="report-pdf-td-mono">{truncate(row.folioUuid, 20)}</td>
                         <td>{truncate(row.rfcEmisor, 18)}</td>

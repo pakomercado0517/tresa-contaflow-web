@@ -45,8 +45,8 @@ const MONTHS = [
   'Diciembre',
 ];
 
-/** Separador vertical reutilizable dentro del filter bar */
-export function FilterSeparator() {
+/** Separador vertical dentro del filter bar */
+function FilterSeparator() {
   return <div className="bg-border/70 mx-0.5 hidden h-4 w-px sm:block" aria-hidden="true" />;
 }
 

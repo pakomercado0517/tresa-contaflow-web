@@ -187,8 +187,9 @@ export function useTour(): UseTourReturn {
 
       // Verificar si se completaron todos los tours AQUÍ con la nueva lista
       const allTours = Object.values(TOUR_IDS);
-      const allCompleted = allTours.every((tour) => newCompletedTours.includes(tour));
-      const missingTours = allTours.filter((tour) => !newCompletedTours.includes(tour));
+      const completedSet = new Set(newCompletedTours);
+      const allCompleted = allTours.every((tour) => completedSet.has(tour));
+      const missingTours = allTours.filter((tour) => !completedSet.has(tour));
 
       console.debug('[useTour] All tours completed check:', {
         allTours,

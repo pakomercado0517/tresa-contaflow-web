@@ -56,9 +56,13 @@ export function CreateProfileForm({
     () => regimenesData?.data ?? [],
     [regimenesData?.data]
   );
+  const regimenesFiscalesSet = useMemo(
+    () => new Set(regimenesFiscales),
+    [regimenesFiscales]
+  );
   const availableToAdd = useMemo(
-    () => regimenesOptions.filter((r) => !regimenesFiscales.includes(r.clave)),
-    [regimenesOptions, regimenesFiscales]
+    () => regimenesOptions.filter((r) => !regimenesFiscalesSet.has(r.clave)),
+    [regimenesOptions, regimenesFiscalesSet]
   );
 
   const handleAddRegimen = () => {
