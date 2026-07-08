@@ -112,21 +112,30 @@ export function ExpensesListContent(props: ExpensesListContentProps) {
         onMesChange={setSelectedMes}
         selectedAño={selectedAño}
         onAñoChange={setSelectedAño}
-        selectedRegimenFiscal={selectedRegimenFiscal}
-        onRegimenFiscalChange={setSelectedRegimenFiscal}
-        regimenOptions={regimenOptions}
-        isRegimenDisabled={!selectedProfile?.regimenes_fiscales?.length}
         search={search}
         onSearchChange={setSearch}
         onClearFilters={handleClearFilters}
-        exportPdfHref={exportPdfHref}
-        onExportPDF={handleExportPDF}
-        canExportPDF={canExportPDF}
-        onExportExcel={handleExportExcel}
-        canExportExcel={canExportExcel}
-        onAddManualExpense={() => setIsManualExpenseDialogOpen(true)}
-        canAddManualExpense={canAddManualExpense}
-        manualExpenseDisabledReason={manualExpenseDisabledReason}
+        regimenFilter={{
+          selected: selectedRegimenFiscal,
+          onChange: setSelectedRegimenFiscal,
+          options: regimenOptions,
+          disabled: !selectedProfile?.regimenes_fiscales?.length,
+        }}
+        exportConfig={{
+          pdf: {
+            allowed: canExportPDF,
+            previewHref: exportPdfHref,
+            onExport: handleExportPDF,
+          },
+          excel: {
+            allowed: canExportExcel,
+            onExport: handleExportExcel,
+          },
+        }}
+        manualEntry={{
+          onAdd: () => setIsManualExpenseDialogOpen(true),
+          blockReason: canAddManualExpense ? null : manualExpenseDisabledReason,
+        }}
       />
 
       <div className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">

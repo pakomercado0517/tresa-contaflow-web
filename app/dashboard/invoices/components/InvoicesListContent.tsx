@@ -105,21 +105,30 @@ export function InvoicesListContent(props: InvoicesListContentProps) {
         onMesChange={setSelectedMes}
         selectedAño={selectedAño}
         onAñoChange={setSelectedAño}
-        selectedRegimenFiscal={selectedRegimenFiscal}
-        onRegimenFiscalChange={setSelectedRegimenFiscal}
-        regimenOptions={regimenOptions}
-        isRegimenDisabled={!selectedProfile?.regimenes_fiscales?.length}
         search={search}
         onSearchChange={setSearch}
         onClearFilters={handleClearFilters}
-        exportPdfHref={exportPdfHref}
-        onExportPDF={handleExportPDF}
-        canExportPDF={canExportPDF}
-        onExportExcel={handleExportExcel}
-        canExportExcel={canExportExcel}
-        onAddManualIncome={handleOpenAddManualIncome}
-        canAddManualIncome={canAddManualIncome}
-        manualIncomeDisabledReason={manualIncomeDisabledReason}
+        regimenFilter={{
+          selected: selectedRegimenFiscal,
+          onChange: setSelectedRegimenFiscal,
+          options: regimenOptions,
+          disabled: !selectedProfile?.regimenes_fiscales?.length,
+        }}
+        exportConfig={{
+          pdf: {
+            allowed: canExportPDF,
+            previewHref: exportPdfHref,
+            onExport: handleExportPDF,
+          },
+          excel: {
+            allowed: canExportExcel,
+            onExport: handleExportExcel,
+          },
+        }}
+        manualEntry={{
+          onAdd: handleOpenAddManualIncome,
+          blockReason: canAddManualIncome ? null : manualIncomeDisabledReason,
+        }}
       />
 
       <div className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
