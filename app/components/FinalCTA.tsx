@@ -10,6 +10,18 @@ import { toast } from 'sonner';
 import { registerUser } from '@/lib/api/auth';
 import type { RegisterRequest } from '@/lib/types/auth';
 
+interface PasswordStrength {
+  text: string;
+  color: string;
+}
+
+function getPasswordStrength(value: string): PasswordStrength {
+  if (value.length === 0) return { text: '', color: '' };
+  if (value.length < 8) return { text: 'Débil', color: 'text-red-500' };
+  if (value.length < 12) return { text: 'Media', color: 'text-yellow-500' };
+  return { text: 'Fuerte', color: 'text-green-500' };
+}
+
 export function FinalCTA() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -43,13 +55,6 @@ export function FinalCTA() {
     }
     setErrors((prev) => ({ ...prev, password: undefined }));
     return true;
-  };
-
-  const getPasswordStrength = (value: string): { text: string; color: string } => {
-    if (value.length === 0) return { text: '', color: '' };
-    if (value.length < 8) return { text: 'Débil', color: 'text-red-500' };
-    if (value.length < 12) return { text: 'Media', color: 'text-yellow-500' };
-    return { text: 'Fuerte', color: 'text-green-500' };
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -154,6 +159,7 @@ export function FinalCTA() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                     className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

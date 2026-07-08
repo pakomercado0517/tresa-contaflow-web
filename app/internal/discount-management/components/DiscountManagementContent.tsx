@@ -10,7 +10,7 @@ import type { DiscountCode } from '@/lib/types/discounts';
 import { getDiscountCodesClient } from '@/lib/api/discounts.client';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorState } from '@/components/common/ErrorState';
-import { logoutAction } from '@/app/dashboard/setup/actions';
+import { startDiscountAdminLogout } from '@/lib/auth/client-logout';
 import { ArrowLeft, LogOut, ShieldCheck } from 'lucide-react';
 
 export function DiscountManagementContent() {
@@ -48,16 +48,6 @@ export function DiscountManagementContent() {
     setRefreshKey((prev) => prev + 1);
   };
 
-  const handleLogout = async () => {
-    // Limpiar localStorage antes de cerrar sesión
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('tour:onboarding');
-    }
-
-    // Llamar a la Server Action que elimina cookies y redirige
-    await logoutAction();
-  };
-
   return (
     <div className="from-background via-primary/5 to-primary/10 min-h-screen bg-gradient-to-br">
       {/* Header con navegación */}
@@ -84,7 +74,7 @@ export function DiscountManagementContent() {
                 </Link>
               </Button>
               <Button
-                onClick={handleLogout}
+                onClick={startDiscountAdminLogout}
                 variant="ghost"
                 size="sm"
                 className="text-muted-foreground hover:text-destructive gap-2"

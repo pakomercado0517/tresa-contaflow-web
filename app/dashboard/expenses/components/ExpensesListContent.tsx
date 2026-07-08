@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useEffectEvent } from 'react';
+import { useExpensesListUiState } from './use-expenses-list-ui-state';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileX, Trash2, Receipt } from 'lucide-react';
@@ -54,6 +55,7 @@ import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkelet
 import { setStoredProfileSelection } from '@/lib/storage/profile-selection';
 import { useStoredProfileUrlRestoreRef } from '@/lib/navigation/use-stored-profile-url-restore-ref';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import { PaymentComplementsSection } from '@/components/payment-complements/PaymentComplementsSection';
 import type {
   PaymentComplementListItem,
@@ -129,6 +131,64 @@ const getOriginBadge = (tipoOrigen: 'XML' | 'MANUAL') => {
   );
 };
 
+function getDeleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return 'No tienes permisos para eliminar este gasto.';
+    }
+    if (error.status === 404) {
+      return 'El gasto ya no existe o fue eliminado.';
+    }
+    if (error.status === 400) {
+      return error.message || 'No se puede eliminar este gasto.';
+    }
+    return error.message || 'Error al eliminar el gasto.';
+  }
+  return 'Error inesperado al eliminar el gasto. Por favor intenta nuevamente.';
+}
+
+function getPaymentStatusBadge(expense: Expense) {
+  if (expense.tipo_origen !== 'XML' || !expense.tipo || expense.tipo === 'COMPLEMENTO_PAGO') {
+    return null;
+  }
+
+  if (expense.tipo === 'PUE') {
+    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+  }
+
+  if (expense.tipo === 'PPD') {
+    const estadoPago = expense.estadoPago;
+
+    if (!estadoPago) {
+      return (
+        <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
+          No Pagado
+        </Badge>
+      );
+    }
+
+    if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+    }
+
+    if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+      return (
+        <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600">
+          Pago Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
+        No Pagado
+      </Badge>
+    );
+  }
+
+  return null;
+}
+
 export function ExpensesListContent({
   expenses,
   pagination,
@@ -156,22 +216,56 @@ export function ExpensesListContent({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const isSyncingFromUrlRef = useRef(false);
-  const [search, setSearch] = useState(initialSearch || '');
-  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
-  const [selectedMes, setSelectedMes] = useState(
-    initialMes ?? getCurrentMonthYearInAppTimezone().mes
-  );
-  const [selectedAño, setSelectedAño] = useState(
-    initialAño ?? getCurrentMonthYearInAppTimezone().año
-  );
-  const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(initialRegimenFiscal || 'all');
+  const {
+    dispatchUi,
+    search,
+    setSearch,
+    selectedProfileId,
+    selectedMes,
+    setSelectedMes,
+    selectedAño,
+    setSelectedAño,
+    selectedRegimenFiscal,
+    setSelectedRegimenFiscal,
+    isManualExpenseDialogOpen,
+    setIsManualExpenseDialogOpen,
+    showProfileWarning,
+    setShowProfileWarning,
+    isInitialLoad,
+    expenseToDelete,
+    deleteError,
+    deleteConfirmation,
+    setDeleteConfirmation,
+    isDeleting,
+    editingManualExpense,
+    editConcept,
+    setEditConcept,
+    editSubtotal,
+    setEditSubtotal,
+    editIva,
+    setEditIva,
+    editIsPaid,
+    setEditIsPaid,
+    editPaymentDate,
+    setEditPaymentDate,
+    editCategoria,
+    setEditCategoria,
+    editError,
+    isUpdatingManual,
+  } = useExpensesListUiState({
+    initialSearch,
+    initialProfileId,
+    initialMes,
+    initialAño,
+    initialRegimenFiscal,
+  });
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.id === selectedProfileId),
     [profiles, selectedProfileId]
   );
 
-  const regimenesQuery = useQuery({
+  const { data: regimenesCatalogData } = useQuery({
     queryKey: ['regimenes-fiscales'],
     queryFn: () => getRegimenesFiscalesClient(),
     enabled: !!selectedProfile?.regimenes_fiscales?.length,
@@ -183,7 +277,7 @@ export function ExpensesListContent({
     const profileRegimenes = selectedProfile?.regimenes_fiscales ?? [];
     if (profileRegimenes.length === 0) return options;
 
-    const catalog = regimenesQuery.data?.data ?? [];
+    const catalog = regimenesCatalogData?.data ?? [];
     const descripcionMap = Object.fromEntries(catalog.map((r) => [r.clave, r.descripcion]));
 
     for (const clave of profileRegimenes) {
@@ -194,7 +288,7 @@ export function ExpensesListContent({
       });
     }
     return options;
-  }, [selectedProfile?.regimenes_fiscales, regimenesQuery.data?.data]);
+  }, [selectedProfile?.regimenes_fiscales, regimenesCatalogData?.data]);
 
   const exportPdfHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -207,22 +301,6 @@ export function ExpensesListContent({
     if (search?.trim()) params.set('search', search.trim());
     return `/dashboard/expenses/reporte/preview?${params.toString()}`;
   }, [selectedMes, selectedAño, selectedProfileId, selectedRegimenFiscal, search]);
-  const [isManualExpenseDialogOpen, setIsManualExpenseDialogOpen] = useState(false);
-  const [showProfileWarning, setShowProfileWarning] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [editingManualExpense, setEditingManualExpense] = useState<Expense | null>(null);
-  const [editConcept, setEditConcept] = useState('');
-  const [editSubtotal, setEditSubtotal] = useState('');
-  const [editIva, setEditIva] = useState('');
-  const [editIsPaid, setEditIsPaid] = useState(false);
-  const [editPaymentDate, setEditPaymentDate] = useState('');
-  const [editCategoria, setEditCategoria] = useState('');
-  const [editError, setEditError] = useState<string | null>(null);
-  const [isUpdatingManual, setIsUpdatingManual] = useState(false);
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
@@ -243,6 +321,10 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
+  const runApplyFilters = useEffectEvent(() => {
+    applyFilters();
+  });
+
   const storedProfileUrlRestoreRef = useStoredProfileUrlRestoreRef(
     '/dashboard/expenses',
     profiles
@@ -258,31 +340,33 @@ export function ExpensesListContent({
     const urlSearch = searchParams.get('search') ?? '';
 
     isSyncingFromUrlRef.current = true;
-    setSelectedProfileId(urlProfileId);
-    setSelectedMes(urlMes);
-    setSelectedAño(urlAño);
-    setSelectedRegimenFiscal(urlRegimen);
-    setSearch(urlSearch);
+    dispatchUi({
+      type: 'sync_from_url',
+      profileId: urlProfileId,
+      mes: urlMes,
+      año: urlAño,
+      regimen: urlRegimen,
+      search: urlSearch,
+    });
 
     const timeout = window.setTimeout(() => {
       isSyncingFromUrlRef.current = false;
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [searchParams]);
+  }, [searchParams, dispatchUi]);
 
   // Aplicar filtros automáticamente cuando cambien (excepto búsqueda)
   useEffect(() => {
     if (isInitialLoad) return;
     if (isSyncingFromUrlRef.current) return;
     applyFilters();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMes, selectedAño, selectedRegimenFiscal]); // Solo estos filtros se aplican automáticamente
+  }, [isInitialLoad, selectedMes, selectedAño, selectedRegimenFiscal, applyFilters]);
 
   // Marcar que la carga inicial ya terminó
   useEffect(() => {
-    setIsInitialLoad(false);
-  }, []);
+    dispatchUi({ type: 'set_initial_load_done' });
+  }, [dispatchUi]);
 
   // Debounce para la búsqueda - SOLO se ejecuta cuando cambia search
   useEffect(() => {
@@ -290,19 +374,15 @@ export function ExpensesListContent({
     if (isSyncingFromUrlRef.current) return;
 
     const timer = setTimeout(() => {
-      applyFilters();
+      runApplyFilters();
     }, 500); // 500ms de delay
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]); // SOLO search como dependencia
+  }, [search, isInitialLoad]);
 
   const handleClearFilters = () => {
     const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
-    setSearch('');
-    setSelectedMes(appMes);
-    setSelectedAño(appAño);
-    setSelectedRegimenFiscal('all');
+    dispatchUi({ type: 'clear_filters', mes: appMes, año: appAño });
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
     if (selectedProfileId && selectedProfileId !== 'all')
@@ -376,8 +456,7 @@ export function ExpensesListContent({
   };
 
   const handleProfileChange = (profileId: string) => {
-    setSelectedProfileId(profileId);
-    setSelectedRegimenFiscal('all');
+    dispatchUi({ type: 'profile_change', profileId });
     setStoredProfileSelection(profileId || 'all');
     const params = new URLSearchParams(searchParams.toString());
     if (profileId && profileId !== 'all') {
@@ -391,56 +470,19 @@ export function ExpensesListContent({
     router.push(`/dashboard/expenses?${params.toString()}`);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
   const handleDeleteClick = (expense: Expense) => {
-    setExpenseToDelete(expense);
-    setDeleteError(null);
-    setDeleteConfirmation('');
+    dispatchUi({ type: 'open_delete', expense });
   };
 
   const handleCloseDeleteDialog = (open: boolean) => {
     if (!open && !isDeleting) {
-      setExpenseToDelete(null);
-      setDeleteError(null);
-      setDeleteConfirmation('');
+      dispatchUi({ type: 'close_delete' });
     }
-  };
-
-  const getDeleteErrorMessage = (error: unknown): string => {
-    if (error instanceof ApiError) {
-      if (error.status === 403) {
-        return 'No tienes permisos para eliminar este gasto.';
-      }
-      if (error.status === 404) {
-        return 'El gasto ya no existe o fue eliminado.';
-      }
-      if (error.status === 400) {
-        return error.message || 'No se puede eliminar este gasto.';
-      }
-      return error.message || 'Error al eliminar el gasto.';
-    }
-    return 'Error inesperado al eliminar el gasto. Por favor intenta nuevamente.';
   };
 
   const handleConfirmDelete = async () => {
     if (!expenseToDelete) return;
-    setIsDeleting(true);
-    setDeleteError(null);
+    dispatchUi({ type: 'delete_start' });
 
     try {
       if (expenseToDelete.tipo_origen === 'MANUAL') {
@@ -457,11 +499,9 @@ export function ExpensesListContent({
           queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
         ]);
       }
-      setExpenseToDelete(null);
+      dispatchUi({ type: 'delete_success' });
     } catch (error) {
-      setDeleteError(getDeleteErrorMessage(error));
-    } finally {
-      setIsDeleting(false);
+      dispatchUi({ type: 'delete_error', message: getDeleteErrorMessage(error) });
     }
   };
 
@@ -469,42 +509,32 @@ export function ExpensesListContent({
   const isDeleteBlocked = isDeleting || deleteConfirmation.trim() !== deleteKeyword;
 
   const handleOpenEditManual = (expense: Expense) => {
-    setEditingManualExpense(expense);
-    setEditConcept(expense.concepto ?? '');
-    setEditSubtotal(expense.subtotal.toString());
-    setEditIva((expense.iva_amount ?? expense.iva ?? 0).toString());
-    setEditIsPaid(expense.is_paid ?? false);
-    setEditPaymentDate(expense.payment_date ?? '');
-    setEditCategoria(expense.categoria ?? '');
-    setEditError(null);
+    dispatchUi({ type: 'open_edit_manual', expense });
   };
 
   const handleCloseEditManual = () => {
-    if (!isUpdatingManual) {
-      setEditingManualExpense(null);
-      setEditError(null);
-    }
+    dispatchUi({ type: 'close_edit_manual' });
   };
 
   const handleSubmitEditManual = async () => {
     if (!editingManualExpense) return;
-    setEditError(null);
+    dispatchUi({ type: 'set_edit_error', message: null });
     const concept = editConcept.trim();
     const subtotalNum = Number(editSubtotal.replace(/,/g, '.'));
     const ivaNum = Number(editIva.replace(/,/g, '.')) || 0;
     if (!concept) {
-      setEditError('El concepto es obligatorio.');
+      dispatchUi({ type: 'set_edit_error', message: 'El concepto es obligatorio.' });
       return;
     }
     if (!Number.isFinite(subtotalNum) || subtotalNum < 0) {
-      setEditError('El subtotal debe ser un número ≥ 0.');
+      dispatchUi({ type: 'set_edit_error', message: 'El subtotal debe ser un número ≥ 0.' });
       return;
     }
     if (!Number.isFinite(ivaNum) || ivaNum < 0) {
-      setEditError('El IVA debe ser un número ≥ 0.');
+      dispatchUi({ type: 'set_edit_error', message: 'El IVA debe ser un número ≥ 0.' });
       return;
     }
-    setIsUpdatingManual(true);
+    dispatchUi({ type: 'edit_submit_start' });
     try {
       await updateAccruedExpenseClient(editingManualExpense.id, {
         concept,
@@ -519,61 +549,14 @@ export function ExpensesListContent({
         queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] }),
         queryClient.invalidateQueries({ queryKey: ['expenses'] }),
       ]);
-      setEditingManualExpense(null);
+      dispatchUi({ type: 'edit_submit_success' });
     } catch (err) {
-      setEditError(err instanceof ApiError ? err.message : 'Error al actualizar el gasto.');
-    } finally {
-      setIsUpdatingManual(false);
+      dispatchUi({
+        type: 'set_edit_error',
+        message: err instanceof ApiError ? err.message : 'Error al actualizar el gasto.',
+      });
+      dispatchUi({ type: 'edit_submit_end' });
     }
-  };
-
-  const getPaymentStatusBadge = (expense: Expense) => {
-    // Solo mostrar estado de pago para gastos XML con tipo PUE o PPD
-    if (expense.tipo_origen !== 'XML' || !expense.tipo || expense.tipo === 'COMPLEMENTO_PAGO') {
-      return null;
-    }
-
-    // Para gastos PUE, siempre están pagados
-    if (expense.tipo === 'PUE') {
-      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
-    }
-
-    // Para gastos PPD, verificar estado de pago
-    if (expense.tipo === 'PPD') {
-      const estadoPago = expense.estadoPago;
-
-      // Si no hay estadoPago, considerar como no pagado
-      if (!estadoPago) {
-        return (
-          <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
-            No Pagado
-          </Badge>
-        );
-      }
-
-      // Si está completamente pagado
-      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-        return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
-      }
-
-      // Si tiene pago parcial
-      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
-        return (
-          <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600">
-            Pago Parcial ({Math.round(estadoPago.porcentajePagado)}%)
-          </Badge>
-        );
-      }
-
-      // Si no está pagado
-      return (
-        <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
-          No Pagado
-        </Badge>
-      );
-    }
-
-    return null;
   };
 
   // Calcular métricas desde los gastos filtrados
@@ -679,7 +662,7 @@ export function ExpensesListContent({
                             {expense.concepto || 'Sin concepto'}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
-                            {formatDate(expense.fecha)}
+                            {formatDateShort(expense.fecha)}
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
                             {formatCurrency(expense.subtotal)}
@@ -765,7 +748,7 @@ export function ExpensesListContent({
                     expenses.map((expense) => (
                       <TableRow key={expense.id}>
                         <TableCell className="text-sm whitespace-nowrap">
-                          {formatDate(expense.fecha)}
+                          {formatDateShort(expense.fecha)}
                         </TableCell>
                         <TableCell>
                           <div className="max-w-62.5">
@@ -920,7 +903,7 @@ export function ExpensesListContent({
 
         <PaymentComplementsSection
           title="Complementos de pago (REP recibidos)"
-          role="EGRESO"
+          complementRole="EGRESO"
           items={paymentComplements}
           pagination={paymentComplementsPagination}
           complementPage={complementPage}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useEffectEvent } from 'react';
+import { useInvoicesListUiState } from './use-invoices-list-ui-state';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileX, Trash2, HandCoins, Pencil } from 'lucide-react';
@@ -47,6 +48,7 @@ import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkelet
 import { setStoredProfileSelection } from '@/lib/storage/profile-selection';
 import { useStoredProfileUrlRestoreRef } from '@/lib/navigation/use-stored-profile-url-restore-ref';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+import { formatCurrency, formatDateTime } from '@/lib/utils/format';
 import { PaymentComplementsSection } from '@/components/payment-complements/PaymentComplementsSection';
 import type {
   PaymentComplementListItem,
@@ -87,6 +89,83 @@ interface InvoicesListContentProps {
   complementPage: number;
 }
 
+function getManualIncomeDeleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) return 'No tienes permisos para eliminar este ingreso.';
+    if (error.status === 404) return 'El ingreso ya no existe o fue eliminado.';
+    if (error.status === 400) return error.message || 'No se puede eliminar este ingreso.';
+    return error.message || 'Error al eliminar el ingreso.';
+  }
+  return 'Error inesperado al eliminar el ingreso. Por favor intenta nuevamente.';
+}
+
+function getDeleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return 'No tienes permisos para eliminar esta factura.';
+    }
+    if (error.status === 404) {
+      return 'La factura ya no existe o fue eliminada.';
+    }
+    if (error.status === 400) {
+      return error.message || 'No se puede eliminar esta factura.';
+    }
+    return error.message || 'Error al eliminar la factura.';
+  }
+  return 'Error inesperado al eliminar la factura. Por favor intenta nuevamente.';
+}
+
+function getStatusBadge(invoice: Invoice) {
+  if (!invoice.validacion?.valido) {
+    return (
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <AlertTitle className="h-3 w-3" />
+        ERROR
+      </Badge>
+    );
+  }
+
+  if (invoice.tipo === 'PUE') {
+    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+  }
+
+  if (invoice.tipo === 'PPD') {
+    const estadoPago = invoice.estadoPago;
+
+    if (!estadoPago) {
+      return (
+        <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
+          No Pagado
+        </Badge>
+      );
+    }
+
+    if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+    }
+
+    if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+      return (
+        <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600">
+          Pago Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
+        No Pagado
+      </Badge>
+    );
+  }
+
+  if (invoice.tipo === 'COMPLEMENTO_PAGO') {
+    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
+  }
+
+  return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
+}
+
 export function InvoicesListContent({
   invoices,
   pagination,
@@ -116,42 +195,68 @@ export function InvoicesListContent({
   const canExportPDF = hasFeatureAccess(subscription, 'pdf_export');
   const canExportExcel = hasFeatureAccess(subscription, 'excel_export');
   const isSyncingFromUrlRef = useRef(false);
-  const [search, setSearch] = useState(initialSearch || '');
-  const [selectedProfileId, setSelectedProfileId] = useState(initialProfileId || 'all');
-  const [selectedMes, setSelectedMes] = useState(
-    initialMes ?? getCurrentMonthYearInAppTimezone().mes
-  );
-  const [selectedAño, setSelectedAño] = useState(
-    initialAño ?? getCurrentMonthYearInAppTimezone().año
-  );
-  const [selectedRegimenFiscal, setSelectedRegimenFiscal] = useState(initialRegimenFiscal || 'all');
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const [addManualIncomeOpen, setAddManualIncomeOpen] = useState(false);
-  const [manualIncomeConcept, setManualIncomeConcept] = useState('');
-  const [manualIncomeSubtotal, setManualIncomeSubtotal] = useState('');
-  const [manualIncomeIva, setManualIncomeIva] = useState('');
-  const [manualIncomeFecha, setManualIncomeFecha] = useState('');
-  const [manualIncomeNotes, setManualIncomeNotes] = useState('');
-  const [manualIncomeFormError, setManualIncomeFormError] = useState<string | null>(null);
-  const [editingManualIncome, setEditingManualIncome] = useState<ManualIncome | null>(null);
-  const [manualIncomeIsPaid, setManualIncomeIsPaid] = useState(false);
-  const [manualIncomePaymentDate, setManualIncomePaymentDate] = useState('');
-  const [manualIncomeToDelete, setManualIncomeToDelete] = useState<ManualIncome | null>(null);
-  const [manualIncomeDeleteConfirmation, setManualIncomeDeleteConfirmation] = useState('');
-  const [manualIncomeDeleteError, setManualIncomeDeleteError] = useState<string | null>(null);
-  const [isDeletingManualIncome, setIsDeletingManualIncome] = useState(false);
+  const {
+    dispatchUi,
+    search,
+    setSearch,
+    selectedProfileId,
+    selectedMes,
+    setSelectedMes,
+    selectedAño,
+    setSelectedAño,
+    selectedRegimenFiscal,
+    setSelectedRegimenFiscal,
+    isInitialLoad,
+    invoiceToDelete,
+    setInvoiceToDelete,
+    deleteError,
+    setDeleteError,
+    deleteConfirmation,
+    setDeleteConfirmation,
+    isDeleting,
+    setIsDeleting,
+    addManualIncomeOpen,
+    setAddManualIncomeOpen,
+    manualIncomeConcept,
+    setManualIncomeConcept,
+    manualIncomeSubtotal,
+    setManualIncomeSubtotal,
+    manualIncomeIva,
+    setManualIncomeIva,
+    manualIncomeFecha,
+    setManualIncomeFecha,
+    manualIncomeNotes,
+    setManualIncomeNotes,
+    manualIncomeFormError,
+    setManualIncomeFormError,
+    editingManualIncome,
+    setEditingManualIncome,
+    manualIncomeIsPaid,
+    setManualIncomeIsPaid,
+    manualIncomePaymentDate,
+    setManualIncomePaymentDate,
+    manualIncomeToDelete,
+    setManualIncomeToDelete,
+    manualIncomeDeleteConfirmation,
+    setManualIncomeDeleteConfirmation,
+    manualIncomeDeleteError,
+    setManualIncomeDeleteError,
+    isDeletingManualIncome,
+    setIsDeletingManualIncome,
+  } = useInvoicesListUiState({
+    initialSearch,
+    initialProfileId,
+    initialMes,
+    initialAño,
+    initialRegimenFiscal,
+  });
 
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.id === selectedProfileId),
     [profiles, selectedProfileId]
   );
 
-  const regimenesQuery = useQuery({
+  const { data: regimenesCatalogData } = useQuery({
     queryKey: ['regimenes-fiscales'],
     queryFn: () => getRegimenesFiscalesClient(),
     enabled: !!selectedProfile?.regimenes_fiscales?.length,
@@ -163,7 +268,7 @@ export function InvoicesListContent({
     const profileRegimenes = selectedProfile?.regimenes_fiscales ?? [];
     if (profileRegimenes.length === 0) return options;
 
-    const catalog = regimenesQuery.data?.data ?? [];
+    const catalog = regimenesCatalogData?.data ?? [];
     const descripcionMap = Object.fromEntries(catalog.map((r) => [r.clave, r.descripcion]));
 
     for (const clave of profileRegimenes) {
@@ -174,7 +279,7 @@ export function InvoicesListContent({
       });
     }
     return options;
-  }, [selectedProfile?.regimenes_fiscales, regimenesQuery.data?.data]);
+  }, [selectedProfile?.regimenes_fiscales, regimenesCatalogData?.data]);
 
   const exportPdfHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -226,16 +331,6 @@ export function InvoicesListContent({
       setManualIncomeDeleteError(null);
       setManualIncomeDeleteConfirmation('');
     }
-  };
-
-  const getManualIncomeDeleteErrorMessage = (error: unknown): string => {
-    if (error instanceof ApiError) {
-      if (error.status === 403) return 'No tienes permisos para eliminar este ingreso.';
-      if (error.status === 404) return 'El ingreso ya no existe o fue eliminado.';
-      if (error.status === 400) return error.message || 'No se puede eliminar este ingreso.';
-      return error.message || 'Error al eliminar el ingreso.';
-    }
-    return 'Error inesperado al eliminar el ingreso. Por favor intenta nuevamente.';
   };
 
   const handleConfirmDeleteManualIncome = async () => {
@@ -296,6 +391,10 @@ export function InvoicesListContent({
     router.push(`/dashboard/invoices?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
+  const runApplyFilters = useEffectEvent(() => {
+    applyFilters();
+  });
+
   const storedProfileUrlRestoreRef = useStoredProfileUrlRestoreRef(
     '/dashboard/invoices',
     profiles
@@ -311,31 +410,33 @@ export function InvoicesListContent({
     const urlSearch = searchParams.get('search') ?? '';
 
     isSyncingFromUrlRef.current = true;
-    setSelectedProfileId(urlProfileId);
-    setSelectedMes(urlMes);
-    setSelectedAño(urlAño);
-    setSelectedRegimenFiscal(urlRegimen);
-    setSearch(urlSearch);
+    dispatchUi({
+      type: 'sync_from_url',
+      profileId: urlProfileId,
+      mes: urlMes,
+      año: urlAño,
+      regimen: urlRegimen,
+      search: urlSearch,
+    });
 
     const timeout = window.setTimeout(() => {
       isSyncingFromUrlRef.current = false;
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [searchParams]);
+  }, [searchParams, dispatchUi]);
 
   // Aplicar filtros automáticamente cuando cambien (excepto búsqueda)
   useEffect(() => {
     if (isInitialLoad) return;
     if (isSyncingFromUrlRef.current) return;
     applyFilters();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMes, selectedAño, selectedRegimenFiscal]); // Solo estos filtros se aplican automáticamente
+  }, [isInitialLoad, selectedMes, selectedAño, selectedRegimenFiscal, applyFilters]);
 
   // Marcar que la carga inicial ya terminó
   useEffect(() => {
-    setIsInitialLoad(false);
-  }, []);
+    dispatchUi({ type: 'set_initial_load_done' });
+  }, [dispatchUi]);
 
   // Debounce para la búsqueda - SOLO se ejecuta cuando cambia search
   useEffect(() => {
@@ -343,19 +444,15 @@ export function InvoicesListContent({
     if (isSyncingFromUrlRef.current) return;
 
     const timer = setTimeout(() => {
-      applyFilters();
+      runApplyFilters();
     }, 500); // 500ms de delay
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]); // SOLO search como dependencia
+  }, [search, isInitialLoad]);
 
   const handleClearFilters = () => {
     const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
-    setSearch('');
-    setSelectedMes(appMes);
-    setSelectedAño(appAño);
-    setSelectedRegimenFiscal('all');
+    dispatchUi({ type: 'clear_filters', mes: appMes, año: appAño });
     // El perfil no se resetea porque es un filtro principal
     const params = new URLSearchParams();
     if (selectedProfileId && selectedProfileId !== 'all')
@@ -368,8 +465,7 @@ export function InvoicesListContent({
   };
 
   const handleProfileChange = (profileId: string) => {
-    setSelectedProfileId(profileId);
-    setSelectedRegimenFiscal('all'); // Reset régimen al cambiar perfil
+    dispatchUi({ type: 'profile_change', profileId });
     setStoredProfileSelection(profileId || 'all');
     const params = new URLSearchParams(searchParams.toString());
     if (profileId && profileId !== 'all') {
@@ -504,24 +600,6 @@ export function InvoicesListContent({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const handleDeleteClick = (invoice: Invoice) => {
     setInvoiceToDelete(invoice);
     setDeleteError(null);
@@ -534,22 +612,6 @@ export function InvoicesListContent({
       setDeleteError(null);
       setDeleteConfirmation('');
     }
-  };
-
-  const getDeleteErrorMessage = (error: unknown): string => {
-    if (error instanceof ApiError) {
-      if (error.status === 403) {
-        return 'No tienes permisos para eliminar esta factura.';
-      }
-      if (error.status === 404) {
-        return 'La factura ya no existe o fue eliminada.';
-      }
-      if (error.status === 400) {
-        return error.message || 'No se puede eliminar esta factura.';
-      }
-      return error.message || 'Error al eliminar la factura.';
-    }
-    return 'Error inesperado al eliminar la factura. Por favor intenta nuevamente.';
   };
 
   const handleConfirmDelete = async () => {
@@ -645,66 +707,6 @@ export function InvoicesListContent({
         facturasPPD: normalizedInvoices.filter((inv) => inv.tipo === 'PPD').length,
       },
     });
-  };
-
-  const getStatusBadge = (invoice: Invoice) => {
-    // Primero mostrar estado de validación
-    if (!invoice.validacion?.valido) {
-      return (
-        <Badge variant="destructive" className="flex items-center gap-1">
-          <AlertTitle className="h-3 w-3" />
-          ERROR
-        </Badge>
-      );
-    }
-
-    // Para facturas PUE, siempre están pagadas
-    if (invoice.tipo === 'PUE') {
-      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
-    }
-
-    // Para facturas PPD, verificar estado de pago
-    if (invoice.tipo === 'PPD') {
-      const estadoPago = invoice.estadoPago;
-
-      // Si no hay estadoPago, considerar como no pagado
-      if (!estadoPago) {
-        return (
-          <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
-            No Pagado
-          </Badge>
-        );
-      }
-
-      // Si está completamente pagado
-      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-        return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
-      }
-
-      // Si tiene pago parcial
-      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
-        return (
-          <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600">
-            Pago Parcial ({Math.round(estadoPago.porcentajePagado)}%)
-          </Badge>
-        );
-      }
-
-      // Si no está pagado
-      return (
-        <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-600">
-          No Pagado
-        </Badge>
-      );
-    }
-
-    // Para complementos de pago, mostrar como válido
-    if (invoice.tipo === 'COMPLEMENTO_PAGO') {
-      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
-    }
-
-    // Default: válido
-    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
   };
 
   return (
@@ -884,7 +886,7 @@ export function InvoicesListContent({
                           </div>
                         </TableCell>
                         <TableCell className="text-sm whitespace-nowrap">
-                          {formatDate(invoice.fecha)}
+                          {formatDateTime(invoice.fecha)}
                         </TableCell>
                         <TableCell>
                           <div className="max-w-50">
@@ -1036,7 +1038,7 @@ export function InvoicesListContent({
 
         <PaymentComplementsSection
           title="Complementos de cobro (REP emitidos)"
-          role="INGRESO"
+          complementRole="INGRESO"
           items={paymentComplements}
           pagination={paymentComplementsPagination}
           complementPage={complementPage}

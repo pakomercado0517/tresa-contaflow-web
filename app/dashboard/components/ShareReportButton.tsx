@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Share2,
@@ -27,10 +27,14 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { generatePublicReport } from '@/lib/api/public-reports';
+import { formatDateLong } from '@/lib/utils/format';
 import { apiClient } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/client';
 import { UpgradeModal } from '@/components/subscription/UpgradeModal';
-import type { GeneratePublicReportResponse } from '@/lib/types/public-reports';
+import {
+  initialShareReportUiState,
+  shareReportUiReducer,
+} from './share-report-ui-reducer';
 import type { Subscription } from '@/lib/types/subscription';
 
 const MONTHS_ES = [
@@ -58,14 +62,17 @@ interface ShareReportButtonProps {
 }
 
 export function ShareReportButton({ profileId, clientName, mes, año }: ShareReportButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [expiresInDays, setExpiresInDays] = useState(30);
-  const [sendToEmail, setSendToEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GeneratePublicReportResponse | null>(null);
-  const [hasCopied, setHasCopied] = useState(false);
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [ui, dispatch] = useReducer(shareReportUiReducer, initialShareReportUiState);
+  const {
+    isOpen,
+    expiresInDays,
+    sendToEmail,
+    isLoading,
+    error,
+    result,
+    hasCopied,
+    isUpgradeModalOpen,
+  } = ui;
 
   const { data: subscriptionData } = useQuery<Subscription>({
     queryKey: ['subscription'],
@@ -79,15 +86,7 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
   const monthLabel = `${MONTHS_ES[(mes - 1) % 12]} ${año}`;
 
   const handleOpen = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      // Resetear estado al cerrar
-      setError(null);
-      setResult(null);
-      setSendToEmail('');
-      setExpiresInDays(30);
-      setHasCopied(false);
-    }
+    dispatch({ type: 'dialog_open_change', open });
   };
 
   // URL final con mes/año como query string — es la que se comparte con el cliente
@@ -100,8 +99,7 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
 
   const handleGenerate = async () => {
     if (!profileId) return;
-    setIsLoading(true);
-    setError(null);
+    dispatch({ type: 'generate_start' });
 
     try {
       const response = await generatePublicReport({
@@ -109,41 +107,36 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
         expires_in_days: expiresInDays,
         ...(sendToEmail.trim() && { send_to_email: sendToEmail.trim() }),
       });
-      setResult(response);
+      dispatch({ type: 'generate_success', result: response });
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
         const data = err.data as { error?: string; message?: string } | undefined;
         const serverMsg = data?.message ?? '';
         const isLimitError = serverMsg.toLowerCase().includes('límite');
         if (isLimitError) {
-          setError(
-            serverMsg ||
-              'Has alcanzado el límite de reportes activos. Revoca uno existente para crear uno nuevo.'
-          );
+          dispatch({
+            type: 'generate_limit_error',
+            message:
+              serverMsg ||
+              'Has alcanzado el límite de reportes activos. Revoca uno existente para crear uno nuevo.',
+          });
         } else {
-          setIsUpgradeModalOpen(true);
+          dispatch({ type: 'generate_open_upgrade' });
         }
       } else {
-        setError('No se pudo generar el link. Intenta de nuevo.');
+        dispatch({ type: 'generate_generic_error' });
       }
     } finally {
-      setIsLoading(false);
+      dispatch({ type: 'generate_end' });
     }
   };
 
   const handleCopy = async () => {
     if (!shareUrl) return;
     await navigator.clipboard.writeText(shareUrl);
-    setHasCopied(true);
-    setTimeout(() => setHasCopied(false), 2000);
+    dispatch({ type: 'set_has_copied', value: true });
+    setTimeout(() => dispatch({ type: 'set_has_copied', value: false }), 2000);
   };
-
-  const formatExpiresAt = (iso: string) =>
-    new Date(iso).toLocaleDateString('es-MX', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
 
   const trigger = (
     <Button
@@ -227,7 +220,10 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                     max={365}
                     value={expiresInDays}
                     onChange={(e) =>
-                      setExpiresInDays(Math.max(1, Math.min(365, Number(e.target.value))))
+                      dispatch({
+                        type: 'set_expires_in_days',
+                        days: Math.max(1, Math.min(365, Number(e.target.value))),
+                      })
                     }
                     className="w-28"
                   />
@@ -250,7 +246,7 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                   type="email"
                   placeholder="correo@ejemplo.com"
                   value={sendToEmail}
-                  onChange={(e) => setSendToEmail(e.target.value)}
+                  onChange={(e) => dispatch({ type: 'set_send_to_email', value: e.target.value })}
                 />
                 <p className="text-muted-foreground flex items-start gap-1.5 text-xs">
                   <Info className="mt-0.5 h-3 w-3 shrink-0" />
@@ -291,7 +287,7 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                   <p className="text-muted-foreground mt-0.5 text-xs">
                     Válido hasta el{' '}
                     <span className="text-foreground font-medium">
-                      {formatExpiresAt(result.expires_at)}
+                      {formatDateLong(result.expires_at)}
                     </span>
                   </p>
                 </div>
@@ -327,8 +323,13 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                     asChild
                     title="Abrir en nueva pestaña"
                   >
-                    <a href={shareUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4" />
+                    <a
+                      href={shareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Abrir reporte en nueva pestaña"
+                    >
+                      <ExternalLink className="h-4 w-4" aria-hidden />
                     </a>
                   </Button>
                 </div>
@@ -339,10 +340,7 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                 variant="ghost"
                 size="sm"
                 className="w-full"
-                onClick={() => {
-                  setResult(null);
-                  setError(null);
-                }}
+                onClick={() => dispatch({ type: 'reset_result' })}
               >
                 Generar otro link
               </Button>
@@ -353,7 +351,7 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
 
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
+        onClose={() => dispatch({ type: 'close_upgrade_modal' })}
         currentPlan={currentPlan}
         feature="Los reportes públicos no están disponibles en tu plan actual. Actualiza a Básico o superior para compartir reportes con tus clientes."
         recommendedPlan="BASIC"

@@ -13,6 +13,7 @@ import {
   getProfileLimit,
 } from "@/lib/utils/subscription";
 import type { CreateProfileRequest, UpdateProfileRequest } from "@/lib/types/profiles";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export interface ActionResult {
   error?: string;
@@ -22,6 +23,8 @@ export interface ActionResult {
 export async function createProfileAction(
   formData: FormData
 ): Promise<ActionResult> {
+  await requireAuth();
+
   const nombre = formData.get("nombre") as string;
   const rfc = formData.get("rfc") as string;
   const tipoPersona = formData.get("tipo_persona") as "FISICA" | "MORAL";
@@ -117,6 +120,8 @@ export async function updateProfileAction(
   profileId: string,
   formData: FormData
 ): Promise<ActionResult> {
+  await requireAuth();
+
   const nombre = formData.get("nombre") as string;
   const rfc = formData.get("rfc") as string;
   const tipoPersona = formData.get("tipo_persona") as "FISICA" | "MORAL";
@@ -185,6 +190,8 @@ export async function updateProfileAction(
 }
 
 export async function logoutAction() {
+  await requireAuth();
+
   try {
     await logoutUser();
   } catch (error) {

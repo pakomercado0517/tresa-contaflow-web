@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Plus, Receipt, FileText, FileSpreadsheet, Upload, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,15 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { PageHeader } from '@/components/common/PageHeader';
-import { FilterBar } from '@/components/common/FilterBar';
+import { ExpensesHeaderFilters } from './ExpensesHeaderFilters';
 import { ProfileSelector } from './ProfileSelector';
 import {
   Tooltip,
@@ -83,6 +77,37 @@ export function ExpensesHeader({
   canAddManualExpense,
   manualExpenseDisabledReason,
 }: ExpensesHeaderProps) {
+  const filters = useMemo(
+    () => (
+      <ExpensesHeaderFilters
+        selectedMes={selectedMes}
+        onMesChange={onMesChange}
+        selectedAño={selectedAño}
+        onAñoChange={onAñoChange}
+        search={search}
+        onSearchChange={onSearchChange}
+        onClearFilters={onClearFilters}
+        selectedRegimenFiscal={selectedRegimenFiscal}
+        onRegimenFiscalChange={onRegimenFiscalChange}
+        regimenOptions={regimenOptions}
+        isRegimenDisabled={isRegimenDisabled}
+      />
+    ),
+    [
+      selectedMes,
+      onMesChange,
+      selectedAño,
+      onAñoChange,
+      search,
+      onSearchChange,
+      onClearFilters,
+      selectedRegimenFiscal,
+      onRegimenFiscalChange,
+      regimenOptions,
+      isRegimenDisabled,
+    ]
+  );
+
   return (
     <PageHeader
       icon={Receipt}
@@ -221,38 +246,7 @@ export function ExpensesHeader({
           </DropdownMenu>
         </>
       }
-      filters={
-        <FilterBar
-          selectedMes={selectedMes}
-          onMesChange={onMesChange}
-          selectedAño={selectedAño}
-          onAñoChange={onAñoChange}
-          search={search}
-          onSearchChange={onSearchChange}
-          searchPlaceholder="Concepto, Emisor o UUID..."
-          onClearFilters={onClearFilters}
-          extraFilters={
-            <div className="w-full min-w-0 sm:w-auto">
-              <Select
-                value={selectedRegimenFiscal}
-                onValueChange={onRegimenFiscalChange}
-                disabled={isRegimenDisabled}
-              >
-                <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-[180px]">
-                <SelectValue placeholder="Régimen fiscal" />
-              </SelectTrigger>
-              <SelectContent>
-                {regimenOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.value === 'all' ? 'Todos los regímenes' : opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            </div>
-          }
-        />
-      }
+      filters={filters}
     />
   );
 }

@@ -25,12 +25,12 @@ interface EditProfileFormProps {
 export function EditProfileForm({ profile }: EditProfileFormProps) {
   const router = useRouter();
   const [tipoPersona, setTipoPersona] = useState<"FISICA" | "MORAL">(
-    profile.tipo_persona
+    () => profile.tipo_persona
   );
-  const [nombre, setNombre] = useState(profile.nombre);
-  const [rfc, setRfc] = useState(profile.rfc.toUpperCase());
+  const [nombre, setNombre] = useState(() => profile.nombre);
+  const [rfc, setRfc] = useState(() => profile.rfc.toUpperCase());
   const [regimenesFiscales, setRegimenesFiscales] = useState<string[]>(
-    profile.regimenes_fiscales ?? []
+    () => profile.regimenes_fiscales ?? []
   );
   const [regimenToAdd, setRegimenToAdd] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);

@@ -112,7 +112,7 @@ export function FilterBar({
         </SelectTrigger>
         <SelectContent>
           {MONTHS.map((month, index) => (
-            <SelectItem key={index} value={(index + 1).toString()}>
+            <SelectItem key={month} value={(index + 1).toString()}>
               {month}
             </SelectItem>
           ))}

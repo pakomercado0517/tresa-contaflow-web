@@ -3,6 +3,7 @@
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { getFirebaseApp } from "@/lib/firebase/server-app";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -18,6 +19,8 @@ function getImageExtension(mimeType: string): string {
 }
 
 export async function uploadUserLogoAction(userId: string, formData: FormData): Promise<string> {
+  await requireAuth();
+
   const file = formData.get("logo");
   if (!(file instanceof File)) {
     throw new Error("No se recibió ninguna imagen.");

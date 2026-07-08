@@ -1,6 +1,13 @@
 import type { Profile } from '@/lib/types/profiles';
 import type { Plan } from '@/lib/types/subscription';
 
+const PLAN_PROFILE_LIMITS: Record<Plan, number> = {
+  FREE: 1,
+  BASIC: 5,
+  PRO: 20,
+  ENTERPRISE: Infinity,
+};
+
 interface UseProfileFreezeDetectorProps {
   profiles: Profile[];
   plan: Plan;
@@ -23,13 +30,6 @@ export function useProfileFreezeDetector({
   plan,
   enabled = true,
 }: UseProfileFreezeDetectorProps): FreezeDetectionResult {
-  const planLimits: Record<Plan, number> = {
-    FREE: 1,
-    BASIC: 5,
-    PRO: 20,
-    ENTERPRISE: Infinity,
-  };
-
   if (!enabled || !profiles || !plan) {
     return {
       shouldShowModal: false,
@@ -39,7 +39,7 @@ export function useProfileFreezeDetector({
     };
   }
 
-  const limit = planLimits[plan] || 1;
+  const limit = PLAN_PROFILE_LIMITS[plan] || 1;
   const activeProfiles = profiles.filter((p) => !p.frozen);
   const activeCount = activeProfiles.length;
   const excessCount = Math.max(0, activeCount - limit);

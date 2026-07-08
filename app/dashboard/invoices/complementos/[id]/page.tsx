@@ -19,7 +19,7 @@ export default async function InvoicePaymentComplementDetailPage({ params }: Pag
     >
       <PaymentComplementDetailPageClient
         complementId={id}
-        role="INGRESO"
+        complementRole="INGRESO"
         listBasePath="/dashboard/invoices"
         detailRouteBase="/dashboard/invoices/complementos"
       />

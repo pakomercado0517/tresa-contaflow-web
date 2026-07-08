@@ -14,7 +14,7 @@ import { ProfileRequiredDialog } from './ProfileRequiredDialog';
 
 interface PaymentComplementDetailPageClientProps {
   complementId: string;
-  role: ComplementRole;
+  complementRole: ComplementRole;
   listBasePath: '/dashboard/invoices' | '/dashboard/expenses';
   detailRouteBase: '/dashboard/invoices/complementos' | '/dashboard/expenses/complementos';
 }
@@ -39,7 +39,7 @@ function buildListHref(
 
 export function PaymentComplementDetailPageClient({
   complementId,
-  role,
+  complementRole,
   listBasePath,
   detailRouteBase,
 }: PaymentComplementDetailPageClientProps) {
@@ -59,13 +59,17 @@ export function PaymentComplementDetailPageClient({
     setProfileDialogDismissed(false);
   }
 
-  const profilesQuery = useQuery({
+  const { data: profilesData } = useQuery({
     queryKey: ['profiles'],
     queryFn: () => getProfilesClient(),
     staleTime: 60_000,
   });
 
-  const detailQuery = useQuery({
+  const {
+    data: detailData,
+    error: detailError,
+    isLoading: isDetailLoading,
+  } = useQuery({
     queryKey: ['payment-complement', complementId, resolvedProfileId ?? null],
     queryFn: () => getPaymentComplementByIdClient(complementId, resolvedProfileId),
     retry: (failureCount, error) => {
@@ -75,18 +79,18 @@ export function PaymentComplementDetailPageClient({
   });
 
   const profileRequiredError = useMemo(() => {
-    if (!(detailQuery.error instanceof ApiError)) return false;
-    if (detailQuery.error.status !== 400) return false;
-    const message = detailQuery.error.message.toLowerCase();
+    if (!(detailError instanceof ApiError)) return false;
+    if (detailError.status !== 400) return false;
+    const message = detailError.message.toLowerCase();
     return message.includes('profile_id');
-  }, [detailQuery.error]);
+  }, [detailError]);
 
   const profileDialogOpen =
-    profileRequiredError && Boolean(profilesQuery.data) && !profileDialogDismissed;
+    profileRequiredError && Boolean(profilesData) && !profileDialogDismissed;
 
   const listHref = buildListHref(listBasePath, urlProfileId ?? resolvedProfileId ?? null, mes, año);
 
-  if (detailQuery.isLoading && !detailQuery.data) {
+  if (isDetailLoading && !detailData) {
     return (
       <div className="flex min-h-50 items-center justify-center p-8">
         <LoadingSpinner />
@@ -94,7 +98,7 @@ export function PaymentComplementDetailPageClient({
     );
   }
 
-  if (detailQuery.error instanceof ApiError && detailQuery.error.status === 404) {
+  if (detailError instanceof ApiError && detailError.status === 404) {
     return (
       <div className="p-6">
         <ErrorState
@@ -107,12 +111,12 @@ export function PaymentComplementDetailPageClient({
     );
   }
 
-  if (detailQuery.error && !profileRequiredError) {
+  if (detailError && !profileRequiredError) {
     return (
       <div className="p-6">
         <ErrorState
           title="Error al cargar el complemento"
-          message={detailQuery.error.message}
+          message={detailError.message}
           onRetry={() => router.push(listHref)}
           retryLabel="Volver al listado"
         />
@@ -120,15 +124,15 @@ export function PaymentComplementDetailPageClient({
     );
   }
 
-  const detail = detailQuery.data?.data;
-  const profiles = profilesQuery.data?.data ?? [];
+  const detail = detailData?.data;
+  const profiles = profilesData?.data ?? [];
 
   return (
     <>
       {detail && (
         <PaymentComplementDetailContent
           detail={detail}
-          role={role}
+          complementRole={complementRole}
           profileId={resolvedProfileId}
           mes={mes}
           año={año}

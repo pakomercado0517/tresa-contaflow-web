@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer, type Dispatch } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,36 +10,48 @@ import { Switch } from "@/components/ui/switch";
 import { createDiscountCodeClient } from "@/lib/api/discounts.client";
 import type { CreateDiscountCodeRequest } from "@/lib/types/discounts";
 import { Loader2 } from "lucide-react";
+import {
+  createDiscountFormReducer,
+  initialCreateDiscountFormState,
+  type CreateDiscountFormState,
+} from "./create-discount-form-reducer";
 
 interface CreateDiscountCodeFormProps {
   onSuccess: () => void;
 }
 
-export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+function setFormField<K extends keyof CreateDiscountFormState>(
+  dispatch: Dispatch<import("./create-discount-form-reducer").CreateDiscountFormAction>,
+  field: K,
+  value: CreateDiscountFormState[K]
+) {
+  dispatch({ type: "set_field", field, value });
+}
 
-  // Form state
-  const [code, setCode] = useState("");
-  const [duration, setDuration] = useState<"once" | "repeating" | "forever">("once");
-  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
-  const [percentOff, setPercentOff] = useState<string>("");
-  const [amountOff, setAmountOff] = useState<string>("");
-  const [currency, setCurrency] = useState<string>("MXN");
-  const [durationInMonths, setDurationInMonths] = useState<string>("");
-  const [maxRedemptions, setMaxRedemptions] = useState<string>("");
-  const [expiresAt, setExpiresAt] = useState<string>("");
-  const [active, setActive] = useState(true);
-  const [trialDays, setTrialDays] = useState<string>("");
-  const [metadataKey, setMetadataKey] = useState<string>("");
-  const [metadataValue, setMetadataValue] = useState<string>("");
+export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProps) {
+  const [form, dispatch] = useReducer(createDiscountFormReducer, initialCreateDiscountFormState);
+  const {
+    isSubmitting,
+    error,
+    success,
+    code,
+    duration,
+    discountType,
+    percentOff,
+    amountOff,
+    currency,
+    durationInMonths,
+    maxRedemptions,
+    expiresAt,
+    active,
+    trialDays,
+    metadataKey,
+    metadataValue,
+  } = form;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
-    setIsSubmitting(true);
+    dispatch({ type: "submit_start" });
 
     try {
       // Validaciones
@@ -107,29 +119,18 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
 
       await createDiscountCodeClient(payload);
 
-      // Limpiar formulario
-      setCode("");
-      setPercentOff("");
-      setAmountOff("");
-      setDurationInMonths("");
-      setMaxRedemptions("");
-      setExpiresAt("");
-      setTrialDays("");
-      setMetadataKey("");
-      setMetadataValue("");
-      setSuccess(true);
+      dispatch({ type: "submit_success" });
       onSuccess();
 
-      // Ocultar mensaje de éxito después de 3 segundos
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => dispatch({ type: "reset_feedback" }), 3000);
     } catch (err) {
       if (err && typeof err === "object" && "message" in err) {
-        setError((err as { message: string }).message);
+        dispatch({ type: "submit_error", message: (err as { message: string }).message });
       } else {
-        setError("Error al crear el código de descuento");
+        dispatch({ type: "submit_error", message: "Error al crear el código de descuento" });
       }
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "submit_end" });
     }
   };
 
@@ -141,7 +142,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
         <Input
           id="code"
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={(e) => setFormField(dispatch, "code", e.target.value)}
           placeholder="PROMO20"
           maxLength={50}
           required
@@ -154,7 +155,12 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
       {/* Duración */}
       <div className="space-y-2">
         <Label>Duración *</Label>
-        <Select value={duration} onValueChange={(value) => setDuration(value as typeof duration)}>
+        <Select
+          value={duration}
+          onValueChange={(value) =>
+            setFormField(dispatch, "duration", value as CreateDiscountFormState["duration"])
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -175,7 +181,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
             type="number"
             min="1"
             value={durationInMonths}
-            onChange={(e) => setDurationInMonths(e.target.value)}
+            onChange={(e) => setFormField(dispatch, "durationInMonths", e.target.value)}
             placeholder="3"
             required
           />
@@ -187,7 +193,9 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
         <Label>Tipo de descuento *</Label>
         <RadioGroup
           value={discountType}
-          onValueChange={(value) => setDiscountType(value as typeof discountType)}
+          onValueChange={(value) =>
+            setFormField(dispatch, "discountType", value as CreateDiscountFormState["discountType"])
+          }
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="percent" id="percent" />
@@ -215,7 +223,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
             max="100"
             step="0.01"
             value={percentOff}
-            onChange={(e) => setPercentOff(e.target.value)}
+            onChange={(e) => setFormField(dispatch, "percentOff", e.target.value)}
             placeholder="20"
             required
           />
@@ -230,14 +238,17 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
               min="0.01"
               step="0.01"
               value={amountOff}
-              onChange={(e) => setAmountOff(e.target.value)}
+              onChange={(e) => setFormField(dispatch, "amountOff", e.target.value)}
               placeholder="50"
               required
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="currency">Moneda *</Label>
-            <Select value={currency} onValueChange={setCurrency}>
+            <Select
+              value={currency}
+              onValueChange={(value) => setFormField(dispatch, "currency", value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -259,7 +270,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
           type="number"
           min="1"
           value={maxRedemptions}
-          onChange={(e) => setMaxRedemptions(e.target.value)}
+          onChange={(e) => setFormField(dispatch, "maxRedemptions", e.target.value)}
           placeholder="100"
         />
         <p className="text-xs text-muted-foreground">
@@ -274,14 +285,18 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
           id="expiresAt"
           type="datetime-local"
           value={expiresAt}
-          onChange={(e) => setExpiresAt(e.target.value)}
+          onChange={(e) => setFormField(dispatch, "expiresAt", e.target.value)}
         />
       </div>
 
       {/* Activo */}
       <div className="flex items-center justify-between">
         <Label htmlFor="active">Código activo</Label>
-        <Switch id="active" checked={active} onCheckedChange={setActive} />
+        <Switch
+          id="active"
+          checked={active}
+          onCheckedChange={(value) => setFormField(dispatch, "active", value)}
+        />
       </div>
 
       {/* Días de periodo de prueba (opcional) */}
@@ -292,7 +307,7 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
           type="number"
           min="0"
           value={trialDays}
-          onChange={(e) => setTrialDays(e.target.value)}
+          onChange={(e) => setFormField(dispatch, "trialDays", e.target.value)}
           placeholder="0 = sin trial, vacío = default del plan (30 días)"
         />
         <p className="text-xs text-muted-foreground">
@@ -307,12 +322,12 @@ export function CreateDiscountCodeForm({ onSuccess }: CreateDiscountCodeFormProp
           <Input
             placeholder="Clave (ej: campaign)"
             value={metadataKey}
-            onChange={(e) => setMetadataKey(e.target.value)}
+            onChange={(e) => setFormField(dispatch, "metadataKey", e.target.value)}
           />
           <Input
             placeholder="Valor (ej: navidad2026)"
             value={metadataValue}
-            onChange={(e) => setMetadataValue(e.target.value)}
+            onChange={(e) => setFormField(dispatch, "metadataValue", e.target.value)}
           />
         </div>
       </div>

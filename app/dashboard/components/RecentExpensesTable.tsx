@@ -4,46 +4,28 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import type { Expense } from "@/lib/types/expenses";
+import { formatCurrency, formatDateShort } from "@/lib/utils/format";
 
 interface RecentExpensesTableProps {
   expenses?: Expense[];
 }
 
-export function RecentExpensesTable({
-  expenses = [],
-}: RecentExpensesTableProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const getValidationIcon = (expense: Expense) => {
-    if (expense.validacion?.valido) {
-      return (
-        <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
-          <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
-        </div>
-      );
-    }
+function getValidationIcon(expense: Expense) {
+  if (expense.validacion?.valido) {
     return (
-      <div className="h-6 w-6 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
-        <AlertCircle className="h-4 w-4 text-orange-400" />
+      <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+        <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
       </div>
     );
-  };
+  }
+  return (
+    <div className="h-6 w-6 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+      <AlertCircle className="h-4 w-4 text-orange-400" />
+    </div>
+  );
+}
 
-  const getPaymentStatusBadge = (expense: Expense) => {
+function getPaymentStatusBadge(expense: Expense) {
     // Solo mostrar estado de pago para gastos XML con tipo PUE o PPD
     if (expense.tipo_origen !== 'XML' || !expense.tipo || expense.tipo === 'COMPLEMENTO_PAGO') {
       return null;
@@ -98,8 +80,11 @@ export function RecentExpensesTable({
     }
 
     return null;
-  };
+}
 
+export function RecentExpensesTable({
+  expenses = [],
+}: RecentExpensesTableProps) {
   return (
     <Card data-tour="recent-expenses" className="min-w-0 overflow-hidden p-6 bg-card border-border">
       <div className="flex items-center justify-between mb-4">
@@ -149,7 +134,7 @@ export function RecentExpensesTable({
                     </div>
                   </td>
                   <td className="py-3 px-2 text-sm text-muted-foreground">
-                    {formatDate(expense.fecha)}
+                    {formatDateShort(expense.fecha)}
                   </td>
                   <td className="py-3 px-2 text-sm font-medium">
                     {formatCurrency(expense.total)}

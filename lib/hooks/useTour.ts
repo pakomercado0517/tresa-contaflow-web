@@ -23,7 +23,6 @@ interface UseTourReturn {
   checkTourStatus: (user: User | null) => void;
 }
 
-// Función helper para obtener el tour cacheado
 function getCachedTour(): CachedTour | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -35,37 +34,34 @@ function getCachedTour(): CachedTour | null {
   }
 }
 
+function getInitialCompleted(): boolean {
+  if (typeof window === 'undefined') return true;
+  const cached = getCachedTour();
+  if (cached && cached.version === CURRENT_TOUR_VERSION && cached.completed) {
+    return true;
+  }
+  return false;
+}
+
+function getCompletedTours(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(TOUR_LOCALSTORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    if (parsed.completedTours && Array.isArray(parsed.completedTours)) {
+      return parsed.completedTours;
+    }
+    if (parsed.version === CURRENT_TOUR_VERSION && parsed.completed) {
+      return Object.values(TOUR_IDS);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export function useTour(): UseTourReturn {
-  // Inicializar basado en localStorage si está disponible
-  const getInitialCompleted = (): boolean => {
-    if (typeof window === 'undefined') return true;
-    const cached = getCachedTour();
-    if (cached && cached.version === CURRENT_TOUR_VERSION && cached.completed) {
-      return true;
-    }
-    return false;
-  };
-
-  const getCompletedTours = (): string[] => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const stored = localStorage.getItem(TOUR_LOCALSTORAGE_KEY);
-      if (!stored) return [];
-      const parsed = JSON.parse(stored);
-      // Si tiene un array de tours completados, retornarlo
-      if (parsed.completedTours && Array.isArray(parsed.completedTours)) {
-        return parsed.completedTours;
-      }
-      // Si está completado (versión anterior), retornar todos los tours
-      if (parsed.version === CURRENT_TOUR_VERSION && parsed.completed) {
-        return Object.values(TOUR_IDS);
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  };
-
   const [isCompleted, setIsCompleted] = useState<boolean>(getInitialCompleted);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);

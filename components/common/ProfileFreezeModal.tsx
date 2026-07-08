@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertCircle, Lock, Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -36,6 +36,17 @@ export function ProfileFreezeModal({
 
   const activeProfiles = profiles.filter((p) => !p.frozen);
   const excessCount = activeProfiles.length - planLimit;
+
+  const profilesToFreeze = useMemo(() => {
+    if (!selectedProfileId) return [];
+    const frozen: Profile[] = [];
+    for (const profile of activeProfiles) {
+      if (profile.id !== selectedProfileId) {
+        frozen.push(profile);
+      }
+    }
+    return frozen;
+  }, [activeProfiles, selectedProfileId]);
 
   const handleFreeze = async () => {
     if (!selectedProfileId) return;
@@ -90,14 +101,16 @@ export function ProfileFreezeModal({
           )}
 
           {/* Profile Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Selecciona el perfil a mantener:</label>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Selecciona el perfil a mantener:</legend>
             <div className="space-y-2">
               {activeProfiles.map((profile) => (
-                <div
+                <button
                   key={profile.id}
+                  type="button"
                   onClick={() => setSelectedProfileId(profile.id)}
-                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                  aria-pressed={selectedProfileId === profile.id}
+                  className={`w-full cursor-pointer rounded-lg border-2 p-3 text-left transition-all ${
                     selectedProfileId === profile.id
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
@@ -112,20 +125,18 @@ export function ProfileFreezeModal({
                       <div className="h-5 w-5 rounded-full border-2 border-blue-500 bg-blue-500" />
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {/* Frozen Preview */}
           {selectedProfileId && (
             <div className="rounded-lg bg-gray-50 p-3">
               <p className="mb-2 text-sm font-medium text-gray-700">Se congelarán:</p>
               <div className="space-y-1">
-                {activeProfiles
-                  .filter((p) => p.id !== selectedProfileId)
-                  .map((profile) => (
-                    <div key={profile.id} className="flex items-center gap-2 text-sm text-gray-600">
+                {profilesToFreeze.map((profile) => (
+                  <div key={profile.id} className="flex items-center gap-2 text-sm text-gray-600">
                       <Lock className="h-4 w-4 text-orange-500" />
                       <span>{profile.nombre}</span>
                       <Badge variant="outline" className="ml-auto text-xs">

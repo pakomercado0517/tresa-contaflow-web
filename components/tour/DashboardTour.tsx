@@ -774,6 +774,13 @@ function TourController({ user }: { user?: User }) {
         }
       }, 1500);
     }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [
     isAuthenticated,
     isLoading,
@@ -1008,6 +1015,13 @@ function TourController({ user }: { user?: User }) {
         }
       }, 1500);
     }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [
     isAuthenticated,
     isLoading,

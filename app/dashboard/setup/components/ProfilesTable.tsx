@@ -60,6 +60,47 @@ interface ProfilesTableProps {
   subscription?: Subscription | null;
 }
 
+function calculateProfileStats(
+  invoices: Invoice[],
+  expenses: Expense[],
+  profileId: string
+): ProfileStats {
+  const profileInvoices = invoices.filter((inv) => inv.profile_id === profileId);
+  const profileExpenses = expenses.filter((exp) => exp.profile_id === profileId);
+
+  const totalInvoiced = profileInvoices.reduce((sum, inv) => {
+    const total = typeof inv.total === 'number' ? inv.total : parseFloat(inv.total) || 0;
+    return sum + total;
+  }, 0);
+
+  const totalSpent = profileExpenses.reduce((sum, exp) => {
+    const total = typeof exp.total === 'number' ? exp.total : parseFloat(exp.total) || 0;
+    return sum + total;
+  }, 0);
+
+  const invoiceDates = profileInvoices
+    .map((inv) => inv.fecha)
+    .filter((fecha): fecha is string => Boolean(fecha))
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+  const expenseDates = profileExpenses
+    .map((exp) => exp.fecha)
+    .filter((fecha): fecha is string => Boolean(fecha))
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+  return {
+    profileId,
+    totalInvoices: profileInvoices.length,
+    totalExpenses: profileExpenses.length,
+    totalInvoiced,
+    totalSpent,
+    firstInvoiceDate: invoiceDates.length > 0 ? invoiceDates[0] : null,
+    lastInvoiceDate: invoiceDates.length > 0 ? invoiceDates[invoiceDates.length - 1] : null,
+    firstExpenseDate: expenseDates.length > 0 ? expenseDates[0] : null,
+    lastExpenseDate: expenseDates.length > 0 ? expenseDates[expenseDates.length - 1] : null,
+  };
+}
+
 function RegimenFiscalCell({
   regimenesFiscales,
   descripcionMap,
@@ -173,47 +214,6 @@ export function ProfilesTable({
 
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
-
-  const calculateProfileStats = (
-    invoices: Invoice[],
-    expenses: Expense[],
-    profileId: string
-  ): ProfileStats => {
-    const profileInvoices = invoices.filter((inv) => inv.profile_id === profileId);
-    const profileExpenses = expenses.filter((exp) => exp.profile_id === profileId);
-
-    const totalInvoiced = profileInvoices.reduce((sum, inv) => {
-      const total = typeof inv.total === 'number' ? inv.total : parseFloat(inv.total) || 0;
-      return sum + total;
-    }, 0);
-
-    const totalSpent = profileExpenses.reduce((sum, exp) => {
-      const total = typeof exp.total === 'number' ? exp.total : parseFloat(exp.total) || 0;
-      return sum + total;
-    }, 0);
-
-    const invoiceDates = profileInvoices
-      .map((inv) => inv.fecha)
-      .filter((fecha): fecha is string => Boolean(fecha))
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-    const expenseDates = profileExpenses
-      .map((exp) => exp.fecha)
-      .filter((fecha): fecha is string => Boolean(fecha))
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-    return {
-      profileId,
-      totalInvoices: profileInvoices.length,
-      totalExpenses: profileExpenses.length,
-      totalInvoiced,
-      totalSpent,
-      firstInvoiceDate: invoiceDates.length > 0 ? invoiceDates[0] : null,
-      lastInvoiceDate: invoiceDates.length > 0 ? invoiceDates[invoiceDates.length - 1] : null,
-      firstExpenseDate: expenseDates.length > 0 ? expenseDates[0] : null,
-      lastExpenseDate: expenseDates.length > 0 ? expenseDates[expenseDates.length - 1] : null,
-    };
-  };
 
   const handleExport = async () => {
     setIsExporting(true);

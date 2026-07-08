@@ -1,17 +1,8 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { History } from 'lucide-react';
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -31,11 +22,18 @@ import {
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { getRegimenLabel } from '@/lib/constants/sat';
-import { TAX_ESTIMATE_ISR_HIGHLIGHT_LABELS } from '@/lib/constants/tax-estimate-field-labels';
 import { useTaxEstimateHistory } from '@/lib/hooks/useTaxEstimateHistory';
-import { formatCurrency, formatCurrencyCompact } from '@/lib/utils/format';
+import { formatCurrency } from '@/lib/utils/format';
 import { mapTaxEstimateSnapshotsToRows } from '@/lib/utils/tax-estimate-history';
 import { cn } from '@/lib/utils';
+
+const TaxEstimateHistoryLineChart = dynamic(
+  () => import('./TaxEstimateHistoryLineChart'),
+  {
+    ssr: false,
+    loading: () => <div className="bg-muted/30 h-72 w-full animate-pulse rounded-md" />,
+  }
+);
 
 interface TaxEstimateHistorySectionProps {
   profileId: string;
@@ -132,12 +130,6 @@ export function TaxEstimateHistorySection({
     );
   }
 
-  const animationProps = {
-    isAnimationActive: true,
-    animationDuration: 450,
-    animationEasing: 'ease-out' as const,
-  };
-
   return (
     <Card className="border-border w-full p-4 shadow-sm md:p-6">
       <div className="flex flex-col gap-6">
@@ -167,52 +159,7 @@ export function TaxEstimateHistorySection({
           ) : null}
         </div>
 
-        <div className="h-72 min-w-0 w-full">
-          <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={288}>
-            <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="mesLabel" className="text-muted-foreground text-xs" />
-              <YAxis
-                className="text-muted-foreground text-xs"
-                tickFormatter={(value: number) => formatCurrencyCompact(value)}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                }}
-                formatter={(value, name) => {
-                  if (value === null || value === undefined) {
-                    return ['—', String(name)];
-                  }
-                  return [formatCurrency(Number(value)), String(name)];
-                }}
-                labelFormatter={(label) => `Mes: ${label}`}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="isrNeto"
-                name={TAX_ESTIMATE_ISR_HIGHLIGHT_LABELS.isr_neto_a_pagar}
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                connectNulls={false}
-                {...animationProps}
-              />
-              <Line
-                type="monotone"
-                dataKey="ivaNeto"
-                name="IVA neto a pagar"
-                stroke="hsl(var(--chart-2, 142 76% 36%))"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                {...animationProps}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <TaxEstimateHistoryLineChart chartData={chartData} />
 
         <p className="text-muted-foreground text-xs">
           Valores informativos por mes; no sustituyen la declaración ante el SAT.

@@ -1,15 +1,18 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ProfileSelector } from '@/components/common/ProfileSelector';
-import { RegimenFiscalSelector } from '@/components/common/RegimenFiscalSelector';
 import { PageHeader } from '@/components/common/PageHeader';
-import { FilterBar } from '@/components/common/FilterBar';
+import { DashboardHeaderFilters } from './DashboardHeaderFilters';
 import { Plus, Building2, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import type { Profile } from '@/lib/types/profiles';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+
+const EMPTY_REGIMENES_FISCALES: string[] = [];
+const EMPTY_PROFILES: Profile[] = [];
 
 interface DashboardHeaderProps {
   profiles?: Profile[];
@@ -22,7 +25,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
-  profiles = [],
+  profiles = EMPTY_PROFILES,
   selectedProfileId,
   selectedMonth,
   selectedYear,
@@ -36,46 +39,84 @@ export function DashboardHeader({
   const currentMonth = selectedMonth ?? appMes;
   const currentYear = selectedYear ?? appAño;
 
-  function updateFilters(month?: number, year?: number, regimenFiscal?: string) {
-    const params = new URLSearchParams(searchParams.toString());
+  const updateFilters = useCallback(
+    (month?: number, year?: number, regimenFiscal?: string) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    const newMonth = month !== undefined ? month : currentMonth;
-    const newYear = year !== undefined ? year : currentYear;
+      const newMonth = month !== undefined ? month : currentMonth;
+      const newYear = year !== undefined ? year : currentYear;
 
-    params.set('mes', newMonth.toString());
-    params.set('año', newYear.toString());
+      params.set('mes', newMonth.toString());
+      params.set('año', newYear.toString());
 
-    if (regimenFiscal !== undefined) {
-      if (regimenFiscal && regimenFiscal !== 'all') {
-        params.set('regimen_fiscal', regimenFiscal);
-      } else {
-        params.delete('regimen_fiscal');
+      if (regimenFiscal !== undefined) {
+        if (regimenFiscal && regimenFiscal !== 'all') {
+          params.set('regimen_fiscal', regimenFiscal);
+        } else {
+          params.delete('regimen_fiscal');
+        }
       }
-    }
 
-    if (selectedProfileId) {
-      params.set('profileId', selectedProfileId);
-    } else {
-      params.delete('profileId');
-    }
+      if (selectedProfileId) {
+        params.set('profileId', selectedProfileId);
+      } else {
+        params.delete('profileId');
+      }
 
-    router.push(`/dashboard?${params.toString()}`, { scroll: false });
-    router.refresh();
-  }
+      router.push(`/dashboard?${params.toString()}`, { scroll: false });
+      router.refresh();
+    },
+    [searchParams, currentMonth, currentYear, selectedProfileId, router]
+  );
 
-  function handleMonthChange(month: number) {
-    updateFilters(month, currentYear);
-  }
+  const regimenesFiscales = useMemo(
+    () => activeProfile?.regimenes_fiscales ?? EMPTY_REGIMENES_FISCALES,
+    [activeProfile?.regimenes_fiscales]
+  );
 
-  function handleYearChange(year: number) {
-    updateFilters(currentMonth, year);
-  }
+  const handleMonthChange = useCallback(
+    (month: number) => {
+      updateFilters(month, currentYear);
+    },
+    [updateFilters, currentYear]
+  );
 
-  function handleRegimenChange(value: string) {
-    updateFilters(undefined, undefined, value);
-  }
+  const handleYearChange = useCallback(
+    (year: number) => {
+      updateFilters(currentMonth, year);
+    },
+    [updateFilters, currentMonth]
+  );
 
-  const regimenesFiscales = activeProfile?.regimenes_fiscales ?? [];
+  const handleRegimenChange = useCallback(
+    (value: string) => {
+      updateFilters(undefined, undefined, value);
+    },
+    [updateFilters]
+  );
+
+  const filters = useMemo(
+    () => (
+      <DashboardHeaderFilters
+        currentMonth={currentMonth}
+        currentYear={currentYear}
+        selectedRegimenFiscal={selectedRegimenFiscal}
+        regimenesFiscales={regimenesFiscales}
+        onMesChange={handleMonthChange}
+        onAñoChange={handleYearChange}
+        onRegimenChange={handleRegimenChange}
+      />
+    ),
+    [
+      currentMonth,
+      currentYear,
+      selectedRegimenFiscal,
+      regimenesFiscales,
+      handleMonthChange,
+      handleYearChange,
+      handleRegimenChange,
+    ]
+  );
 
   return (
     <PageHeader
@@ -116,23 +157,7 @@ export function DashboardHeader({
         </>
       }
       filtersTourId="date-filters"
-      filters={
-        <FilterBar
-          selectedMes={currentMonth}
-          onMesChange={handleMonthChange}
-          selectedAño={currentYear}
-          onAñoChange={handleYearChange}
-          extraFilters={
-            <RegimenFiscalSelector
-              regimenesFiscales={regimenesFiscales}
-              selectedRegimenFiscal={selectedRegimenFiscal}
-              onRegimenFiscalChange={handleRegimenChange}
-              showOnlyWhenMultiple
-              triggerClassName="h-8 w-50 text-sm"
-            />
-          }
-        />
-      }
+      filters={filters}
     />
   );
 }

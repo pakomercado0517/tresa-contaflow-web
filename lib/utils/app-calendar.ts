@@ -11,19 +11,20 @@ export interface CalendarPartsInAppTimezone {
   day: number;
 }
 
+const APP_TIMEZONE_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: APP_CALENDAR_TIMEZONE,
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+});
+
 /**
  * Partes de calendario (año, mes 1–12, día) en {@link APP_CALENDAR_TIMEZONE} para un instante dado.
  */
 export function getCalendarPartsInAppTimezone(
   instant: Date = new Date()
 ): CalendarPartsInAppTimezone {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: APP_CALENDAR_TIMEZONE,
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  });
-  const parts = formatter.formatToParts(instant);
+  const parts = APP_TIMEZONE_DATE_FORMATTER.formatToParts(instant);
   const yearStr = parts.find((p) => p.type === 'year')?.value;
   const monthStr = parts.find((p) => p.type === 'month')?.value;
   const dayStr = parts.find((p) => p.type === 'day')?.value;
@@ -41,6 +42,14 @@ export function getCurrentMonthYearInAppTimezone(
 ): { mes: number; año: number } {
   const { year, month } = getCalendarPartsInAppTimezone(instant);
   return { mes: month, año: year };
+}
+
+/** Fecha ISO (YYYY-MM-DD) en {@link APP_CALENDAR_TIMEZONE} para inputs `type="date"`. */
+export function getTodayIsoDateInAppTimezone(instant: Date = new Date()): string {
+  const { year, month, day } = getCalendarPartsInAppTimezone(instant);
+  const monthPadded = String(month).padStart(2, '0');
+  const dayPadded = String(day).padStart(2, '0');
+  return `${year}-${monthPadded}-${dayPadded}`;
 }
 
 /**

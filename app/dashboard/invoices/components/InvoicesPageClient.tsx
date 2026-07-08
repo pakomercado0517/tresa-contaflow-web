@@ -76,13 +76,22 @@ export function InvoicesPageClient() {
     };
   }, [searchParams]);
 
-  const profilesQuery = useQuery<GetProfilesResponse, Error>({
+  const {
+    data: profilesData,
+    error: profilesError,
+    isLoading: isProfilesLoading,
+  } = useQuery<GetProfilesResponse, Error>({
     queryKey: ['profiles'],
     queryFn: () => getProfilesClient(),
     staleTime: 60_000,
   });
 
-  const invoicesQuery = useQuery<GetInvoicesResponse, Error>({
+  const {
+    data: invoicesData,
+    error: invoicesError,
+    isLoading: isInvoicesLoading,
+    isFetching: isInvoicesFetching,
+  } = useQuery<GetInvoicesResponse, Error>({
     queryKey: [
       'invoices',
       normalizedParams.profileId ?? null,
@@ -105,7 +114,12 @@ export function InvoicesPageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const metricsQuery = useQuery<PeriodMetricsResponse, Error>({
+  const {
+    data: metricsData,
+    error: metricsError,
+    isLoading: isMetricsLoading,
+    isFetching: isMetricsFetching,
+  } = useQuery<PeriodMetricsResponse, Error>({
     queryKey: [
       'invoice-metrics',
       normalizedParams.profileId ?? null,
@@ -118,18 +132,29 @@ export function InvoicesPageClient() {
   });
 
   const periodId = useMemo(
-    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsQuery.data?.period?.id),
-    [normalizedParams.profileId, metricsQuery.data?.period?.id]
+    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsData?.period?.id),
+    [normalizedParams.profileId, metricsData?.period?.id]
   );
 
-  const manualIncomesQuery = useQuery<GetManualIncomesResponse, Error>({
+  const {
+    data: manualIncomesData,
+    error: manualIncomesError,
+    isPending: isManualIncomesPending,
+    isFetching: isManualIncomesFetching,
+  } = useQuery<GetManualIncomesResponse, Error>({
     queryKey: ['manual-incomes', periodId],
     queryFn: () => getManualIncomesClient(periodId as string),
     enabled: !!periodId,
     placeholderData: keepPreviousData,
   });
 
-  const paymentComplementsQuery = useQuery<ListPaymentComplementsResponse, Error>({
+  const {
+    data: paymentComplementsData,
+    error: paymentComplementsQueryError,
+    isPending: isPaymentComplementsPending,
+    isError: isPaymentComplementsError,
+    isFetching: isPaymentComplementsFetching,
+  } = useQuery<ListPaymentComplementsResponse, Error>({
     queryKey: [
       'payment-complements',
       'INGRESO',
@@ -151,10 +176,10 @@ export function InvoicesPageClient() {
   });
 
   const fatalError =
-    profilesQuery.error ??
-    invoicesQuery.error ??
-    metricsQuery.error ??
-    (periodId ? manualIncomesQuery.error : null);
+    profilesError ??
+    invoicesError ??
+    metricsError ??
+    (periodId ? manualIncomesError : null);
   if (fatalError) {
     return (
       <ErrorState
@@ -167,12 +192,12 @@ export function InvoicesPageClient() {
     );
   }
 
-  const invoices = invoicesQuery.data?.data ?? [];
+  const invoices = invoicesData?.data ?? [];
   const pagination =
-    invoicesQuery.data?.pagination ??
+    invoicesData?.pagination ??
     ({ total: 0, page: normalizedParams.page, limit: 10, totalPages: 1 } as const);
-  const profiles = profilesQuery.data?.data ?? [];
-  const periodMetrics = metricsQuery.data;
+  const profiles = profilesData?.data ?? [];
+  const periodMetrics = metricsData;
   const facturasPendientesPago =
     invoices.filter((inv) => inv.estadoPago?.estado !== 'PAGADO').length;
   const metrics = {
@@ -184,21 +209,21 @@ export function InvoicesPageClient() {
   };
 
   const isInitialLoading =
-    (profilesQuery.isLoading && !profilesQuery.data) ||
-    (invoicesQuery.isLoading && !invoicesQuery.data) ||
-    (metricsQuery.isLoading && !metricsQuery.data);
+    (isProfilesLoading && !profilesData) ||
+    (isInvoicesLoading && !invoicesData) ||
+    (isMetricsLoading && !metricsData);
 
-  const isUpdating = !isInitialLoading && (invoicesQuery.isFetching || metricsQuery.isFetching);
+  const isUpdating = !isInitialLoading && (isInvoicesFetching || isMetricsFetching);
 
   const tableState = isInitialLoading ? 'loading' : isUpdating ? 'updating' : 'idle';
 
-  const manualIncomes = manualIncomesQuery.data?.data ?? [];
+  const manualIncomes = manualIncomesData?.data ?? [];
   const manualIncomeDisabledReason =
     !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
 
-  const paymentComplements = paymentComplementsQuery.data?.data ?? [];
+  const paymentComplements = paymentComplementsData?.data ?? [];
   const paymentComplementsPagination =
-    paymentComplementsQuery.data?.pagination ??
+    paymentComplementsData?.pagination ??
     ({
       total: 0,
       page: normalizedParams.complementPage,
@@ -206,11 +231,11 @@ export function InvoicesPageClient() {
       totalPages: 1,
     } as const);
 
-  const paymentComplementsState = paymentComplementsQuery.isPending && !paymentComplementsQuery.data
+  const paymentComplementsState = isPaymentComplementsPending && !paymentComplementsData
     ? 'loading'
-    : paymentComplementsQuery.isError
+    : isPaymentComplementsError
       ? 'error'
-      : paymentComplementsQuery.isFetching
+      : isPaymentComplementsFetching
         ? 'updating'
         : 'idle';
 
@@ -222,9 +247,9 @@ export function InvoicesPageClient() {
       manualIncomes={manualIncomes}
       manualIncomesState={
         periodId
-          ? manualIncomesQuery.isPending && !manualIncomesQuery.data
+          ? isManualIncomesPending && !manualIncomesData
             ? 'loading'
-            : manualIncomesQuery.isFetching
+            : isManualIncomesFetching
               ? 'updating'
               : 'idle'
           : 'disabled'
@@ -248,7 +273,7 @@ export function InvoicesPageClient() {
       paymentComplements={paymentComplements}
       paymentComplementsPagination={paymentComplementsPagination}
       paymentComplementsState={paymentComplementsState}
-      paymentComplementsError={paymentComplementsQuery.error?.message}
+      paymentComplementsError={paymentComplementsQueryError?.message}
       complementPage={normalizedParams.complementPage}
     />
   );

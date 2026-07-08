@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Calendar, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import {
@@ -24,13 +24,21 @@ import {
 } from '@/components/ui/select';
 import { createAccruedExpenseClient } from '@/lib/api/accrued-expenses.client';
 import { ApiError } from '@/lib/api/client';
-import type { Subscription } from '@/lib/types/subscription';
-import type { Profile } from '@/lib/types/profiles';
 import {
   canUploadExpenses,
   getExpensesLimit,
   getRecommendedUpgradePlan,
 } from '@/lib/utils/subscription';
+import type { Subscription } from '@/lib/types/subscription';
+import {
+  createInitialManualExpenseFormState,
+  manualExpenseFormReducer,
+} from './manual-expense-form-reducer';
+import { getTodayIsoDateInAppTimezone } from '@/lib/utils/app-calendar';
+
+import type { Profile } from '@/lib/types/profiles';
+
+const CATEGORIES = ['Viáticos', 'Oficina', 'Servicios', 'Transporte', 'Alimentación', 'Otro'];
 
 interface ManualExpenseDialogProps {
   isOpen: boolean;
@@ -43,8 +51,6 @@ interface ManualExpenseDialogProps {
   expensesUsed?: number;
 }
 
-const CATEGORIES = ['Viáticos', 'Oficina', 'Servicios', 'Transporte', 'Alimentación', 'Otro'];
-
 export function ManualExpenseDialog({
   isOpen,
   onClose,
@@ -55,25 +61,30 @@ export function ManualExpenseDialog({
   subscription,
   expensesUsed = 0,
 }: ManualExpenseDialogProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedProfileId, setSelectedProfileId] = useState<string>(profileId);
+  const [form, dispatchForm] = useReducer(
+    manualExpenseFormReducer,
+    profileId,
+    createInitialManualExpenseFormState
+  );
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-  const [fecha, setFecha] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
-  const [total, setTotal] = useState('');
-  const [subtotal, setSubtotal] = useState('');
-  const [iva, setIva] = useState('');
-  const [concepto, setConcepto] = useState('');
-  const [categoria, setCategoria] = useState('');
+  const {
+    isSubmitting,
+    error,
+    selectedProfileId,
+    fecha,
+    total,
+    subtotal,
+    iva,
+    concepto,
+    categoria,
+  } = form;
+
+  const maxFechaIso = useMemo(() => getTodayIsoDateInAppTimezone(), []);
 
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
     if (isOpen) {
-      setSelectedProfileId(profileId);
-      setError('');
+      dispatchForm({ type: 'dialog_opened', profileId });
     }
   }
 
@@ -89,31 +100,34 @@ export function ManualExpenseDialog({
 
   // Cálculo automático de IVA cuando cambia el total
   const handleTotalChange = (value: string) => {
-    setTotal(value);
     if (value && !isNaN(parseFloat(value))) {
       const totalNum = parseFloat(value);
       const subtotalNum = totalNum / 1.16;
       const ivaNum = totalNum - subtotalNum;
-      setSubtotal(subtotalNum.toFixed(2));
-      setIva(ivaNum.toFixed(2));
+      dispatchForm({
+        type: 'set_total',
+        value,
+        subtotal: subtotalNum.toFixed(2),
+        iva: ivaNum.toFixed(2),
+      });
     } else {
-      setSubtotal('');
-      setIva('');
+      dispatchForm({ type: 'set_total', value, subtotal: '', iva: '' });
     }
   };
 
-  // Cálculo automático de IVA cuando cambia el subtotal
   const handleSubtotalChange = (value: string) => {
-    setSubtotal(value);
     if (value && !isNaN(parseFloat(value))) {
       const subtotalNum = parseFloat(value);
       const ivaNum = subtotalNum * 0.16;
       const totalNum = subtotalNum + ivaNum;
-      setIva(ivaNum.toFixed(2));
-      setTotal(totalNum.toFixed(2));
+      dispatchForm({
+        type: 'set_subtotal',
+        value,
+        iva: ivaNum.toFixed(2),
+        total: totalNum.toFixed(2),
+      });
     } else {
-      setIva('');
-      setTotal('');
+      dispatchForm({ type: 'set_subtotal', value, iva: '', total: '' });
     }
   };
 
@@ -124,34 +138,38 @@ export function ManualExpenseDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    dispatchForm({ type: 'set_error', message: '' });
 
     // Validar límite antes de crear gasto manual
     if (!canUpload) {
-      setError(
-        `Has alcanzado el límite de ${expensesLimit} gastos por mes de tu plan actual. ${
+      dispatchForm({
+        type: 'set_error',
+        message: `Has alcanzado el límite de ${expensesLimit} gastos por mes de tu plan actual. ${
           recommendedPlan
             ? 'Actualiza tu plan para crear más gastos.'
             : 'Contacta con soporte para aumentar tu límite.'
-        }`
-      );
+        }`,
+      });
       return;
     }
 
     // Validaciones
     if (!fecha) {
-      setError('La fecha es requerida');
+      dispatchForm({ type: 'set_error', message: 'La fecha es requerida' });
       return;
     }
 
     if (!selectedProfileId) {
-      setError('Debes seleccionar un perfil');
+      dispatchForm({ type: 'set_error', message: 'Debes seleccionar un perfil' });
       return;
     }
 
     // Validar que el perfil seleccionado no esté congelado
     if (isFrozen) {
-      setError('No se pueden agregar gastos a un perfil congelado. Selecciona otro perfil.');
+      dispatchForm({
+        type: 'set_error',
+        message: 'No se pueden agregar gastos a un perfil congelado. Selecciona otro perfil.',
+      });
       return;
     }
 
@@ -159,21 +177,24 @@ export function ManualExpenseDialog({
     const ivaNum = parseFloat(iva) || 0;
 
     if (!Number.isFinite(subtotalNum) || subtotalNum < 0) {
-      setError('El subtotal debe ser un número mayor o igual a 0');
+      dispatchForm({
+        type: 'set_error',
+        message: 'El subtotal debe ser un número mayor o igual a 0',
+      });
       return;
     }
     if (!Number.isFinite(ivaNum) || ivaNum < 0) {
-      setError('El IVA debe ser un número mayor o igual a 0');
+      dispatchForm({ type: 'set_error', message: 'El IVA debe ser un número mayor o igual a 0' });
       return;
     }
 
     const concept = concepto.trim();
     if (!concept) {
-      setError('El concepto es obligatorio');
+      dispatchForm({ type: 'set_error', message: 'El concepto es obligatorio' });
       return;
     }
 
-    setIsSubmitting(true);
+    dispatchForm({ type: 'submit_start' });
 
     try {
       const fechaStr = fecha; // YYYY-MM-DD
@@ -193,30 +214,22 @@ export function ManualExpenseDialog({
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        dispatchForm({ type: 'set_error', message: err.message });
       } else {
-        setError('Error al crear el gasto. Intenta nuevamente.');
+        dispatchForm({ type: 'set_error', message: 'Error al crear el gasto. Intenta nuevamente.' });
       }
     } finally {
-      setIsSubmitting(false);
+      dispatchForm({ type: 'submit_end' });
     }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      setSelectedProfileId(profileId);
-      setError('');
+      dispatchForm({ type: 'dialog_opened', profileId });
       return;
     }
 
     if (!isSubmitting) {
-      setFecha(new Date().toISOString().split('T')[0]);
-      setTotal('');
-      setSubtotal('');
-      setIva('');
-      setConcepto('');
-      setCategoria('');
-      setError('');
       onClose();
     }
   };
@@ -269,7 +282,9 @@ export function ManualExpenseDialog({
               </Label>
               <Select
                 value={selectedProfileId}
-                onValueChange={setSelectedProfileId}
+                onValueChange={(value) =>
+                  dispatchForm({ type: 'set_selected_profile_id', value })
+                }
                 disabled={isSubmitting}
               >
                 <SelectTrigger id="profile">
@@ -309,8 +324,9 @@ export function ManualExpenseDialog({
                   id="fecha"
                   type="date"
                   value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => dispatchForm({ type: 'set_fecha', value: e.target.value })}
+                  max={maxFechaIso}
+                  suppressHydrationWarning
                   required
                   disabled={isSubmitting}
                   className="pl-3"
@@ -383,7 +399,7 @@ export function ManualExpenseDialog({
                 type="text"
                 placeholder="Ej: Compra de materiales de oficina"
                 value={concepto}
-                onChange={(e) => setConcepto(e.target.value)}
+                onChange={(e) => dispatchForm({ type: 'set_concepto', value: e.target.value })}
                 disabled={isSubmitting}
                 maxLength={200}
               />
@@ -392,7 +408,11 @@ export function ManualExpenseDialog({
             {/* Categoría */}
             <div className="grid gap-2">
               <Label htmlFor="categoria">Categoría</Label>
-              <Select value={categoria} onValueChange={setCategoria} disabled={isSubmitting}>
+              <Select
+                value={categoria}
+                onValueChange={(value) => dispatchForm({ type: 'set_categoria', value })}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger id="categoria">
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>

@@ -24,7 +24,7 @@ import { ReconciliationBadge } from './ReconciliationBadge';
 
 interface PaymentComplementsSectionProps {
   title: string;
-  role: ComplementRole;
+  complementRole: ComplementRole;
   items: PaymentComplementListItem[];
   pagination: PaymentComplementsPagination;
   complementPage: number;
@@ -100,7 +100,7 @@ function buildDetailHref(
 
 export function PaymentComplementsSection({
   title,
-  role,
+  complementRole,
   items,
   pagination,
   complementPage,
@@ -177,7 +177,7 @@ export function PaymentComplementsSection({
                         <p className="text-muted-foreground text-xs">{item.profile.rfc}</p>
                       </TableCell>
                     )}
-                    <TableCell className="font-mono text-xs">{getCounterparty(item, role)}</TableCell>
+                    <TableCell className="font-mono text-xs">{getCounterparty(item, complementRole)}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(item.total_pagado)}
                     </TableCell>

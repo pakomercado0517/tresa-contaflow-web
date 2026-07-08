@@ -34,7 +34,7 @@ export function RegimenFiscalSelector({
     ? regimenesFiscales.length >= 2
     : regimenesFiscales.length > 0;
 
-  const regimenesQuery = useQuery({
+  const { data: regimenesCatalogData, isLoading: isRegimenesCatalogLoading } = useQuery({
     queryKey: ['regimenes-fiscales'],
     queryFn: () => getRegimenesFiscalesClient(),
     enabled: shouldShow && regimenesFiscales.length > 0,
@@ -45,7 +45,7 @@ export function RegimenFiscalSelector({
     const options = [{ value: 'all', label: 'Todos los regímenes' }];
     if (regimenesFiscales.length === 0) return options;
 
-    const catalog = regimenesQuery.data?.data ?? [];
+    const catalog = regimenesCatalogData?.data ?? [];
     const descripcionMap = Object.fromEntries(
       catalog.map((r) => [r.clave, r.descripcion])
     );
@@ -58,7 +58,7 @@ export function RegimenFiscalSelector({
       });
     }
     return options;
-  }, [regimenesFiscales, regimenesQuery.data?.data]);
+  }, [regimenesFiscales, regimenesCatalogData?.data]);
 
   if (!shouldShow) return null;
 
@@ -66,7 +66,7 @@ export function RegimenFiscalSelector({
     <Select
       value={selectedRegimenFiscal || 'all'}
       onValueChange={onRegimenFiscalChange}
-      disabled={disabled || regimenesQuery.isLoading}
+      disabled={disabled || isRegimenesCatalogLoading}
     >
       <SelectTrigger className={triggerClassName}>
         <SelectValue placeholder="Régimen fiscal" />
