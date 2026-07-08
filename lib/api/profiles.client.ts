@@ -44,15 +44,3 @@ export async function freezeExcessProfiles(
     }),
   });
 }
-
-/**
- * Descongela un perfil
- */
-export async function unfreezeProfile(
-  profileId: string
-): Promise<{ message: string; data: Profile }> {
-  return apiClient<{ message: string; data: Profile }>(`/api/profiles/${profileId}/unfreeze`, {
-    method: 'PUT',
-    requireAuth: true,
-  });
-}

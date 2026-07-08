@@ -20,17 +20,6 @@ export async function generatePublicReport(
 }
 
 /**
- * Revoca un token de acceso público (Client Component)
- * DELETE /api/public-reports/:token
- */
-export async function revokePublicReport(token: string): Promise<{ message: string }> {
-  return apiClient<{ message: string }>(`/api/public-reports/${token}`, {
-    method: 'DELETE',
-    requireAuth: true,
-  });
-}
-
-/**
  * Obtiene los datos del reporte público por token — NO requiere autenticación.
  * Usado desde Server Components de la ruta /public/[token].
  * Lanza un Error con el status HTTP como mensaje si falla (ej. "404", "500").

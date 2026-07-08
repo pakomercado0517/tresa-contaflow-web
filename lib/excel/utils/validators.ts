@@ -1,4 +1,4 @@
-import type { ExcelOptions, ExcelInvoicesOptions, ExcelExpensesOptions, ExcelProfilesOptions } from "../core/types";
+import type { ExcelOptions, ExcelProfilesOptions } from "../core/types";
 
 function assert(condition: boolean, message: string): asserts condition {
   if (!condition) {
@@ -19,24 +19,6 @@ export function validateExcelOptions(options: ExcelOptions): void {
   if (options.tipo === "completo" || options.tipo === "gastos") {
     assert(Array.isArray(options.expenses), "expenses debe ser un array");
   }
-}
-
-/**
- * Valida opciones para exportar solo facturas.
- */
-export function validateExcelInvoicesOptions(options: ExcelInvoicesOptions): void {
-  assert(Array.isArray(options.invoices), "invoices es requerido y debe ser un array");
-  assert(options.mes >= 1 && options.mes <= 12, "mes debe estar entre 1 y 12");
-  assert(Number.isInteger(options.año) && options.año > 0, "año debe ser un entero positivo");
-}
-
-/**
- * Valida opciones para exportar solo gastos.
- */
-export function validateExcelExpensesOptions(options: ExcelExpensesOptions): void {
-  assert(Array.isArray(options.expenses), "expenses es requerido y debe ser un array");
-  assert(options.mes >= 1 && options.mes <= 12, "mes debe estar entre 1 y 12");
-  assert(Number.isInteger(options.año) && options.año > 0, "año debe ser un entero positivo");
 }
 
 /**

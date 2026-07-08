@@ -218,33 +218,6 @@ export function getExpensesLimit(plan: Plan, subscription?: Subscription | null)
 }
 
 /**
- * Obtiene el límite de reportes públicos activos simultáneamente
- * null = ilimitado; undefined/false = sin acceso al feature
- */
-export function getPublicReportsActiveLimit(
-  plan: Plan,
-  subscription?: Subscription | null
-): number | null | undefined {
-  // Sin acceso en FREE
-  if (!subscription?.limits?.publicReports && plan === 'FREE') return undefined;
-
-  // Priorizar límite dinámico del backend
-  if (subscription?.limits?.publicReportsActiveLimit !== undefined) {
-    return subscription.limits.publicReportsActiveLimit;
-  }
-
-  // Fallback hardcodeado
-  const limits: Record<Plan, number | null | undefined> = {
-    FREE: undefined, // Sin acceso
-    BASIC: 10,
-    PRO: 50,
-    ENTERPRISE: null, // Ilimitado
-  };
-
-  return limits[plan];
-}
-
-/**
  * Verifica si el usuario puede subir más facturas según su plan y uso actual
  */
 export function canUploadInvoices(

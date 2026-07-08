@@ -1,8 +1,6 @@
 import { apiClient } from './client';
 import type {
   UploadExpenseResponse,
-  CreateExpenseRequest,
-  CreateExpenseResponse,
   DeleteExpenseResponse,
   GetExpensesResponse,
 } from '@/lib/types/expenses';
@@ -56,19 +54,6 @@ export async function uploadExpense(file: File, profileId: string): Promise<Uplo
   return apiClient<UploadExpenseResponse>('/api/invoices/upload', {
     method: 'POST',
     body: formData,
-    requireAuth: true,
-  });
-}
-
-/**
- * Crea un gasto manual (Client Component only)
- */
-export async function createManualExpense(
-  data: CreateExpenseRequest
-): Promise<CreateExpenseResponse> {
-  return apiClient<CreateExpenseResponse>('/api/expenses', {
-    method: 'POST',
-    body: JSON.stringify(data),
     requireAuth: true,
   });
 }

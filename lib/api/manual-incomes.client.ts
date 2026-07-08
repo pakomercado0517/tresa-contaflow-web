@@ -1,7 +1,6 @@
 import { apiClient } from './client';
 import type {
   GetManualIncomesResponse,
-  GetManualIncomeResponse,
   CreateManualIncomeRequest,
   CreateManualIncomeResponse,
   UpdateManualIncomeRequest,
@@ -19,17 +18,6 @@ export async function getManualIncomesClient(
     `/api/manual-incomes?${queryParams.toString()}`,
     { requireAuth: true }
   );
-}
-
-/**
- * Obtiene un ingreso manual por ID (Client Component only)
- */
-export async function getManualIncomeByIdClient(
-  id: string
-): Promise<GetManualIncomeResponse> {
-  return apiClient<GetManualIncomeResponse>(`/api/manual-incomes/${id}`, {
-    requireAuth: true,
-  });
 }
 
 /**

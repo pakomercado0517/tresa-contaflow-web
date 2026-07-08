@@ -95,26 +95,8 @@ export function resumenFinancieroValueStyle(fillArgb: string): Partial<Style> {
   };
 }
 
-/** Aplica estilo a una celda (objeto parcial para no pisar todo el Style) */
-export function applyCellStyle(
-  cell: { style: Partial<Style> },
-  style: Partial<Style>
-): void {
-  if (style.fill) cell.style.fill = style.fill;
-  if (style.font) cell.style.font = { ...cell.style.font, ...style.font };
-  if (style.alignment) cell.style.alignment = { ...cell.style.alignment, ...style.alignment };
-  if (style.border) cell.style.border = { ...cell.style.border, ...style.border };
-  if (style.numFmt) cell.style.numFmt = style.numFmt;
-}
-
-/** Formato numérico para moneda en Excel */
-export const NUM_FMT_CURRENCY = '"$"#,##0.00';
 /** Formato contable: miles, decimales, negativos entre paréntesis */
 export const NUM_FMT_ACCOUNTING = '"$"#,##0.00;("$"#,##0.00);"$"0.00;@';
-/** Formato de fecha corta */
-export const NUM_FMT_DATE = "dd/mm/yyyy";
-/** Formato fecha y hora */
-export const NUM_FMT_DATETIME = "dd/mm/yyyy hh:mm";
 
 /** Encabezado corporativo (teal oscuro, texto blanco, centrado) - estilo imagen */
 export const corporateTableHeaderStyle: Partial<Style> = {
