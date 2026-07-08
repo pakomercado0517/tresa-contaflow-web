@@ -24,7 +24,7 @@ Componentes que **solo** se cargan con `next/dynamic(..., { ssr: false })` desde
 
 Subida de XML en cola: cada archivo actualiza estado (`uploading` → `success`/`error`) y llama al API **en serie** para no saturar el backend ni mezclar toasts/redirects de complementos.
 
-- `app/dashboard/expenses/upload/components/UploadExpensesContent.tsx`
+- `app/dashboard/expenses/upload/components/use-upload-expenses-flow.ts`
 - `app/dashboard/invoices/upload/components/UploadInvoicesContent.tsx`
 
 ## `react-doctor/require-pnpm-hardening`

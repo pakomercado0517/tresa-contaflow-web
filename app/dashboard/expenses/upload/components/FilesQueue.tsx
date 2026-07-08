@@ -5,7 +5,7 @@ import { FileText, X, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { QueuedFile } from "./UploadExpensesContent";
+import type { QueuedFile } from './upload-expenses-types';
 
 interface FilesQueueProps {
   files: QueuedFile[];
