@@ -14,12 +14,10 @@ import { addExpensesSection } from './sections/expenses';
 import { addProfilesSection } from './sections/profiles';
 import {
   buildInvoicesSheet,
-  buildResumenSheet as buildInvoicesResumenSheet,
-} from './sections/invoices-report';
-import {
-  buildExpensesSheet,
-  buildResumenSheet as buildExpensesResumenSheet,
-} from './sections/expenses-report';
+} from './sections/invoices-report/buildInvoicesSheet';
+import { buildResumenSheet as buildInvoicesResumenSheet } from './sections/invoices-report/buildResumenSheet';
+import { buildExpensesSheet } from './sections/expenses-report/buildExpensesSheet';
+import { buildResumenSheet as buildExpensesResumenSheet } from './sections/expenses-report/buildResumenSheet';
 
 /**
  * Genera el nombre de archivo para reporte financiero.

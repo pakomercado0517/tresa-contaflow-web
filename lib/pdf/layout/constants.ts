@@ -4,13 +4,6 @@ export const PAGE = {
   unit: 'mm' as const,
 };
 
-export const MARGINS = {
-  left: 15,
-  right: 15,
-  header: 25,
-  footer: 20,
-};
-
 /** Dimensiones para el reporte mensual (exportación HTML → PDF) */
 export const REPORT = {
   headerHeightMm: 12,

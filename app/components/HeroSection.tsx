@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ export function HeroSection() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isValidEmail, setIsValidEmail] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const validateEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -31,8 +31,9 @@ export function HeroSection() {
 
   const handleStartFree = () => {
     if (!isValidEmail) return;
-    setIsLoading(true);
-    router.push(`/auth/register?email=${encodeURIComponent(email)}`);
+    startTransition(() => {
+      router.push(`/auth/register?email=${encodeURIComponent(email)}`);
+    });
   };
 
   return (
@@ -63,7 +64,7 @@ export function HeroSection() {
                 placeholder="Ingresa tu correo profesional"
                 value={email}
                 onChange={handleEmailChange}
-                disabled={isLoading}
+                disabled={isPending}
                 className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               {isValidEmail && <Check className="h-5 w-5 text-green-500" />}
@@ -72,9 +73,9 @@ export function HeroSection() {
               size="lg"
               className="bg-primary hover:bg-primary/90 whitespace-nowrap disabled:opacity-50"
               onClick={handleStartFree}
-              disabled={!isValidEmail || isLoading}
+              disabled={!isValidEmail || isPending}
             >
-              {isLoading ? 'Redirigiendo...' : 'Empieza gratis'}
+              {isPending ? 'Redirigiendo...' : 'Empieza gratis'}
             </Button>
           </div>
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { motion } from 'motion/react';
+import { LazyMotion, domAnimation, m } from 'motion/react';
 
 interface DashboardRouteTransitionProps {
   children: React.ReactNode;
@@ -28,14 +28,16 @@ export function DashboardRouteTransition({ children }: DashboardRouteTransitionP
   const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
-    <motion.div
-      key={pathname}
-      className="min-w-0 flex-1 overflow-x-hidden"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
-    >
-      {children}
-    </motion.div>
+    <LazyMotion features={domAnimation}>
+      <m.div
+        key={pathname}
+        className="min-w-0 flex-1 overflow-x-hidden"
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+      >
+        {children}
+      </m.div>
+    </LazyMotion>
   );
 }

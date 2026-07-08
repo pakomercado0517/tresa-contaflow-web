@@ -30,13 +30,13 @@ export default function PublicFlowBarChartPlot({ chartData }: PublicFlowBarChart
         <XAxis
           dataKey="name"
           stroke="#9ca3af"
-          style={{ fontSize: '11px' }}
+          style={{ fontSize: '12px' }}
           tick={{ width: 90 }}
           interval={0}
         />
         <YAxis
           stroke="#9ca3af"
-          style={{ fontSize: '11px' }}
+          style={{ fontSize: '12px' }}
           tickFormatter={(v) => formatCurrencyCompact(Number(v))}
           width={80}
         />

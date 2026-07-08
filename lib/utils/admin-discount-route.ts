@@ -23,12 +23,6 @@ export function getAdminDiscountPublicRouteSegments(
   return normalized;
 }
 
-export function getAdminDiscountPublicPath(
-  envValue?: string
-): string {
-  return `/${getAdminDiscountPublicRouteSegments(envValue)}`;
-}
-
 export function isCustomAdminDiscountRoute(
   envValue: string | undefined = process.env.ADMIN_DISCOUNT_ROUTE
 ): boolean {
