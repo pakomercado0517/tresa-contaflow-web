@@ -1,5 +1,11 @@
 # Falsos positivos verificados (React Doctor)
 
+Supresiones acotadas en `doctor.config.json` (`ignore.overrides` / `rules`). Este archivo documenta el porqué.
+
+## `react-doctor/no-event-handler`
+
+`use-manual-expense-dialog-form.ts`: al abrir el diálogo controlado desde el padre (`isOpen`), se reinicia el formulario en render al detectar transición `isOpen` / `profileId` (patrón recomendado en React para reset por props), no con `useEffect`.
+
 ## `react-doctor/server-auth-actions`
 
 Acciones en `app/auth/**` que **establecen** credenciales (login, registro, verificación, reset, forgot password). No puede existir sesión previa; el backend valida credenciales y rate limits.
