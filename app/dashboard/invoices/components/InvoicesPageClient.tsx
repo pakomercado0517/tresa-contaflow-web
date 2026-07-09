@@ -4,29 +4,26 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
-import { getProfilesClient } from '@/lib/api/profiles.client';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
 import { getManualIncomesClient } from '@/lib/api/manual-incomes.client';
 import {
   listPaymentComplementsClient,
   profileIdToSnakeQuery,
 } from '@/lib/api/payment-complements.client';
+import { resolveDashboardListFilters } from '@/lib/navigation/resolve-dashboard-list-filters';
+import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
+import { profilesQueryOptions } from '@/lib/query/profiles-query';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import type { ListPaymentComplementsResponse } from '@/lib/types/payment-complements';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
 import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import type { GetManualIncomesResponse } from '@/lib/types/manual-incomes';
 import { InvoicesListContent } from './InvoicesListContent';
-import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * period_id se obtiene de GET /api/metrics (con profile_id, mes, año).
- * Si el backend devuelve period.id = "aggregated" no podemos listar/crear ingresos manuales.
- * Aceptamos cualquier id que sea UUID; si el backend devuelve otro formato, la API fallará al crear.
- */
 function getPeriodIdFromMetrics(
   profileId: string | undefined,
   periodIdFromApi: string | undefined
@@ -35,56 +32,31 @@ function getPeriodIdFromMetrics(
   return UUID_REGEX.test(periodIdFromApi) ? periodIdFromApi : null;
 }
 
-interface NormalizedInvoiceParams {
-  profileId?: string;
-  mes: number;
-  año: number;
-  regimen_fiscal?: string;
-  page: number;
-  complementPage: number;
-  search?: string;
-}
-
-function getDefaultMes(): number {
-  return getCurrentMonthYearInAppTimezone().mes;
-}
-
-function getDefaultAño(): number {
-  return getCurrentMonthYearInAppTimezone().año;
-}
-
-function toNumber(value: string | null, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 export function InvoicesPageClient() {
   const searchParams = useSearchParams();
-
-  const normalizedParams: NormalizedInvoiceParams = useMemo(() => {
-    const profileIdParam = searchParams.get('profileId');
-    const regimenParam = searchParams.get('regimen_fiscal');
-
-    return {
-      profileId: profileIdParam && profileIdParam !== 'all' ? profileIdParam : undefined,
-      mes: toNumber(searchParams.get('mes'), getDefaultMes()),
-      año: toNumber(searchParams.get('año'), getDefaultAño()),
-      regimen_fiscal: regimenParam && regimenParam !== 'all' ? regimenParam : undefined,
-      page: toNumber(searchParams.get('page'), 1),
-      complementPage: toNumber(searchParams.get('complementPage'), 1),
-      search: searchParams.get('search') ?? undefined,
-    };
-  }, [searchParams]);
 
   const {
     data: profilesData,
     error: profilesError,
     isLoading: isProfilesLoading,
-  } = useQuery<GetProfilesResponse, Error>({
-    queryKey: ['profiles'],
-    queryFn: () => getProfilesClient(),
-    staleTime: 60_000,
-  });
+  } = useQuery<GetProfilesResponse, Error>(profilesQueryOptions());
+
+  const filtersReady = profilesData !== undefined;
+  const profiles = useMemo(() => profilesData?.data ?? [], [profilesData]);
+
+  const resolved = useMemo(() => {
+    if (!filtersReady) return null;
+    return resolveDashboardListFilters(searchParams, profiles);
+  }, [filtersReady, searchParams, profiles]);
+
+  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef(
+    '/dashboard/invoices',
+    profiles
+  );
+
+  const filters = resolved?.filters;
+  const canFetchData = Boolean(filtersReady && resolved);
+  const canShowList = Boolean(canFetchData && resolved?.canonicalSearch === null);
 
   const {
     data: invoicesData,
@@ -94,23 +66,24 @@ export function InvoicesPageClient() {
   } = useQuery<GetInvoicesResponse, Error>({
     queryKey: [
       'invoices',
-      normalizedParams.profileId ?? null,
-      normalizedParams.mes,
-      normalizedParams.año,
-      normalizedParams.regimen_fiscal ?? null,
-      normalizedParams.page,
-      normalizedParams.search ?? null,
+      filters?.profileId ?? null,
+      filters?.mes ?? null,
+      filters?.año ?? null,
+      filters?.regimen_fiscal ?? null,
+      filters?.page ?? null,
+      filters?.search ?? null,
     ],
     queryFn: () =>
       getInvoicesClient({
-        profileId: normalizedParams.profileId,
-        mes: normalizedParams.mes,
-        año: normalizedParams.año,
-        regimen_fiscal: normalizedParams.regimen_fiscal,
-        page: normalizedParams.page,
+        profileId: filters!.profileId,
+        mes: filters!.mes,
+        año: filters!.año,
+        regimen_fiscal: filters!.regimen_fiscal,
+        page: filters!.page,
         limit: 10,
-        search: normalizedParams.search,
+        search: filters!.search,
       }),
+    enabled: canFetchData,
     placeholderData: keepPreviousData,
   });
 
@@ -122,18 +95,25 @@ export function InvoicesPageClient() {
   } = useQuery<PeriodMetricsResponse, Error>({
     queryKey: [
       'invoice-metrics',
-      normalizedParams.profileId ?? null,
-      normalizedParams.mes,
-      normalizedParams.año,
+      filters?.profileId ?? null,
+      filters?.mes ?? null,
+      filters?.año ?? null,
+      filters?.regimen_fiscal ?? null,
     ],
     queryFn: () =>
-      getMetricsClient(normalizedParams.profileId, normalizedParams.mes, normalizedParams.año),
+      getMetricsClient(
+        filters!.profileId,
+        filters!.mes,
+        filters!.año,
+        filters!.regimen_fiscal
+      ),
+    enabled: canFetchData,
     placeholderData: keepPreviousData,
   });
 
   const periodId = useMemo(
-    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsData?.period?.id),
-    [normalizedParams.profileId, metricsData?.period?.id]
+    () => getPeriodIdFromMetrics(filters?.profileId, metricsData?.period?.id),
+    [filters?.profileId, metricsData?.period?.id]
   );
 
   const {
@@ -144,7 +124,7 @@ export function InvoicesPageClient() {
   } = useQuery<GetManualIncomesResponse, Error>({
     queryKey: ['manual-incomes', periodId],
     queryFn: () => getManualIncomesClient(periodId as string),
-    enabled: !!periodId,
+    enabled: canFetchData && Boolean(periodId),
     placeholderData: keepPreviousData,
   });
 
@@ -158,28 +138,28 @@ export function InvoicesPageClient() {
     queryKey: [
       'payment-complements',
       'INGRESO',
-      normalizedParams.profileId ?? null,
-      normalizedParams.mes,
-      normalizedParams.año,
-      normalizedParams.complementPage,
+      filters?.profileId ?? null,
+      filters?.mes ?? null,
+      filters?.año ?? null,
+      filters?.complementPage ?? null,
     ],
     queryFn: () =>
       listPaymentComplementsClient({
         role: 'INGRESO',
-        profile_id: profileIdToSnakeQuery(normalizedParams.profileId),
-        mes: normalizedParams.mes,
-        año: normalizedParams.año,
-        page: normalizedParams.complementPage,
+        profile_id: profileIdToSnakeQuery(filters!.profileId),
+        mes: filters!.mes,
+        año: filters!.año,
+        page: filters!.complementPage,
         limit: 50,
       }),
+    enabled: canFetchData,
     placeholderData: keepPreviousData,
   });
 
   const fatalError =
     profilesError ??
-    invoicesError ??
-    metricsError ??
-    (periodId ? manualIncomesError : null);
+    (canFetchData ? invoicesError ?? metricsError ?? (periodId ? manualIncomesError : null) : null);
+
   if (fatalError) {
     return (
       <ErrorState
@@ -192,11 +172,21 @@ export function InvoicesPageClient() {
     );
   }
 
+  if (!canShowList || !filters) {
+    return (
+      <div className="flex min-h-50 items-center justify-center p-8">
+        {filtersReady ? (
+          <div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
+        ) : null}
+        <LoadingSpinner message="Cargando facturas..." />
+      </div>
+    );
+  }
+
   const invoices = invoicesData?.data ?? [];
   const pagination =
     invoicesData?.pagination ??
-    ({ total: 0, page: normalizedParams.page, limit: 10, totalPages: 1 } as const);
-  const profiles = profilesData?.data ?? [];
+    ({ total: 0, page: filters.page, limit: 10, totalPages: 1 } as const);
   const periodMetrics = metricsData;
   const facturasPendientesPago =
     invoices.filter((inv) => inv.estadoPago?.estado !== 'PAGADO').length;
@@ -219,14 +209,14 @@ export function InvoicesPageClient() {
 
   const manualIncomes = manualIncomesData?.data ?? [];
   const manualIncomeDisabledReason =
-    !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
+    !filters.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
 
   const paymentComplements = paymentComplementsData?.data ?? [];
   const paymentComplementsPagination =
     paymentComplementsData?.pagination ??
     ({
       total: 0,
-      page: normalizedParams.complementPage,
+      page: filters.complementPage,
       limit: 50,
       totalPages: 1,
     } as const);
@@ -256,7 +246,7 @@ export function InvoicesPageClient() {
       }
       manualIncomeDisabledReason={manualIncomeDisabledReason}
       periodId={periodId}
-      profileId={normalizedParams.profileId}
+      profileId={filters.profileId}
       metrics={{
         totalFacturado: metrics.totalFacturado,
         totalFacturas: metrics.totalFacturas,
@@ -264,17 +254,17 @@ export function InvoicesPageClient() {
         facturasPUE: metrics.facturasPUE,
         facturasPPD: metrics.facturasPPD,
       }}
-      initialProfileId={normalizedParams.profileId}
-      initialMes={normalizedParams.mes}
-      initialAño={normalizedParams.año}
-      initialRegimenFiscal={normalizedParams.regimen_fiscal}
-      initialSearch={normalizedParams.search}
+      initialProfileId={filters.profileId}
+      initialMes={filters.mes}
+      initialAño={filters.año}
+      initialRegimenFiscal={filters.regimen_fiscal}
+      initialSearch={filters.search}
       tableState={tableState}
       paymentComplements={paymentComplements}
       paymentComplementsPagination={paymentComplementsPagination}
       paymentComplementsState={paymentComplementsState}
       paymentComplementsError={paymentComplementsQueryError?.message}
-      complementPage={normalizedParams.complementPage}
+      complementPage={filters.complementPage}
     />
   );
 }

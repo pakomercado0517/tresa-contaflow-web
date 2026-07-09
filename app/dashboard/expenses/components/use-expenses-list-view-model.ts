@@ -15,7 +15,10 @@ import {
 } from '@/lib/api/accrued-expenses.client';
 import { ApiError } from '@/lib/api/client';
 import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
-import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
+import {
+  buildListFiltersSearchParams,
+  listFiltersQueryMatchesUrl,
+} from '@/lib/navigation/resolve-dashboard-list-filters';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 import type { Expense } from '@/lib/types/expenses';
 import type { Profile } from '@/lib/types/profiles';
@@ -169,37 +172,44 @@ export function useExpensesListViewModel({
   }, [selectedMes, selectedAño, selectedProfileId, selectedRegimenFiscal, search]);
 
   const applyFilters = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedProfileId && selectedProfileId !== 'all')
-      params.set('profileId', selectedProfileId);
-    if (selectedMes) params.set('mes', selectedMes.toString());
-    if (selectedAño) params.set('año', selectedAño.toString());
-    if (
-      selectedProfileId &&
-      selectedProfileId !== 'all' &&
-      selectedRegimenFiscal &&
-      selectedRegimenFiscal !== 'all'
-    )
-      params.set('regimen_fiscal', selectedRegimenFiscal);
-    if (search) params.set('search', search);
-    params.set('page', '1');
-    params.set('complementPage', '1');
+    const profileId =
+      selectedProfileId && selectedProfileId !== 'all' ? selectedProfileId : undefined;
+    const regimen_fiscal =
+      profileId && selectedRegimenFiscal && selectedRegimenFiscal !== 'all'
+        ? selectedRegimenFiscal
+        : undefined;
+    const filterPayload = {
+      profileId,
+      mes: selectedMes,
+      año: selectedAño,
+      regimen_fiscal,
+      page: 1,
+      complementPage: 1,
+      search: search.trim() || undefined,
+    };
+    if (listFiltersQueryMatchesUrl(filterPayload, searchParams)) {
+      return;
+    }
+    const nextParams = buildListFiltersSearchParams(filterPayload);
     setStoredDashboardFilters({
       profileId: selectedProfileId || 'all',
       mes: selectedMes,
       año: selectedAño,
     });
-    router.push(`/dashboard/expenses?${params.toString()}`);
-  }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
+    router.push(`/dashboard/expenses?${nextParams.toString()}`);
+  }, [
+    selectedProfileId,
+    selectedMes,
+    selectedAño,
+    selectedRegimenFiscal,
+    search,
+    router,
+    searchParams,
+  ]);
 
   const runApplyFilters = useEffectEvent(() => {
     applyFilters();
   });
-
-  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef(
-    '/dashboard/expenses',
-    profiles
-  );
 
   useEffect(() => {
     const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
@@ -218,6 +228,7 @@ export function useExpensesListViewModel({
       regimen: urlRegimen,
       search: urlSearch,
     });
+    dispatchUi({ type: 'set_initial_load_done' });
 
     const timeout = window.setTimeout(() => {
       isSyncingFromUrlRef.current = false;
@@ -231,10 +242,6 @@ export function useExpensesListViewModel({
     if (isSyncingFromUrlRef.current) return;
     applyFilters();
   }, [isInitialLoad, selectedMes, selectedAño, selectedRegimenFiscal, applyFilters]);
-
-  useEffect(() => {
-    dispatchUi({ type: 'set_initial_load_done' });
-  }, [dispatchUi]);
 
   useEffect(() => {
     if (isInitialLoad) return;
@@ -445,7 +452,6 @@ export function useExpensesListViewModel({
   };
 
   return {
-    dashboardFiltersUrlRestoreRef,
     pagination,
     tableState,
     paymentComplements,

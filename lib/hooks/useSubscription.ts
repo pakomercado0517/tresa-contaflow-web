@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { logger } from "@/lib/utils/logger";
-import { getSubscriptionClient } from "@/lib/api/subscription.client";
+import { useQuery } from "@tanstack/react-query";
 import type { Subscription } from "@/lib/types/subscription";
+import { subscriptionQueryOptions } from "@/lib/query/subscription-query";
 
 interface UseSubscriptionReturn {
   subscription: Subscription | null;
@@ -13,39 +12,18 @@ interface UseSubscriptionReturn {
 }
 
 /**
- * Hook para obtener y gestionar la suscripción del usuario
- * Incluye auto-refresh y manejo de errores
+ * Hook para obtener y gestionar la suscripción del usuario (caché compartida vía React Query)
  */
 export function useSubscription(): UseSubscriptionReturn {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchSubscription = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await getSubscriptionClient();
-      setSubscription(data);
-    } catch (err) {
-      logger.error("Error fetching subscription", err);
-      setError(
-        err instanceof Error ? err.message : "Error al obtener suscripción"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
+  const { data, isLoading, error, refetch } = useQuery(subscriptionQueryOptions());
 
   return {
-    subscription,
+    subscription: data ?? null,
     isLoading,
-    error,
-    refetch: fetchSubscription,
+    error: error ? (error instanceof Error ? error.message : "Error al obtener suscripción") : null,
+    refetch: async () => {
+      await refetch();
+    },
   };
 }
 

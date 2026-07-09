@@ -62,12 +62,66 @@ export function mergePendientesImpuestosDefaults(
   };
 }
 
+export interface NominaMetrics {
+  total_pagada: number;
+  percepciones: number;
+  deducciones: number;
+  cantidad_empleados: number;
+}
+
 export interface PeriodMetricsResponse {
   period: PeriodInfo;
   flujo: FlujoMetrics;
   devengado: DevengadoMetrics;
   impuestos: ImpuestosMetrics;
   pendientes: PendientesMetrics;
+  nomina?: NominaMetrics;
+}
+
+export interface MetricsRangeBounds {
+  mes_desde: number;
+  año_desde: number;
+  mes_hasta: number;
+  año_hasta: number;
+}
+
+export interface MetricsByMonthItem extends PeriodMetricsResponse {
+  mes: number;
+  año: number;
+}
+
+export interface MetricsRangeResponse {
+  range: MetricsRangeBounds;
+  items: MetricsByMonthItem[];
+}
+
+export interface GetMetricsRangeParams {
+  mesDesde: number;
+  añoDesde: number;
+  mesHasta: number;
+  añoHasta: number;
+  profileId?: string;
+  regimenFiscal?: string;
+}
+
+export function metricsByMonthItemToPeriodMetrics(
+  item: MetricsByMonthItem
+): PeriodMetricsResponse {
+  return {
+    period: item.period,
+    flujo: item.flujo,
+    devengado: item.devengado,
+    impuestos: item.impuestos,
+    pendientes: item.pendientes,
+    nomina: item.nomina,
+  };
+}
+
+/** Respuesta por defecto cuando el backend devuelve 404 en modo rango */
+export function createEmptyMetricsRangeResponse(
+  bounds: MetricsRangeBounds
+): MetricsRangeResponse {
+  return { range: bounds, items: [] };
 }
 
 /** Respuesta por defecto cuando el backend devuelve 404 (ej. usuario sin suscripción o sin período) */

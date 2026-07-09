@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { SetupTabs } from "./components/SetupTabs";
-import { ProfilesSection } from "./components/ProfilesSection";
+import { ProfilesSectionView } from "./components/ProfilesSectionView";
 import { AccountContent } from "./components/AccountContent";
 import { SubscriptionContent } from "./components/SubscriptionContent";
 import { SATDownloadContent } from "./components/SATDownloadContent";
@@ -46,7 +46,9 @@ export default async function SetupPage() {
           }
         >
           <SetupTabs
-            profilesContent={<ProfilesSection />}
+            profilesContent={
+              <ProfilesSectionView profiles={profiles} subscription={subscription} />
+            }
             accountContent={<AccountContent subscription={subscription} user={currentUser.user} />}
             subscriptionContent={
               <SubscriptionContent

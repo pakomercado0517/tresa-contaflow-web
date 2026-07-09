@@ -17,7 +17,7 @@ const CHART_COLORS = {
 
 export default function HeroSectionMiniChart() {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={192} minWidth={1}>
       <BarChart
         data={HERO_CHART_DATA}
         margin={{ top: 8, right: 4, left: -16, bottom: 0 }}

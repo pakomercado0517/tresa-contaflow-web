@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { logger } from '@/lib/utils/logger';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -15,10 +16,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { formatPrice, getPlanDetailsFromAvailable } from '@/lib/utils/plans';
-import { createCheckoutSession, getAvailablePlansClient } from '@/lib/api/subscription.client';
+import { createCheckoutSession } from '@/lib/api/subscription.client';
+import { availablePlansQueryOptions } from '@/lib/query/available-plans-query';
 import { PromotionCodeInput } from './PromotionCodeInput';
 import { Leaf, Rocket, Gem, Building2, LucideIcon } from 'lucide-react';
-import type { Plan, AvailablePlan } from '@/lib/types/subscription';
+import type { Plan } from '@/lib/types/subscription';
 
 interface AvailablePlansProps {
   currentPlan: Plan;
@@ -34,51 +36,45 @@ const iconMap: Record<string, LucideIcon> = {
 export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [promotionCode, setPromotionCode] = useState<string>('');
-  const [availablePlans, setAvailablePlans] = useState<AvailablePlan[]>([]);
-  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  // Cargar planes disponibles del backend cuando cambie el billing cycle
-  useEffect(() => {
-    const loadPlans = async () => {
-      setIsLoadingPlans(true);
-      try {
-        const response = await getAvailablePlansClient(billingCycle);
-        setAvailablePlans(response.plans);
-        setError(null);
-      } catch (err) {
-        logger.error('Error fetching available plans', err);
-        setError(err instanceof Error ? err.message : 'Error al cargar los planes disponibles');
-      } finally {
-        setIsLoadingPlans(false);
-      }
-    };
+  const {
+    data: plansResponse,
+    isPending: isLoadingPlans,
+    isError: isPlansError,
+    error: plansQueryError,
+  } = useQuery(availablePlansQueryOptions(billingCycle));
 
-    loadPlans();
-  }, [billingCycle]);
+  const availablePlans = plansResponse?.plans ?? [];
+  const plansFetchError = isPlansError
+    ? plansQueryError instanceof Error
+      ? plansQueryError.message
+      : 'Error al cargar los planes disponibles'
+    : null;
+  const error = checkoutError ?? plansFetchError;
 
   const handleUpgrade = async (planId: Plan) => {
     // Validaciones
     if (planId === 'FREE') {
-      setError('El plan FREE no requiere suscripción');
+      setCheckoutError('El plan FREE no requiere suscripción');
       return;
     }
 
     if (planId === currentPlan) {
-      setError('Ya tienes este plan activo');
+      setCheckoutError('Ya tienes este plan activo');
       return;
     }
 
     // ENTERPRISE requiere contacto con ventas
     if (planId === 'ENTERPRISE') {
-      setError(
+      setCheckoutError(
         'El plan Empresarial requiere contacto directo. Por favor, escríbenos a ventas@contafy.com'
       );
       return;
     }
 
-    setError(null);
+    setCheckoutError(null);
     setLoadingPlan(planId);
 
     try {
@@ -114,7 +110,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
         setPromotionCode('');
       }
 
-      setError(errorMessage);
+      setCheckoutError(errorMessage);
       setLoadingPlan(null);
     }
   };

@@ -1,7 +1,6 @@
 'use client';
 
 import { useReducer } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Share2,
   Copy,
@@ -28,15 +27,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { generatePublicReport } from '@/lib/api/public-reports';
 import { formatDateLong } from '@/lib/utils/format';
-import { apiClient } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/client';
+import { useSubscription } from '@/lib/hooks/useSubscription';
 import { UpgradeModal } from '@/components/subscription/UpgradeModal';
 import {
   initialShareReportUiState,
   shareReportUiReducer,
 } from './share-report-ui-reducer';
-import type { Subscription } from '@/lib/types/subscription';
-
 const MONTHS_ES = [
   'enero',
   'febrero',
@@ -74,13 +71,9 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
     isUpgradeModalOpen,
   } = ui;
 
-  const { data: subscriptionData } = useQuery<Subscription>({
-    queryKey: ['subscription'],
-    queryFn: () => apiClient<Subscription>('/api/subscription', { requireAuth: true }),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { subscription } = useSubscription();
 
-  const currentPlan = subscriptionData?.plan ?? 'FREE';
+  const currentPlan = subscription?.plan ?? 'FREE';
 
   const isDisabled = !profileId;
   const monthLabel = `${MONTHS_ES[(mes - 1) % 12]} ${año}`;

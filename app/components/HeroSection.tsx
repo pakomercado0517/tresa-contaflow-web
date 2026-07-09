@@ -91,7 +91,7 @@ export function HeroSection() {
             </div>
 
             <div className="space-y-4">
-              <div className="from-primary/20 to-primary/5 flex h-48 items-center justify-center rounded-lg bg-linear-to-br px-2">
+              <div className="from-primary/20 to-primary/5 h-48 w-full min-w-0 rounded-lg bg-linear-to-br px-2">
                 <HeroSectionMiniChart />
               </div>
 

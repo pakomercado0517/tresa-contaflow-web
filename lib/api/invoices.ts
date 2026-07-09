@@ -1,10 +1,10 @@
+import { cache } from 'react';
 import { serverApiClient } from './server-client';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
-import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 import {
-  getCurrentMonthYearInAppTimezone,
-  getLast12CalendarMonthsAscending,
-} from '@/lib/utils/app-calendar';
+  DEFAULT_PERIOD_METRICS,
+  type PeriodMetricsResponse,
+} from '@/lib/types/metrics';
 
 interface GetInvoicesParams {
   profileId?: string;
@@ -20,16 +20,24 @@ interface GetInvoicesParams {
  * Obtiene las facturas del usuario (Server Component only)
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
-export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoicesResponse> {
+async function fetchInvoices(
+  profileId: string | undefined,
+  mes: number | undefined,
+  año: number | undefined,
+  regimenFiscal: string | undefined,
+  page: number | undefined,
+  limit: number | undefined,
+  search: string | undefined
+): Promise<GetInvoicesResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.profileId) queryParams.append('profileId', params.profileId);
-  if (params?.mes) queryParams.append('mes', params.mes.toString());
-  if (params?.año) queryParams.append('año', params.año.toString());
-  if (params?.regimen_fiscal) queryParams.append('regimen_fiscal', params.regimen_fiscal);
-  if (params?.page) queryParams.append('page', params.page.toString());
-  if (params?.limit) queryParams.append('limit', params.limit.toString());
-  if (params?.search) queryParams.append('search', params.search);
+  if (profileId) queryParams.append('profileId', profileId);
+  if (mes) queryParams.append('mes', mes.toString());
+  if (año) queryParams.append('año', año.toString());
+  if (regimenFiscal) queryParams.append('regimen_fiscal', regimenFiscal);
+  if (page) queryParams.append('page', page.toString());
+  if (limit) queryParams.append('limit', limit.toString());
+  if (search) queryParams.append('search', search);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/invoices${queryString ? `?${queryString}` : ''}`;
@@ -39,12 +47,21 @@ export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoic
   });
 }
 
-/**
- * Obtiene las métricas del usuario (Server Component only)
- * Maneja automáticamente el refresh de tokens cuando recibe 401.
- * Si el backend devuelve 404 (usuario sin suscripción o sin período), devuelve métricas en cero para que el dashboard renderice sin error.
- */
-export async function getMetrics(
+const cachedFetchInvoices = cache(fetchInvoices);
+
+export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoicesResponse> {
+  return cachedFetchInvoices(
+    params?.profileId,
+    params?.mes,
+    params?.año,
+    params?.regimen_fiscal,
+    params?.page,
+    params?.limit,
+    params?.search
+  );
+}
+
+async function fetchMetrics(
   profileId?: string,
   mes?: number,
   año?: number,
@@ -66,147 +83,22 @@ export async function getMetrics(
   });
 }
 
+export const getMetrics = cache(fetchMetrics);
+
 /**
  * Modos de visualización para la tendencia
  */
 export type TrendPeriodView =
-  | 'año-actual' // Solo el año seleccionado hasta el mes actual (por defecto)
-  | 'últimos-12-meses' // Rolling window de últimos 12 meses
-  | 'año-completo' // Todos los 12 meses del año seleccionado
-  | 'comparar-anterior'; // Año actual + últimos 3 meses del año anterior
+  | 'año-actual'
+  | 'últimos-12-meses'
+  | 'año-completo'
+  | 'comparar-anterior';
 
-/**
- * Obtiene datos de tendencia mensual (Server Component only)
- * Por defecto muestra solo el año seleccionado sin meses del año anterior
- */
-export async function getTrendData(
-  profileId?: string,
-  año?: number,
-  periodView: TrendPeriodView = 'año-actual',
-  mesCorte?: number,
-  regimenFiscal?: string
-): Promise<
-    Array<{
-      mes: number;
-      año: number;
-      ingresos_cobrados: number;
-      egresos_pagados: number;
-      ingresos_devengados: number;
-      egresos_devengados: number;
-    }>
-  > {
-  const { mes: currentMonth, año: currentYear } = getCurrentMonthYearInAppTimezone();
-  const year = año || currentYear;
-
-  const clampedMesCorte = mesCorte ? Math.min(12, Math.max(1, mesCorte)) : undefined;
-  const currentYearCutoffMonth =
-    year === currentYear
-      ? Math.min(clampedMesCorte ?? currentMonth, currentMonth)
-      : clampedMesCorte;
-
-  let monthsToFetch = 12;
-  let shouldIncludePrevYearTail = false;
-  let shouldFetchLast12Months = false;
-
-  switch (periodView) {
-    case 'año-actual':
-      // Solo el año seleccionado hasta el mes actual
-      monthsToFetch =
-        year < currentYear
-          ? 12
-          : year === currentYear
-            ? (currentYearCutoffMonth ?? currentMonth)
-            : (currentYearCutoffMonth ?? 12);
-      break;
-    case 'últimos-12-meses':
-      // Rolling window de últimos 12 meses
-      shouldFetchLast12Months = true;
-      break;
-    case 'año-completo':
-      // Todos los 12 meses del año seleccionado
-      monthsToFetch = 12;
-      break;
-    case 'comparar-anterior':
-      // Año actual + últimos 3 meses del año anterior (solo si es el año actual)
-      if (year === currentYear) {
-        monthsToFetch = currentYearCutoffMonth ?? currentMonth;
-        shouldIncludePrevYearTail = true;
-      } else {
-        monthsToFetch = 12;
-      }
-      break;
-  }
-
-  const previousYear = year - 1;
-
-  // Si necesitamos los últimos 12 meses, calcular qué meses/años necesitamos
-  if (shouldFetchLast12Months) {
-    const months = getLast12CalendarMonthsAscending(currentMonth, currentYear);
-
-    const promises = months.map(({ mes, año }) =>
-      getMetrics(profileId, mes, año, regimenFiscal)
-    );
-    const results = await Promise.all(promises);
-
-    return months.map(({ mes, año }, index) => ({
-      mes,
-      año,
-      ingresos_cobrados: results[index]?.flujo.ingresos_cobrados ?? 0,
-      egresos_pagados: results[index]?.flujo.egresos_pagados ?? 0,
-      ingresos_devengados: results[index]?.devengado.ingresos_devengados ?? 0,
-      egresos_devengados: results[index]?.devengado.egresos_devengados ?? 0,
-    }));
-  }
-
-  // Para los otros modos
-  const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
-    getMetrics(profileId, i + 1, year, regimenFiscal)
-  );
-
-  const previousYearMonths = [10, 11, 12];
-  const previousYearPromises = shouldIncludePrevYearTail
-    ? previousYearMonths.map((mes) =>
-        getMetrics(profileId, mes, previousYear, regimenFiscal)
-      )
-    : [];
-
-  const [currentYearResults, previousYearResults] = await Promise.all([
-    Promise.all(currentYearPromises),
-    Promise.all(previousYearPromises),
-  ]);
-
-  const previousYearData = shouldIncludePrevYearTail
-    ? previousYearMonths.map((mes, index) => ({
-        mes,
-        año: previousYear,
-        ingresos_cobrados: previousYearResults[index]?.flujo.ingresos_cobrados ?? 0,
-        egresos_pagados: previousYearResults[index]?.flujo.egresos_pagados ?? 0,
-        ingresos_devengados: previousYearResults[index]?.devengado.ingresos_devengados ?? 0,
-        egresos_devengados: previousYearResults[index]?.devengado.egresos_devengados ?? 0,
-      }))
-    : [];
-
-  const currentYearData = Array.from({ length: 12 }, (_, i) => {
-    const mes = i + 1;
-    if (mes <= monthsToFetch && currentYearResults[i]) {
-      return {
-        mes,
-        año: year,
-        ingresos_cobrados: currentYearResults[i].flujo.ingresos_cobrados,
-        egresos_pagados: currentYearResults[i].flujo.egresos_pagados,
-        ingresos_devengados: currentYearResults[i].devengado.ingresos_devengados,
-        egresos_devengados: currentYearResults[i].devengado.egresos_devengados,
-      };
-    }
-    return {
-      mes,
-      año: year,
-      ingresos_cobrados: 0,
-      egresos_pagados: 0,
-      ingresos_devengados: 0,
-      egresos_devengados: 0,
-    };
-  });
-
-  return [...previousYearData, ...currentYearData];
+export interface TrendDataPoint {
+  mes: number;
+  año: number;
+  ingresos_cobrados: number;
+  egresos_pagados: number;
+  ingresos_devengados: number;
+  egresos_devengados: number;
 }

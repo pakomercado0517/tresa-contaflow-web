@@ -9,6 +9,7 @@ import { TaxEstimatePanel } from '@/components/common/TaxEstimatePanel';
 import { getRegimenLabel } from '@/lib/constants/sat';
 import { ApiError } from '@/lib/api/client';
 import { useTaxEstimates } from '@/lib/hooks/useTaxEstimates';
+import { useSelectedDashboardProfile } from '@/lib/hooks/useSelectedDashboardProfile';
 import type { TaxEstimateApiErrorBody } from '@/lib/types/tax-estimates';
 
 const TaxEstimateHistorySection = dynamic(
@@ -27,7 +28,6 @@ interface DashboardTaxEstimateSectionProps {
   mes: number;
   año: number;
   regimenFiscal?: string;
-  regimenesFiscales?: string[];
 }
 
 function getTaxEstimateErrorMessage(error: Error): string {
@@ -57,8 +57,9 @@ export function DashboardTaxEstimateSection({
   mes,
   año,
   regimenFiscal,
-  regimenesFiscales,
 }: DashboardTaxEstimateSectionProps) {
+  const { activeProfile } = useSelectedDashboardProfile(profileId);
+  const regimenesFiscales = activeProfile?.regimenes_fiscales;
   const { data, isLoading, isError, error, refetch } = useTaxEstimates({
     profileId,
     mes,

@@ -1,7 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +25,7 @@ import type { TrendPeriodView } from '@/lib/api/invoices';
 import { Filter } from 'lucide-react';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { metricsTrendQueryKey } from '@/lib/query/query-keys';
 
 const FlowTrendChartPlot = dynamic(() => import('./FlowTrendChartPlot'), {
   ssr: false,
@@ -89,58 +91,25 @@ export function FlowTrendChart({
 }: FlowTrendChartProps) {
   const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(DEFAULT_VISIBLE);
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
-  const [fetchedData, setFetchedData] = useState<TrendDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const { año: appBusinessAño } = getCurrentMonthYearInAppTimezone();
   const selectedYear = año ?? appBusinessAño;
   const selectedMonth = mes;
-  const isMountedRef = useRef(true);
   const shouldUseInitialData = periodView === 'año-actual';
 
-  // Datos mostrados: en "año-actual" usamos props; en otros modos, estado del fetch
-  const data = shouldUseInitialData ? initialData : fetchedData;
-  const displayLoading = !shouldUseInitialData && isLoading;
+  const {
+    data: fetchedData,
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: metricsTrendQueryKey(profileId, selectedYear, periodView, selectedMonth, regimenFiscal),
+    queryFn: () =>
+      getTrendDataClient(profileId, selectedYear, periodView, selectedMonth, regimenFiscal),
+    enabled: !shouldUseInitialData,
+    staleTime: 2 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (shouldUseInitialData) return;
-
-    let cancelled = false;
-    const timeoutId = setTimeout(() => {
-      if (isMountedRef.current) setIsLoading(true);
-    }, 0);
-
-    const runFetch = async () => {
-      try {
-        const newData = await getTrendDataClient(
-          profileId,
-          selectedYear,
-          periodView,
-          selectedMonth,
-          regimenFiscal
-        );
-        if (!cancelled && isMountedRef.current) {
-          setFetchedData(newData);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Error al cargar datos de tendencia:', error);
-        if (!cancelled && isMountedRef.current) setIsLoading(false);
-      }
-    };
-
-    runFetch();
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timeoutId);
-    };
-  }, [periodView, profileId, selectedYear, selectedMonth, regimenFiscal, shouldUseInitialData]);
-
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  const data = shouldUseInitialData ? initialData : (fetchedData ?? []);
+  const displayLoading = !shouldUseInitialData && (isLoading || isFetching);
 
   const chartData = data.map((item) => {
     const monthLabel = MONTHS_SHORT[item.mes - 1];

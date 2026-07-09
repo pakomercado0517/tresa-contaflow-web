@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { serverApiClient } from "./server-client";
 import type { GetExpensesResponse } from "@/lib/types/expenses";
 
@@ -13,24 +14,28 @@ interface GetExpensesParams {
   search?: string;
 }
 
-/**
- * Obtiene los gastos del usuario (Server Component only)
- * Maneja automáticamente el refresh de tokens cuando recibe 401
- */
-export async function getExpenses(
-  params?: GetExpensesParams
+async function fetchExpenses(
+  profileId: string | undefined,
+  mes: number | undefined,
+  año: number | undefined,
+  regimenFiscal: string | undefined,
+  tipo: string | undefined,
+  categoria: string | undefined,
+  page: number | undefined,
+  limit: number | undefined,
+  search: string | undefined
 ): Promise<GetExpensesResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.profileId) queryParams.append("profileId", params.profileId);
-  if (params?.mes) queryParams.append("mes", params.mes.toString());
-  if (params?.año) queryParams.append("año", params.año.toString());
-  if (params?.regimen_fiscal) queryParams.append("regimen_fiscal", params.regimen_fiscal);
-  if (params?.tipo) queryParams.append("tipo", params.tipo);
-  if (params?.categoria) queryParams.append("categoria", params.categoria);
-  if (params?.page) queryParams.append("page", params.page.toString());
-  if (params?.limit) queryParams.append("limit", params.limit.toString());
-  if (params?.search) queryParams.append("search", params.search);
+  if (profileId) queryParams.append("profileId", profileId);
+  if (mes) queryParams.append("mes", mes.toString());
+  if (año) queryParams.append("año", año.toString());
+  if (regimenFiscal) queryParams.append("regimen_fiscal", regimenFiscal);
+  if (tipo) queryParams.append("tipo", tipo);
+  if (categoria) queryParams.append("categoria", categoria);
+  if (page) queryParams.append("page", page.toString());
+  if (limit) queryParams.append("limit", limit.toString());
+  if (search) queryParams.append("search", search);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/expenses${queryString ? `?${queryString}` : ""}`;
@@ -38,4 +43,26 @@ export async function getExpenses(
   return serverApiClient<GetExpensesResponse>(endpoint, {
     redirectOnAuthError: true,
   });
+}
+
+const cachedFetchExpenses = cache(fetchExpenses);
+
+/**
+ * Obtiene los gastos del usuario (Server Component only)
+ * Maneja automáticamente el refresh de tokens cuando recibe 401
+ */
+export async function getExpenses(
+  params?: GetExpensesParams
+): Promise<GetExpensesResponse> {
+  return cachedFetchExpenses(
+    params?.profileId,
+    params?.mes,
+    params?.año,
+    params?.regimen_fiscal,
+    params?.tipo,
+    params?.categoria,
+    params?.page,
+    params?.limit,
+    params?.search
+  );
 }

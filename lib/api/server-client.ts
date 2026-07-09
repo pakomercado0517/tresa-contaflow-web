@@ -51,6 +51,8 @@ export async function serverApiClient<T>(
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
+    // Evitar caché HTTP entre requests; la dedupe del mismo render la hace React.cache / Next fetch memo.
+    cache: options?.cache ?? 'no-store',
   });
 
   const data = await response.json().catch(() => ({}));
