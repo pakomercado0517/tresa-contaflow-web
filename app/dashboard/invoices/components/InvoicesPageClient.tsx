@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -12,6 +12,7 @@ import {
   profileIdToSnakeQuery,
 } from '@/lib/api/payment-complements.client';
 import { resolveDashboardListFilters } from '@/lib/navigation/resolve-dashboard-list-filters';
+import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
 import { profilesQueryOptions } from '@/lib/query/profiles-query';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import type { ListPaymentComplementsResponse } from '@/lib/types/payment-complements';
@@ -32,7 +33,6 @@ function getPeriodIdFromMetrics(
 }
 
 export function InvoicesPageClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const {
@@ -49,10 +49,10 @@ export function InvoicesPageClient() {
     return resolveDashboardListFilters(searchParams, profiles);
   }, [filtersReady, searchParams, profiles]);
 
-  useEffect(() => {
-    if (!resolved?.canonicalSearch) return;
-    router.replace(`/dashboard/invoices?${resolved.canonicalSearch}`, { scroll: false });
-  }, [resolved?.canonicalSearch, router]);
+  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef(
+    '/dashboard/invoices',
+    profiles
+  );
 
   const filters = resolved?.filters;
   const canFetchData = Boolean(filtersReady && resolved);
@@ -175,6 +175,9 @@ export function InvoicesPageClient() {
   if (!canShowList || !filters) {
     return (
       <div className="flex min-h-50 items-center justify-center p-8">
+        {filtersReady ? (
+          <div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
+        ) : null}
         <LoadingSpinner message="Cargando facturas..." />
       </div>
     );
