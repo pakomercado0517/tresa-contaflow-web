@@ -2,14 +2,9 @@ import { cache } from 'react';
 import { serverApiClient } from './server-client';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import {
-  createEmptyMetricsRangeResponse,
-  type GetMetricsRangeParams,
-  type MetricsRangeResponse,
   DEFAULT_PERIOD_METRICS,
   type PeriodMetricsResponse,
 } from '@/lib/types/metrics';
-import { appendMetricsRangeQueryParams, trendBoundsToMetricsRangeBounds } from './metrics-range-query';
-import { getTrendRangeBounds } from '@/lib/utils/metrics-trend-range';
 
 interface GetInvoicesParams {
   profileId?: string;
@@ -91,44 +86,6 @@ async function fetchMetrics(
 export const getMetrics = cache(fetchMetrics);
 
 /**
- * Argumentos primitivos: React.cache compara con Object.is;
- * un objeto params nuevo en cada llamada nunca reutiliza la caché del request.
- */
-async function fetchMetricsRange(
-  mesDesde: number,
-  añoDesde: number,
-  mesHasta: number,
-  añoHasta: number,
-  profileId?: string,
-  regimenFiscal?: string
-): Promise<MetricsRangeResponse> {
-  const params: GetMetricsRangeParams = {
-    mesDesde,
-    añoDesde,
-    mesHasta,
-    añoHasta,
-    profileId,
-    regimenFiscal,
-  };
-  const queryParams = new URLSearchParams();
-  appendMetricsRangeQueryParams(queryParams, params);
-
-  const queryString = queryParams.toString();
-  const endpoint = `/api/metrics?${queryString}`;
-
-  const emptyDefault = createEmptyMetricsRangeResponse(
-    trendBoundsToMetricsRangeBounds(params)
-  );
-
-  return serverApiClient<MetricsRangeResponse>(endpoint, {
-    redirectOnAuthError: true,
-    notFoundDefault: emptyDefault,
-  });
-}
-
-export const getMetricsRange = cache(fetchMetricsRange);
-
-/**
  * Modos de visualización para la tendencia
  */
 export type TrendPeriodView =
@@ -144,35 +101,4 @@ export interface TrendDataPoint {
   egresos_pagados: number;
   ingresos_devengados: number;
   egresos_devengados: number;
-}
-
-async function fetchDashboardTrendMetricsRange(
-  profileId: string | undefined,
-  año: number,
-  mesCorte: number,
-  regimenFiscal: string | undefined
-): Promise<MetricsRangeResponse> {
-  const bounds = getTrendRangeBounds('año-actual', año, mesCorte);
-  return getMetricsRange(
-    bounds.mesDesde,
-    bounds.añoDesde,
-    bounds.mesHasta,
-    bounds.añoHasta,
-    profileId,
-    regimenFiscal
-  );
-}
-
-const cachedDashboardTrendMetricsRange = cache(fetchDashboardTrendMetricsRange);
-
-/**
- * Rango de métricas para la vista por defecto del dashboard (año-actual) en SSR.
- */
-export async function getDashboardTrendMetricsRange(
-  profileId: string | undefined,
-  año: number,
-  mesCorte: number,
-  regimenFiscal?: string
-): Promise<MetricsRangeResponse> {
-  return cachedDashboardTrendMetricsRange(profileId, año, mesCorte, regimenFiscal);
 }

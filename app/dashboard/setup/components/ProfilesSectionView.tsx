@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { getProfiles } from "@/lib/api/profiles";
-import { getSubscription } from "@/lib/api/subscription";
 import {
   canCreateProfile,
   getRemainingProfiles,
@@ -13,16 +11,19 @@ import {
   getProfileLimit,
   getRecommendedUpgradePlan,
 } from "@/lib/utils/subscription";
+import type { GetProfilesResponse } from "@/lib/types/profiles";
+import type { GetSubscriptionResponse } from "@/lib/types/subscription";
 import { ProfilesTable } from "./ProfilesTable";
 
-export async function ProfilesSection() {
-  // No usar .catch() aquí porque captura los errores de redirect()
-  // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
-  const [subscription, profiles] = await Promise.all([
-    getSubscription(),
-    getProfiles(),
-  ]);
+export interface ProfilesSectionViewProps {
+  profiles: GetProfilesResponse;
+  subscription: GetSubscriptionResponse;
+}
 
+export function ProfilesSectionView({
+  profiles,
+  subscription,
+}: ProfilesSectionViewProps) {
   const currentCount = profiles?.count || 0;
   const plan = subscription?.plan || "FREE";
   const profilesData = profiles?.data || [];
@@ -31,11 +32,9 @@ export async function ProfilesSection() {
   const limit = getProfileLimit(plan, subscription);
   const recommendedPlan = getRecommendedUpgradePlan(plan);
 
-  // Calcular porcentaje de uso
   const usagePercentage =
     limit === Infinity ? 0 : Math.min(100, (currentCount / limit) * 100);
 
-  // Determinar nivel de advertencia
   const warningLevel =
     limit === Infinity
       ? null
@@ -49,7 +48,6 @@ export async function ProfilesSection() {
 
   return (
     <div className="space-y-6">
-      {/* Header con información del plan */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Perfiles RFC</h2>
@@ -65,7 +63,6 @@ export async function ProfilesSection() {
         </Link>
       </div>
 
-      {/* Banner de límite de uso */}
       {limit !== Infinity ? (
         <Alert
           className={
@@ -100,7 +97,8 @@ export async function ProfilesSection() {
             <Progress value={usagePercentage} className="h-2" />
             {warningLevel === "error" && (
               <p className="text-sm font-medium">
-                Has alcanzado el límite de tu plan. {recommendedPlan && (
+                Has alcanzado el límite de tu plan.{" "}
+                {recommendedPlan && (
                   <Link
                     href="/dashboard/setup?tab=subscription"
                     className="text-primary hover:underline inline-flex items-center gap-1"
@@ -112,7 +110,8 @@ export async function ProfilesSection() {
             )}
             {warningLevel === "warning" && remaining !== null && remaining > 0 && (
               <p className="text-sm">
-                Te quedan {remaining} perfil{remaining !== 1 ? "es" : ""} disponibles en tu plan actual.
+                Te quedan {remaining} perfil{remaining !== 1 ? "es" : ""} disponibles en tu plan
+                actual.
                 {recommendedPlan && (
                   <Link
                     href="/dashboard/setup?tab=subscription"
@@ -150,7 +149,6 @@ export async function ProfilesSection() {
         </Alert>
       )}
 
-      {/* Tabla de perfiles */}
       <ProfilesTable
         profiles={profilesData}
         canCreate={canCreate}

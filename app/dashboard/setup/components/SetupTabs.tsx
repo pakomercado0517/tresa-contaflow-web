@@ -1,10 +1,10 @@
 "use client";
 
 import { ReactNode } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Settings, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isSetupTab, useSetupTab } from "./use-setup-tab";
 
 interface SetupTabsProps {
   profilesContent: ReactNode;
@@ -19,34 +19,12 @@ export function SetupTabs({
   subscriptionContent,
   satDownloadContent,
 }: SetupTabsProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Determinar el tab activo basado en la ruta o query params
-  const getActiveTabValue = () => {
-    const tabParam = searchParams?.get("tab");
-    if (tabParam === "account") return "account";
-    if (tabParam === "subscription") return "subscription";
-    if (tabParam === "sat-download") return "sat-download";
-    if (pathname?.includes("/profiles")) return "profiles";
-    if (pathname?.includes("/account")) return "account";
-    if (pathname?.includes("/subscription")) return "subscription";
-    return "profiles"; // default
-  };
-
-  const activeTab = getActiveTabValue();
+  const { activeTab, setSetupTab } = useSetupTab();
 
   const handleTabChange = (value: string) => {
-    // Actualizar la URL sin recargar la página
-    const tabPaths: Record<string, string> = {
-      profiles: "/dashboard/setup",
-      account: "/dashboard/setup?tab=account",
-      subscription: "/dashboard/setup?tab=subscription",
-      "sat-download": "/dashboard/setup?tab=sat-download",
-    };
-    const newPath = tabPaths[value] ?? "/dashboard/setup";
-    router.push(newPath, { scroll: false });
+    if (isSetupTab(value)) {
+      setSetupTab(value);
+    }
   };
 
   return (
@@ -107,4 +85,3 @@ export function SetupTabs({
     </Tabs>
   );
 }
-
