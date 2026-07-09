@@ -36,3 +36,12 @@ Subida de XML en cola: cada archivo actualiza estado (`uploading` → `success`/
 ## `react-doctor/require-pnpm-hardening`
 
 `minimumReleaseAge: 7d` en este repo rompió `pnpm install` (paquetes recientes bloqueados). Se mantiene `trustPolicy: no-downgrade` en `pnpm-workspace.yaml` como mitigación acordada.
+
+## Firebase Auth (login Google) — no deprecar por limpieza
+
+Archivos de contrato con el API (`verifyFirebaseIdToken` en backend). **No** eliminar `firebase`, **no** migrar a Google Identity Services ni quitar `lib/firebase/config.ts` salvo ticket explícito de migración backend.
+
+- `lib/firebase/config.ts`
+- `app/auth/login/components/GoogleLoginButton.tsx` (`signInWithPopup` → `getIdToken()` → `loginWithGoogleAction`)
+
+Logos y storage de usuario: **Supabase**, no Firebase Storage en el frontend.
