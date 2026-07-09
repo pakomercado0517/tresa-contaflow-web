@@ -24,7 +24,7 @@ interface PublicFlowBarChartPlotProps {
 
 export default function PublicFlowBarChartPlot({ chartData }: PublicFlowBarChartPlotProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={288}>
+    <ResponsiveContainer width="100%" height={288} minWidth={1}>
       <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%">
         <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
         <XAxis

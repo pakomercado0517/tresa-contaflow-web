@@ -44,7 +44,7 @@ export default function FlowTrendChartPlot({
 }: FlowTrendChartPlotProps) {
   return (
     <div className="relative h-80 min-w-0 w-full">
-      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={320}>
+      <ResponsiveContainer width="100%" height={320} minWidth={1}>
         <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorIngresosCobrados" x1="0" y1="0" x2="0" y2="1">

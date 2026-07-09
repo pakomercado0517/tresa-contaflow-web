@@ -13,6 +13,7 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -50,8 +51,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="es" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.className} antialiased`}>
         <ReactQueryProvider>
           <TokenRefresher />
           {children}

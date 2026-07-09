@@ -46,9 +46,9 @@ export function Sidebar({ user }: SidebarProps) {
           <Image
             src="/logotipo-contafy.svg"
             alt="Contafy"
-            width={140}
+            width={32}
             height={32}
-            className="h-8 w-auto"
+            className="h-8 w-8"
           />
           <span className="text-xl font-semibold">Contafy</span>
         </div>

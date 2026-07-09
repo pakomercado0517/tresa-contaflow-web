@@ -62,9 +62,9 @@ export function MobileNav({ user }: MobileNavProps) {
             <Image
               src="/logotipo-contafy.svg"
               alt="Contafy"
-              width={140}
+              width={32}
               height={32}
-              className="h-8 w-auto"
+              className="h-8 w-8"
             />
             <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
           </SheetHeader>
@@ -142,9 +142,9 @@ export function MobileNav({ user }: MobileNavProps) {
         <Image
           src="/logotipo-contafy.svg"
           alt="Contafy"
-          width={100}
-          height={24}
-          className="h-7 w-auto"
+          width={28}
+          height={28}
+          className="h-7 w-7"
         />
       </Link>
 
