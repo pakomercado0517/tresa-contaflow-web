@@ -18,7 +18,7 @@ export type InvoicesListContentProps = InvoicesListViewModelInput;
 
 export function InvoicesListContent(props: InvoicesListContentProps) {
   const {
-    storedProfileUrlRestoreRef,
+    dashboardFiltersUrlRestoreRef,
     profiles,
     selectedProfileId,
     handleProfileChange,
@@ -96,7 +96,7 @@ export function InvoicesListContent(props: InvoicesListContentProps) {
 
   return (
     <div className="w-full min-w-0 overflow-x-hidden">
-      <div ref={storedProfileUrlRestoreRef} className="hidden" aria-hidden />
+      <div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
       <InvoicesHeader
         profiles={profiles}
         selectedProfileId={selectedProfileId}

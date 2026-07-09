@@ -15,8 +15,8 @@ import {
 } from '@/lib/api/manual-incomes.client';
 import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { ApiError } from '@/lib/api/client';
-import { setStoredProfileSelection } from '@/lib/storage/profile-selection';
-import { useStoredProfileUrlRestoreRef } from '@/lib/navigation/use-stored-profile-url-restore-ref';
+import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
+import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Profile } from '@/lib/types/profiles';
@@ -249,6 +249,11 @@ export function useInvoicesListViewModel({
     if (search) params.set('search', search);
     params.set('page', '1');
     params.set('complementPage', '1');
+    setStoredDashboardFilters({
+      profileId: selectedProfileId || 'all',
+      mes: selectedMes,
+      año: selectedAño,
+    });
     router.push(`/dashboard/invoices?${params.toString()}`);
   }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
 
@@ -256,7 +261,7 @@ export function useInvoicesListViewModel({
     applyFilters();
   });
 
-  const storedProfileUrlRestoreRef = useStoredProfileUrlRestoreRef(
+  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef(
     '/dashboard/invoices',
     profiles
   );
@@ -317,12 +322,17 @@ export function useInvoicesListViewModel({
     params.set('año', String(appAño));
     params.set('page', '1');
     params.set('complementPage', '1');
+    setStoredDashboardFilters({
+      mes: appMes,
+      año: appAño,
+      profileId: selectedProfileId || 'all',
+    });
     router.push(`/dashboard/invoices?${params.toString()}`);
   };
 
   const handleProfileChange = (nextProfileId: string) => {
     dispatchUi({ type: 'profile_change', profileId: nextProfileId });
-    setStoredProfileSelection(nextProfileId || 'all');
+    setStoredDashboardFilters({ profileId: nextProfileId || 'all' });
     const params = new URLSearchParams(searchParams.toString());
     if (nextProfileId && nextProfileId !== 'all') {
       params.set('profileId', nextProfileId);
@@ -589,7 +599,7 @@ export function useInvoicesListViewModel({
   };
 
   return {
-    storedProfileUrlRestoreRef,
+    dashboardFiltersUrlRestoreRef,
     profiles,
     selectedProfileId,
     selectedMes,

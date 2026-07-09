@@ -10,6 +10,7 @@ import { Plus, Building2, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import type { Profile } from '@/lib/types/profiles';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
 
 const EMPTY_REGIMENES_FISCALES: string[] = [];
 const EMPTY_PROFILES: Profile[] = [];
@@ -62,6 +63,12 @@ export function DashboardHeader({
       } else {
         params.delete('profileId');
       }
+
+      setStoredDashboardFilters({
+        mes: newMonth,
+        año: newYear,
+        profileId: selectedProfileId ?? 'all',
+      });
 
       router.push(`/dashboard?${params.toString()}`, { scroll: false });
       router.refresh();
