@@ -180,3 +180,60 @@ export function resolveDashboardListFilters(
     canonicalSearch: canonicalNorm === currentNorm ? null : canonical.toString(),
   };
 }
+
+/**
+ * Indica si la URL del home ya refleja los filtros efectivos (sin exigir page/complementPage).
+ */
+export function dashboardHomeUrlReflectsFilters(
+  searchParams: ReadonlyURLSearchParams,
+  filters: ResolvedDashboardListFilters
+): boolean {
+  const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
+
+  const urlProfileId = searchParams.get('profileId');
+  const effectiveProfileId = filters.profileId ?? null;
+  if ((urlProfileId || null) !== (effectiveProfileId || null)) {
+    return false;
+  }
+
+  const urlMes = searchParams.get('mes');
+  if (urlMes === null) {
+    if (filters.mes !== appMes) return false;
+  } else if (Number(urlMes) !== filters.mes) {
+    return false;
+  }
+
+  const urlAño = searchParams.get('año');
+  if (urlAño === null) {
+    if (filters.año !== appAño) return false;
+  } else if (Number(urlAño) !== filters.año) {
+    return false;
+  }
+
+  const urlRegimen = searchParams.get('regimen_fiscal');
+  const effectiveRegimen = filters.regimen_fiscal ?? null;
+  if ((urlRegimen || null) !== (effectiveRegimen || null)) {
+    return false;
+  }
+
+  const urlSearch = searchParams.get('search');
+  if ((urlSearch || '') !== (filters.search || '')) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Query para router.replace en /dashboard. null si no hace falta navegar.
+ */
+export function getDashboardHomeReplaceSearch(
+  searchParams: ReadonlyURLSearchParams,
+  profiles: Profile[]
+): string | null {
+  const resolved = resolveDashboardListFilters(searchParams, profiles);
+  if (dashboardHomeUrlReflectsFilters(searchParams, resolved.filters)) {
+    return null;
+  }
+  return buildListFiltersSearchParams(resolved.filters).toString();
+}

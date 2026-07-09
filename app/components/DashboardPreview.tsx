@@ -57,7 +57,7 @@ export function DashboardPreview() {
               <div className="h-3 w-3 rounded-full bg-green-500"></div>
             </div>
             <div className="bg-background p-8">
-              <div className="h-64 min-h-64 w-full">
+              <div className="h-64 min-h-64 w-full min-w-0">
                 {inView ? (
                   <DashboardPreviewAreaChart />
                 ) : (

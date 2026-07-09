@@ -25,16 +25,24 @@ interface GetInvoicesParams {
  * Obtiene las facturas del usuario (Server Component only)
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
-export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoicesResponse> {
+async function fetchInvoices(
+  profileId: string | undefined,
+  mes: number | undefined,
+  año: number | undefined,
+  regimenFiscal: string | undefined,
+  page: number | undefined,
+  limit: number | undefined,
+  search: string | undefined
+): Promise<GetInvoicesResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.profileId) queryParams.append('profileId', params.profileId);
-  if (params?.mes) queryParams.append('mes', params.mes.toString());
-  if (params?.año) queryParams.append('año', params.año.toString());
-  if (params?.regimen_fiscal) queryParams.append('regimen_fiscal', params.regimen_fiscal);
-  if (params?.page) queryParams.append('page', params.page.toString());
-  if (params?.limit) queryParams.append('limit', params.limit.toString());
-  if (params?.search) queryParams.append('search', params.search);
+  if (profileId) queryParams.append('profileId', profileId);
+  if (mes) queryParams.append('mes', mes.toString());
+  if (año) queryParams.append('año', año.toString());
+  if (regimenFiscal) queryParams.append('regimen_fiscal', regimenFiscal);
+  if (page) queryParams.append('page', page.toString());
+  if (limit) queryParams.append('limit', limit.toString());
+  if (search) queryParams.append('search', search);
 
   const queryString = queryParams.toString();
   const endpoint = `/api/invoices${queryString ? `?${queryString}` : ''}`;
@@ -42,6 +50,20 @@ export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoic
   return serverApiClient<GetInvoicesResponse>(endpoint, {
     redirectOnAuthError: true,
   });
+}
+
+const cachedFetchInvoices = cache(fetchInvoices);
+
+export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoicesResponse> {
+  return cachedFetchInvoices(
+    params?.profileId,
+    params?.mes,
+    params?.año,
+    params?.regimen_fiscal,
+    params?.page,
+    params?.limit,
+    params?.search
+  );
 }
 
 async function fetchMetrics(
@@ -124,14 +146,11 @@ export interface TrendDataPoint {
   egresos_devengados: number;
 }
 
-/**
- * Rango de métricas para la vista por defecto del dashboard (año-actual) en SSR.
- */
-export async function getDashboardTrendMetricsRange(
+async function fetchDashboardTrendMetricsRange(
   profileId: string | undefined,
   año: number,
   mesCorte: number,
-  regimenFiscal?: string
+  regimenFiscal: string | undefined
 ): Promise<MetricsRangeResponse> {
   const bounds = getTrendRangeBounds('año-actual', año, mesCorte);
   return getMetricsRange(
@@ -142,4 +161,18 @@ export async function getDashboardTrendMetricsRange(
     profileId,
     regimenFiscal
   );
+}
+
+const cachedDashboardTrendMetricsRange = cache(fetchDashboardTrendMetricsRange);
+
+/**
+ * Rango de métricas para la vista por defecto del dashboard (año-actual) en SSR.
+ */
+export async function getDashboardTrendMetricsRange(
+  profileId: string | undefined,
+  año: number,
+  mesCorte: number,
+  regimenFiscal?: string
+): Promise<MetricsRangeResponse> {
+  return cachedDashboardTrendMetricsRange(profileId, año, mesCorte, regimenFiscal);
 }

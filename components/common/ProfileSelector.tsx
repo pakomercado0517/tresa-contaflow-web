@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/select';
 import type { Profile } from '@/lib/types/profiles';
 import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
-import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
 
 interface ProfileSelectorProps {
   profiles: Profile[];
@@ -30,14 +29,12 @@ export function ProfileSelector({
 }: ProfileSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef('/dashboard', profiles);
 
   function handleProfileChange(profileId: string) {
-    // Verificar que el perfil no esté congelado
     if (profileId !== 'all') {
       const selectedProfile = profiles.find((p) => p.id === profileId);
       if (selectedProfile?.frozen) {
-        return; // Prevenir selección de perfil congelado
+        return;
       }
     }
     setStoredDashboardFilters({ profileId: profileId || 'all' });
@@ -51,30 +48,25 @@ export function ProfileSelector({
     for (const param of clearParamsOnChange) {
       params.delete(param);
     }
-    // Solo push: con searchParams nuevos Next ya re-renderiza Server Components.
-    // Un refresh extra duplica /api/metrics, tax-estimates, etc.
     router.push(`/dashboard?${params.toString()}`, { scroll: false });
   }
 
   return (
-    <>
-      <div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
-      <Select value={selectedProfileId || 'all'} onValueChange={handleProfileChange}>
-        <SelectTrigger className={triggerClassName}>
-          <SelectValue placeholder="Seleccionar perfil" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos los perfiles</SelectItem>
-          {profiles.map((profile) => (
-            <SelectItem key={profile.id} value={profile.id} disabled={profile.frozen}>
-              <span className="flex items-center gap-2">
-                {profile.frozen && <Lock className="h-3 w-3" />}
-                {profile.nombre} ({profile.rfc})
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </>
+    <Select value={selectedProfileId || 'all'} onValueChange={handleProfileChange}>
+      <SelectTrigger className={triggerClassName}>
+        <SelectValue placeholder="Seleccionar perfil" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todos los perfiles</SelectItem>
+        {profiles.map((profile) => (
+          <SelectItem key={profile.id} value={profile.id} disabled={profile.frozen}>
+            <span className="flex items-center gap-2">
+              {profile.frozen && <Lock className="h-3 w-3" />}
+              {profile.nombre} ({profile.rfc})
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

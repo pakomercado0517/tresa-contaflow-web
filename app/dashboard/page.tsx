@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { DashboardContent } from './components/DashboardContent';
+import { DashboardHomeUrlSync } from './components/DashboardHomeUrlSync';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 // Forzar renderizado dinámico y evitar caché para datos siempre frescos
@@ -33,11 +35,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const año = Number.isFinite(añoNumber) ? añoNumber : defaultAño;
 
   return (
-    <DashboardContent
-      profileId={profileId}
-      mes={mes}
-      año={año}
-      regimenFiscal={regimenFiscal}
-    />
+    <>
+      <Suspense fallback={null}>
+        <DashboardHomeUrlSync />
+      </Suspense>
+      <DashboardContent
+        profileId={profileId}
+        mes={mes}
+        año={año}
+        regimenFiscal={regimenFiscal}
+      />
+    </>
   );
 }

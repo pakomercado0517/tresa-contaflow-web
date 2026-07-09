@@ -11,7 +11,7 @@ async function refreshSessionToken(): Promise<null> {
   });
 
   if (response.ok) {
-    logger.info('Token refrescado automáticamente');
+    logger.debug('Token refrescado automáticamente');
     return null;
   }
 

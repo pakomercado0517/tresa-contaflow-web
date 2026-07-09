@@ -8,34 +8,28 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { DashboardHeaderFilters } from './DashboardHeaderFilters';
 import { Plus, Building2, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
-import type { Profile } from '@/lib/types/profiles';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
+import { useSelectedDashboardProfile } from '@/lib/hooks/useSelectedDashboardProfile';
 
 const EMPTY_REGIMENES_FISCALES: string[] = [];
-const EMPTY_PROFILES: Profile[] = [];
 
 interface DashboardHeaderProps {
-  profiles?: Profile[];
   selectedProfileId?: string;
   selectedMonth?: number;
   selectedYear?: number;
   selectedRegimenFiscal?: string;
-  activeProfile?: Profile | null;
-  companyName?: string;
 }
 
 export function DashboardHeader({
-  profiles = EMPTY_PROFILES,
   selectedProfileId,
   selectedMonth,
   selectedYear,
   selectedRegimenFiscal = 'all',
-  activeProfile,
-  companyName,
 }: DashboardHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { profiles, activeProfile, companyName } = useSelectedDashboardProfile(selectedProfileId);
   const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
   const currentMonth = selectedMonth ?? appMes;
   const currentYear = selectedYear ?? appAño;

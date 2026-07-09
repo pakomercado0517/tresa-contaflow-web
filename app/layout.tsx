@@ -51,8 +51,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
-      <body className={`${geistSans.className} antialiased`}>
+    <html
+      lang="es"
+      className={`dark ${geistSans.variable} ${geistMono.variable} ${geistSans.className}`}
+    >
+      <body className="antialiased">
         <ReactQueryProvider>
           <TokenRefresher />
           {children}

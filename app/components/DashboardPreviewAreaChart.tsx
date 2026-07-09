@@ -23,7 +23,7 @@ const CHART_PRIMARY = 'hsl(142, 76%, 36%)';
 
 export default function DashboardPreviewAreaChart() {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={256} minWidth={1}>
       <AreaChart data={DEMO_CHART_DATA} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
         <defs>
           <linearGradient id="demoUtilidadGradient" x1="0" y1="0" x2="0" y2="1">
