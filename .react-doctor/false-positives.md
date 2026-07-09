@@ -37,6 +37,15 @@ Subida de XML en cola: cada archivo actualiza estado (`uploading` → `success`/
 
 `minimumReleaseAge: 7d` en este repo rompió `pnpm install` (paquetes recientes bloqueados). Se mantiene `trustPolicy: no-downgrade` en `pnpm-workspace.yaml` como mitigación acordada.
 
+## `react-doctor/artifact-baas-authority-surface`
+
+Falso positivo verificado (receta canónica: config BaaS pública + boundary en servidor).
+
+- Dispara en `.next/static/chunks/*.js` porque el SDK `firebase/auth` minificado contiene `tenantId` / `providerId` junto a `apiKey` / `authDomain` / `firebase`.
+- En Contafy, Firebase en el cliente es **solo** login Google (`lib/firebase/config.ts` + `GoogleLoginButton` → ID token → `loginWithGoogleAction` → backend). No hay Firestore/Realtime ni queries de colecciones desde el browser.
+- Supabase es server-only (`lib/supabase/server-client.ts` + service role); uploads de logos vía Server Action; bucket `user-logos` sin INSERT para anon (`supabase/storage-user-logos.sql`).
+- No hay override por archivo de source: la regla escanea artifacts generados. Se desactiva en `doctor.config.json` (`rules`). Re-evaluar si se añade acceso cliente a Firestore/Supabase.
+
 ## Firebase Auth (login Google) — no deprecar por limpieza
 
 Archivos de contrato con el API (`verifyFirebaseIdToken` en backend). **No** eliminar `firebase`, **no** migrar a Google Identity Services ni quitar `lib/firebase/config.ts` salvo ticket explícito de migración backend.

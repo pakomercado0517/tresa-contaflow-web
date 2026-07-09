@@ -1,7 +1,8 @@
 {
   "$schema": "https://react.doctor/schema/config.json",
   "rules": {
-    "react-doctor/require-pnpm-hardening": "off"
+    "react-doctor/require-pnpm-hardening": "off",
+    "react-doctor/artifact-baas-authority-surface": "off"
   },
   "ignore": {
     "overrides": [

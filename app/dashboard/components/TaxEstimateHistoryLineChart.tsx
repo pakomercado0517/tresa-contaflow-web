@@ -27,7 +27,7 @@ interface TaxEstimateHistoryLineChartProps {
 export default function TaxEstimateHistoryLineChart({ chartData }: TaxEstimateHistoryLineChartProps) {
   return (
     <div className="h-72 min-w-0 w-full">
-      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={288}>
+      <ResponsiveContainer width="100%" height={288} minWidth={1}>
         <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis dataKey="mesLabel" className="text-muted-foreground text-xs" />
