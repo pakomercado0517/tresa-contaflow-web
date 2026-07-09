@@ -16,7 +16,10 @@ import {
 import { getRegimenesFiscalesClient } from '@/lib/api/sat.client';
 import { ApiError } from '@/lib/api/client';
 import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
-import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
+import {
+  buildListFiltersSearchParams,
+  listFiltersQueryMatchesUrl,
+} from '@/lib/navigation/resolve-dashboard-list-filters';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Profile } from '@/lib/types/profiles';
@@ -234,37 +237,57 @@ export function useInvoicesListViewModel({
     createManualIncomeMutation.isPending || updateManualIncomeMutation.isPending;
 
   const applyFilters = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedProfileId && selectedProfileId !== 'all')
-      params.set('profileId', selectedProfileId);
-    if (selectedMes) params.set('mes', selectedMes.toString());
-    if (selectedAño) params.set('año', selectedAño.toString());
+    const profileId =
+      selectedProfileId && selectedProfileId !== 'all' ? selectedProfileId : undefined;
+    const regimen_fiscal =
+      profileId && selectedRegimenFiscal && selectedRegimenFiscal !== 'all'
+        ? selectedRegimenFiscal
+        : undefined;
+    const nextParams = buildListFiltersSearchParams({
+      profileId,
+      mes: selectedMes,
+      año: selectedAño,
+      regimen_fiscal,
+      page: 1,
+      complementPage: 1,
+      search: search.trim() || undefined,
+    });
     if (
-      selectedProfileId &&
-      selectedProfileId !== 'all' &&
-      selectedRegimenFiscal &&
-      selectedRegimenFiscal !== 'all'
-    )
-      params.set('regimen_fiscal', selectedRegimenFiscal);
-    if (search) params.set('search', search);
-    params.set('page', '1');
-    params.set('complementPage', '1');
+      listFiltersQueryMatchesUrl(
+        {
+          profileId,
+          mes: selectedMes,
+          año: selectedAño,
+          regimen_fiscal,
+          page: 1,
+          complementPage: 1,
+          search: search.trim() || undefined,
+        },
+        searchParams
+      )
+    ) {
+      return;
+    }
+
     setStoredDashboardFilters({
       profileId: selectedProfileId || 'all',
       mes: selectedMes,
       año: selectedAño,
     });
-    router.push(`/dashboard/invoices?${params.toString()}`);
-  }, [selectedProfileId, selectedMes, selectedAño, selectedRegimenFiscal, search, router]);
+    router.push(`/dashboard/invoices?${nextParams.toString()}`);
+  }, [
+    selectedProfileId,
+    selectedMes,
+    selectedAño,
+    selectedRegimenFiscal,
+    search,
+    router,
+    searchParams,
+  ]);
 
   const runApplyFilters = useEffectEvent(() => {
     applyFilters();
   });
-
-  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef(
-    '/dashboard/invoices',
-    profiles
-  );
 
   useEffect(() => {
     const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
@@ -283,6 +306,7 @@ export function useInvoicesListViewModel({
       regimen: urlRegimen,
       search: urlSearch,
     });
+    dispatchUi({ type: 'set_initial_load_done' });
 
     const timeout = window.setTimeout(() => {
       isSyncingFromUrlRef.current = false;
@@ -296,10 +320,6 @@ export function useInvoicesListViewModel({
     if (isSyncingFromUrlRef.current) return;
     applyFilters();
   }, [isInitialLoad, selectedMes, selectedAño, selectedRegimenFiscal, applyFilters]);
-
-  useEffect(() => {
-    dispatchUi({ type: 'set_initial_load_done' });
-  }, [dispatchUi]);
 
   useEffect(() => {
     if (isInitialLoad) return;
@@ -599,7 +619,6 @@ export function useInvoicesListViewModel({
   };
 
   return {
-    dashboardFiltersUrlRestoreRef,
     profiles,
     selectedProfileId,
     selectedMes,
