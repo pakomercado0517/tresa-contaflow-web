@@ -5,12 +5,17 @@ import { DashboardTour } from '@/components/tour/DashboardTour';
 import { getCurrentUser } from '@/lib/api/auth.server';
 import { ProfileFreezeDetector } from '@/components/auth/ProfileFreezeDetector';
 import { DashboardRouteTransition } from '@/components/layout/DashboardRouteTransition';
+import { prefetchDashboardQueries } from '@/lib/query/dashboard-prefetch';
+import { DashboardQueryHydration } from '@/components/providers/DashboardQueryHydration';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const currentUser = await getCurrentUser();
+  const [currentUser, dehydratedState] = await Promise.all([
+    getCurrentUser(),
+    prefetchDashboardQueries(),
+  ]);
 
   return (
-    <>
+    <DashboardQueryHydration state={dehydratedState}>
       <ProfileFreezeDetector />
       <DashboardTour user={currentUser.user}>
         <div className="bg-background flex min-h-screen">
@@ -22,6 +27,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
       </DashboardTour>
-    </>
+    </DashboardQueryHydration>
   );
 }

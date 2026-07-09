@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { serverApiClient } from "./server-client";
 import type {
   GetProfilesResponse,
@@ -8,16 +9,18 @@ import type {
   UpdateProfileResponse,
 } from "@/lib/types/profiles";
 
+async function fetchProfiles(): Promise<GetProfilesResponse> {
+  return serverApiClient<GetProfilesResponse>("/api/profiles", {
+    redirectOnAuthError: true, // Redirigir a login si falla la autenticación
+  });
+}
+
 /**
  * Obtiene los perfiles del usuario (Server Component only)
  * Esta función debe ser llamada solo desde Server Components o Server Actions
  * Maneja automáticamente el refresh de tokens cuando recibe 401
  */
-export async function getProfiles(): Promise<GetProfilesResponse> {
-  return serverApiClient<GetProfilesResponse>("/api/profiles", {
-    redirectOnAuthError: true, // Redirigir a login si falla la autenticación
-  });
-}
+export const getProfiles = cache(fetchProfiles);
 
 /**
  * Crea un nuevo perfil (Server Component only)

@@ -4,13 +4,13 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
-import { getProfilesClient } from '@/lib/api/profiles.client';
 import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
 import { getManualIncomesClient } from '@/lib/api/manual-incomes.client';
 import {
   listPaymentComplementsClient,
   profileIdToSnakeQuery,
 } from '@/lib/api/payment-complements.client';
+import { profilesQueryOptions } from '@/lib/query/profiles-query';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import type { ListPaymentComplementsResponse } from '@/lib/types/payment-complements';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
@@ -80,11 +80,7 @@ export function InvoicesPageClient() {
     data: profilesData,
     error: profilesError,
     isLoading: isProfilesLoading,
-  } = useQuery<GetProfilesResponse, Error>({
-    queryKey: ['profiles'],
-    queryFn: () => getProfilesClient(),
-    staleTime: 60_000,
-  });
+  } = useQuery<GetProfilesResponse, Error>(profilesQueryOptions());
 
   const {
     data: invoicesData,

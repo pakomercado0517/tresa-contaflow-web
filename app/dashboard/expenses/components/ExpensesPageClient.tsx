@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
-import { getProfilesClient } from '@/lib/api/profiles.client';
+import { profilesQueryOptions } from '@/lib/query/profiles-query';
 import { getExpensesClient } from '@/lib/api/expenses.client';
 import { getAccruedExpensesClient } from '@/lib/api/accrued-expenses.client';
 import { getMetricsClient } from '@/lib/api/invoices.client';
@@ -77,11 +77,7 @@ export function ExpensesPageClient() {
     data: profilesData,
     error: profilesError,
     isLoading: isProfilesLoading,
-  } = useQuery<GetProfilesResponse, Error>({
-    queryKey: ['profiles'],
-    queryFn: () => getProfilesClient(),
-    staleTime: 60_000,
-  });
+  } = useQuery<GetProfilesResponse, Error>(profilesQueryOptions());
 
   const {
     data: expensesData,

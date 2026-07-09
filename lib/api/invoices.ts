@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { serverApiClient } from './server-client';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
@@ -44,7 +45,7 @@ export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoic
  * Maneja automáticamente el refresh de tokens cuando recibe 401.
  * Si el backend devuelve 404 (usuario sin suscripción o sin período), devuelve métricas en cero para que el dashboard renderice sin error.
  */
-export async function getMetrics(
+async function fetchMetrics(
   profileId?: string,
   mes?: number,
   año?: number,
@@ -65,6 +66,13 @@ export async function getMetrics(
     notFoundDefault: DEFAULT_PERIOD_METRICS,
   });
 }
+
+/**
+ * Obtiene las métricas del usuario (Server Component only)
+ * Maneja automáticamente el refresh de tokens cuando recibe 401.
+ * Si el backend devuelve 404 (usuario sin suscripción o sin período), devuelve métricas en cero para que el dashboard renderice sin error.
+ */
+export const getMetrics = cache(fetchMetrics);
 
 /**
  * Modos de visualización para la tendencia

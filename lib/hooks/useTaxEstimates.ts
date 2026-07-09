@@ -1,6 +1,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { getTaxEstimatesClient } from '@/lib/api/tax-estimates.client';
 import type { TaxEstimateListResponse } from '@/lib/types/tax-estimates';
+import { SUBSCRIPTION_STALE_TIME_MS } from '@/lib/query/subscription-query';
 
 export interface UseTaxEstimatesParams {
   profileId?: string;
@@ -41,6 +42,7 @@ export function useTaxEstimates({
         persist,
       }),
     enabled: hasProfile,
+    staleTime: SUBSCRIPTION_STALE_TIME_MS,
   });
 }
 
