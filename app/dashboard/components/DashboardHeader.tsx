@@ -70,8 +70,9 @@ export function DashboardHeader({
         profileId: selectedProfileId ?? 'all',
       });
 
+      // Solo push: con searchParams nuevos Next ya re-renderiza Server Components.
+      // Un refresh extra duplica /api/metrics, tax-estimates, etc.
       router.push(`/dashboard?${params.toString()}`, { scroll: false });
-      router.refresh();
     },
     [searchParams, currentMonth, currentYear, selectedProfileId, router]
   );

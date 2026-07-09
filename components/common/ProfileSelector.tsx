@@ -51,8 +51,9 @@ export function ProfileSelector({
     for (const param of clearParamsOnChange) {
       params.delete(param);
     }
+    // Solo push: con searchParams nuevos Next ya re-renderiza Server Components.
+    // Un refresh extra duplica /api/metrics, tax-estimates, etc.
     router.push(`/dashboard?${params.toString()}`, { scroll: false });
-    router.refresh();
   }
 
   return (

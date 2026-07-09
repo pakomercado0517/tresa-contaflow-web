@@ -4,12 +4,22 @@ import type {
   DeleteInvoiceResponse,
   GetInvoicesResponse,
 } from '@/lib/types/invoices';
-import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
-import type { TrendPeriodView } from './invoices';
 import {
-  getCurrentMonthYearInAppTimezone,
-  getLast12CalendarMonthsAscending,
-} from '@/lib/utils/app-calendar';
+  createEmptyMetricsRangeResponse,
+  DEFAULT_PERIOD_METRICS,
+  type GetMetricsRangeParams,
+  type MetricsRangeResponse,
+  type PeriodMetricsResponse,
+} from '@/lib/types/metrics';
+import type { TrendDataPoint, TrendPeriodView } from './invoices';
+import { appendMetricsRangeQueryParams, trendBoundsToMetricsRangeBounds } from './metrics-range-query';
+import {
+  buildTrendSeriesForView,
+  getTrendRangeBounds,
+} from '@/lib/utils/metrics-trend-range';
+import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
+
+export type { TrendDataPoint };
 
 export interface GetInvoicesClientParams {
   profileId?: string;
@@ -45,15 +55,6 @@ export async function getInvoicesClient(
   });
 }
 
-export type TrendDataPoint = {
-  mes: number;
-  año: number;
-  ingresos_cobrados: number;
-  egresos_pagados: number;
-  ingresos_devengados: number;
-  egresos_devengados: number;
-};
-
 /**
  * Obtiene las métricas del usuario (Client Component only).
  * Si el backend devuelve 404 (usuario sin suscripción o sin período), devuelve métricas en cero.
@@ -80,9 +81,27 @@ export async function getMetricsClient(
   });
 }
 
+export async function getMetricsRangeClient(
+  params: GetMetricsRangeParams
+): Promise<MetricsRangeResponse> {
+  const queryParams = new URLSearchParams();
+  appendMetricsRangeQueryParams(queryParams, params);
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/metrics?${queryString}`;
+
+  const emptyDefault = createEmptyMetricsRangeResponse(
+    trendBoundsToMetricsRangeBounds(params)
+  );
+
+  return apiClient<MetricsRangeResponse>(endpoint, {
+    requireAuth: true,
+    notFoundDefault: emptyDefault,
+  });
+}
+
 /**
  * Obtiene datos de tendencia mensual (Client Component only)
- * Permite diferentes modos de visualización
  */
 export async function getTrendDataClient(
   profileId?: string,
@@ -91,125 +110,21 @@ export async function getTrendDataClient(
   mesCorte?: number,
   regimenFiscal?: string
 ): Promise<TrendDataPoint[]> {
-  const { mes: currentMonth, año: currentYear } = getCurrentMonthYearInAppTimezone();
-  const year = año || currentYear;
+  const { año: currentYear } = getCurrentMonthYearInAppTimezone();
+  const year = año ?? currentYear;
 
-  const clampedMesCorte = mesCorte ? Math.min(12, Math.max(1, mesCorte)) : undefined;
-  const currentYearCutoffMonth =
-    year === currentYear
-      ? Math.min(clampedMesCorte ?? currentMonth, currentMonth)
-      : clampedMesCorte;
-
-  let monthsToFetch = 12;
-  let shouldIncludePrevYearTail = false;
-  let shouldFetchLast12Months = false;
-
-  switch (periodView) {
-    case 'año-actual':
-      // Solo el año seleccionado hasta el mes actual
-      monthsToFetch =
-        year < currentYear
-          ? 12
-          : year === currentYear
-            ? (currentYearCutoffMonth ?? currentMonth)
-            : (currentYearCutoffMonth ?? 12);
-      break;
-    case 'últimos-12-meses':
-      // Rolling window de últimos 12 meses
-      shouldFetchLast12Months = true;
-      break;
-    case 'año-completo':
-      // Todos los 12 meses del año seleccionado
-      monthsToFetch = 12;
-      break;
-    case 'comparar-anterior':
-      // Año actual + últimos 3 meses del año anterior (solo si es el año actual)
-      if (year === currentYear) {
-        monthsToFetch = currentYearCutoffMonth ?? currentMonth;
-        shouldIncludePrevYearTail = true;
-      } else {
-        monthsToFetch = 12;
-      }
-      break;
-  }
-
-  const previousYear = year - 1;
-
-  // Si necesitamos los últimos 12 meses, calcular qué meses/años necesitamos
-  if (shouldFetchLast12Months) {
-    const months = getLast12CalendarMonthsAscending(currentMonth, currentYear);
-
-    const promises = months.map(({ mes, año }) =>
-      getMetricsClient(profileId, mes, año, regimenFiscal)
-    );
-    const results = await Promise.all(promises);
-
-    return months.map(({ mes, año }, index) => ({
-      mes,
-      año,
-      ingresos_cobrados: results[index]?.flujo.ingresos_cobrados ?? 0,
-      egresos_pagados: results[index]?.flujo.egresos_pagados ?? 0,
-      ingresos_devengados: results[index]?.devengado.ingresos_devengados ?? 0,
-      egresos_devengados: results[index]?.devengado.egresos_devengados ?? 0,
-    }));
-  }
-
-  // Para los otros modos
-  const currentYearPromises = Array.from({ length: monthsToFetch }, (_, i) =>
-    getMetricsClient(profileId, i + 1, year, regimenFiscal)
-  );
-
-  const previousYearMonths = [10, 11, 12];
-  const previousYearPromises = shouldIncludePrevYearTail
-    ? previousYearMonths.map((mes) =>
-        getMetricsClient(profileId, mes, previousYear, regimenFiscal)
-      )
-    : [];
-
-  const [currentYearResults, previousYearResults] = await Promise.all([
-    Promise.all(currentYearPromises),
-    Promise.all(previousYearPromises),
-  ]);
-
-  const previousYearData = shouldIncludePrevYearTail
-    ? previousYearMonths.map((mes, index) => ({
-        mes,
-        año: previousYear,
-        ingresos_cobrados: previousYearResults[index]?.flujo.ingresos_cobrados ?? 0,
-        egresos_pagados: previousYearResults[index]?.flujo.egresos_pagados ?? 0,
-        ingresos_devengados: previousYearResults[index]?.devengado.ingresos_devengados ?? 0,
-        egresos_devengados: previousYearResults[index]?.devengado.egresos_devengados ?? 0,
-      }))
-    : [];
-
-  const currentYearData = Array.from({ length: 12 }, (_, i) => {
-    const mes = i + 1;
-    if (mes <= monthsToFetch && currentYearResults[i]) {
-      return {
-        mes,
-        año: year,
-        ingresos_cobrados: currentYearResults[i].flujo.ingresos_cobrados,
-        egresos_pagados: currentYearResults[i].flujo.egresos_pagados,
-        ingresos_devengados: currentYearResults[i].devengado.ingresos_devengados,
-        egresos_devengados: currentYearResults[i].devengado.egresos_devengados,
-      };
-    }
-    return {
-      mes,
-      año: year,
-      ingresos_cobrados: 0,
-      egresos_pagados: 0,
-      ingresos_devengados: 0,
-      egresos_devengados: 0,
-    };
+  const bounds = getTrendRangeBounds(periodView, year, mesCorte);
+  const range = await getMetricsRangeClient({
+    ...bounds,
+    profileId,
+    regimenFiscal,
   });
 
-  return [...previousYearData, ...currentYearData];
+  return buildTrendSeriesForView(range.items, periodView, year, mesCorte);
 }
 
 /**
  * Sube un archivo XML de factura al backend (Client Component only)
- * El sistema determina automáticamente si es factura o gasto basándose en el RFC
  */
 export async function uploadInvoice(file: File, profileId: string): Promise<UploadInvoiceResponse> {
   const formData = new FormData();

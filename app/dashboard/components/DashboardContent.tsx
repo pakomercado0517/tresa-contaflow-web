@@ -7,10 +7,15 @@ import { RecentInvoicesTable } from './RecentInvoicesTable';
 import { RecentExpensesTable } from './RecentExpensesTable';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { TrialBannerWrapper } from './TrialBannerWrapper';
-import { getMetrics, getInvoices, getTrendData } from '@/lib/api/invoices';
+import { getMetrics, getInvoices, getDashboardTrendMetricsRange } from '@/lib/api/invoices';
 import { getExpenses } from '@/lib/api/expenses';
 import { getProfiles } from '@/lib/api/profiles';
 import { getCurrentUser } from '@/lib/api/auth.server';
+import {
+  buildTrendSeriesForView,
+  findMetricsItemForMonth,
+} from '@/lib/utils/metrics-trend-range';
+import { metricsByMonthItemToPeriodMetrics } from '@/lib/types/metrics';
 
 // Lazy load componentes pesados (jsPDF y Recharts)
 // Nota: Estos componentes ya son Client Components, el lazy loading reduce el bundle inicial
@@ -70,16 +75,23 @@ export async function DashboardContent({
   año,
   regimenFiscal,
 }: DashboardContentProps) {
-  // No usar .catch() aquí porque captura los errores de redirect()
-  // Si hay un 401, serverApiClient redirigirá automáticamente a /auth/login
-  const [metrics, invoices, expenses, profiles, trendData, currentUser] = await Promise.all([
-    getMetrics(profileId, mes, año, regimenFiscal),
+  const trendRangePromise = getDashboardTrendMetricsRange(profileId, año, mes, regimenFiscal);
+
+  const [trendRange, invoices, expenses, profiles, currentUser] = await Promise.all([
+    trendRangePromise,
     getInvoices({ profileId, mes, año, regimen_fiscal: regimenFiscal, limit: 3 }),
     getExpenses({ profileId, mes, año, regimen_fiscal: regimenFiscal, limit: 3 }),
     getProfiles(),
-    getTrendData(profileId, año, 'año-actual', mes, regimenFiscal),
     getCurrentUser(),
   ]);
+
+  const trendData = buildTrendSeriesForView(trendRange.items, 'año-actual', año, mes);
+
+  const monthItem = findMetricsItemForMonth(trendRange.items, mes, año);
+  const metrics =
+    monthItem !== undefined
+      ? metricsByMonthItemToPeriodMetrics(monthItem)
+      : await getMetrics(profileId, mes, año, regimenFiscal);
 
   const activeProfile = profileId ? (profiles.data.find((p) => p.id === profileId) ?? null) : null;
   const selectedCompanyName = profileId
