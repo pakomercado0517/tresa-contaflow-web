@@ -461,6 +461,14 @@ function InvoiceTable() {
 - ✅ Protección contra XSS
 - ✅ Refresh tokens manejados automáticamente
 
+### Login con Google (Firebase Auth — no cambiar sin migrar backend)
+
+- ✅ **Obligatorio**: paquete `firebase`, [`lib/firebase/config.ts`](lib/firebase/config.ts) y [`GoogleLoginButton`](app/auth/login/components/GoogleLoginButton.tsx) con `signInWithPopup` + `user.getIdToken()`
+- ✅ El frontend envía ese token a `loginWithGoogleAction` → `POST /api/auth/google`; el backend valida **Firebase ID token** (`aud` = project id, p. ej. `tresa-contafy`)
+- ✅ Variables `NEXT_PUBLIC_FIREBASE_*` en entorno (ver `.env.example`); **no** usar `NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID` ni Google Identity Services (GIS) en el login
+- ❌ **No** eliminar `firebase` ni sustituir el flujo por GIS “para limpiar bundle” o por refactors de react-doctor
+- ❌ **No** confundir con Supabase: logos/archivos van a Supabase; Firebase en este repo es **solo Auth Google en el cliente**
+
 ```typescript
 // ✅ CORRECTO - Cliente HTTP configurado
 // lib/api/client.ts
@@ -625,6 +633,7 @@ Antes de hacer commit, verificar:
 - [ ] ¿Se implementó Suspense para componentes de cliente?
 - [ ] ¿Se usó la estrategia híbrida correcta (Server Components vs React Query)?
 - [ ] ¿Se usó el cliente HTTP configurado en lugar de fetch directo?
+- [ ] ¿Login Google sigue usando Firebase Auth (`lib/firebase/config.ts`), sin GIS ni quitar `firebase`?
 
 ---
 
