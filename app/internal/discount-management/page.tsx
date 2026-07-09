@@ -6,7 +6,10 @@ import { DiscountManagementContent } from './components/DiscountManagementConten
 /**
  * Ruta administrativa oculta para gestionar códigos de descuento
  *
- * Esta ruta no aparece en la navegación del proyecto.
+ * URL pública: `ADMIN_DISCOUNT_ROUTE` en `.env.local` (ver `lib/utils/admin-discount-route.ts`).
+ * Implementación App Router: `app/internal/discount-management/`.
+ *
+ * No aparece en la navegación del proyecto.
  * Solo usuarios con permisos de administrador pueden acceder.
  *
  * Para usuarios no autorizados o sin permisos, se muestra una página 404

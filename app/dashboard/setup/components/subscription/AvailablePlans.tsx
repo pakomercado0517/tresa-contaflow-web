@@ -165,6 +165,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
         {/* Billing Cycle Toggle */}
         <div className="bg-muted flex items-center gap-2 rounded-lg p-1">
           <button
+            type="button"
             onClick={() => setBillingCycle('monthly')}
             disabled={loadingPlan !== null}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
@@ -176,6 +177,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
             Mensual
           </button>
           <button
+            type="button"
             onClick={() => setBillingCycle('annual')}
             disabled={loadingPlan !== null}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
@@ -265,8 +267,8 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
                   </div>
 
                   <ul className="space-y-2">
-                    {planDetails.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
+                    {planDetails.features.map((feature) => (
+                      <li key={feature.label} className="flex items-start gap-2">
                         <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                         <span className="text-sm">
                           {typeof feature.value === 'number'

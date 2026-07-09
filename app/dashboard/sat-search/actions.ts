@@ -3,6 +3,7 @@
 import type { SATProductServiceAttributes, SATPlanInfo } from '@/lib/types/sat';
 import { searchSATSimilarity } from '@/lib/api/sat';
 import { ServerApiError } from '@/lib/api/server-client';
+import { requireAuth } from '@/lib/auth/require-auth';
 
 /**
  * IA: Rankea resultados SAT existentes según el concepto del usuario
@@ -94,9 +95,10 @@ Devuelve el resultado en el siguiente formato:
 
     const rankedMap = new Map(candidates.map((c) => [c.id, c]));
 
-    const rankedResults = parsed.rankedIds
-      .map((id) => rankedMap.get(id))
-      .filter(Boolean) as SATProductServiceAttributes[];
+    const rankedResults = parsed.rankedIds.flatMap((id) => {
+      const match = rankedMap.get(id);
+      return match ? [match] : [];
+    });
 
     return {
       rankedResults: rankedResults.length > 0 ? rankedResults : candidates,
@@ -133,6 +135,8 @@ export type SearchSATResult = SearchSATSuccess | SearchSATLimitError;
  * Respeta límites del plan: maxResults, hasAIExplanations, 403 por límite IA.
  */
 export async function searchSATWithAI(userQuery: string): Promise<SearchSATResult> {
+  await requireAuth();
+
   let quickResults;
 
   try {

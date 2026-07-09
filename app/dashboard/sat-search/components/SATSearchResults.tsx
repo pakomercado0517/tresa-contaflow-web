@@ -6,20 +6,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SATProductServiceAttributes } from "@/lib/types/sat";
 
+async function copySatKeyToClipboard(key: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(key);
+  } catch (error) {
+    console.error("Error al copiar:", error);
+  }
+}
+
 interface SATSearchResultsProps {
   results: SATProductServiceAttributes[];
 }
 
 export function SATSearchResults({ results }: SATSearchResultsProps) {
-  const handleCopyKey = async (key: string) => {
-    try {
-      await navigator.clipboard.writeText(key);
-      // Podrías agregar un toast aquí
-    } catch (error) {
-      console.error("Error al copiar:", error);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-4">
       {results.map((product) => {
@@ -69,7 +68,7 @@ export function SATSearchResults({ results }: SATSearchResultsProps) {
                 {/* Botones de acción */}
                 <div className="flex flex-col gap-2 md:min-w-[140px]">
                   <Button
-                    onClick={() => handleCopyKey(product.id)}
+                    onClick={() => copySatKeyToClipboard(product.id)}
                     className="w-full gap-2"
                     size="sm"
                   >

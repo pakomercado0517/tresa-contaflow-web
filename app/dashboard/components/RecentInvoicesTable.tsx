@@ -4,68 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { FileText } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import type { Invoice } from "@/lib/types/invoices";
+import { formatCurrency, formatDateShort } from "@/lib/utils/format";
 
 interface RecentInvoicesTableProps {
   invoices?: Invoice[];
 }
 
-export function RecentInvoicesTable({
-  invoices = [],
-}: RecentInvoicesTableProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-    }).format(amount);
-  };
+function getStatusBadge(invoice: Invoice) {
+  if (invoice.tipo === "PUE") {
+    return (
+      <Badge className="bg-green-500 text-white">Pagado</Badge>
+    );
+  }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  if (invoice.tipo === "PPD") {
+    const estadoPago = invoice.estadoPago;
 
-  const getStatusBadge = (invoice: Invoice) => {
-    // Para facturas PUE, siempre están pagadas
-    if (invoice.tipo === "PUE") {
-      return (
-        <Badge className="bg-green-500 text-white">Pagado</Badge>
-      );
-    }
-
-    // Para facturas PPD, verificar estado de pago
-    if (invoice.tipo === "PPD") {
-      const estadoPago = invoice.estadoPago;
-
-      // Si no hay estadoPago, considerar como no pagado
-      if (!estadoPago) {
-        return (
-          <Badge variant="outline" className="border-orange-500 text-orange-600">
-            No Pagado
-          </Badge>
-        );
-      }
-
-      // Si está completamente pagado
-      if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-        return (
-          <Badge className="bg-green-500 text-white">Pagado</Badge>
-        );
-      }
-
-      // Si tiene pago parcial
-      if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
-        return (
-          <Badge variant="outline" className="border-blue-500 text-blue-600">
-            Parcial ({Math.round(estadoPago.porcentajePagado)}%)
-          </Badge>
-        );
-      }
-
-      // Si no está pagado
+    if (!estadoPago) {
       return (
         <Badge variant="outline" className="border-orange-500 text-orange-600">
           No Pagado
@@ -73,10 +28,33 @@ export function RecentInvoicesTable({
       );
     }
 
-    // Para complementos de pago
-    return <Badge variant="outline">Pago</Badge>;
-  };
+    if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
+      return (
+        <Badge className="bg-green-500 text-white">Pagado</Badge>
+      );
+    }
 
+    if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-600">
+          Parcial ({Math.round(estadoPago.porcentajePagado)}%)
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="border-orange-500 text-orange-600">
+        No Pagado
+      </Badge>
+    );
+  }
+
+  return <Badge variant="outline">Pago</Badge>;
+}
+
+export function RecentInvoicesTable({
+  invoices = [],
+}: RecentInvoicesTableProps) {
   return (
     <Card data-tour="recent-invoices" className="min-w-0 overflow-hidden p-6 bg-card border-border">
       <div className="flex items-center justify-between mb-4">
@@ -122,7 +100,7 @@ export function RecentInvoicesTable({
                     </div>
                   </td>
                   <td className="py-3 px-2 text-sm text-muted-foreground">
-                    {formatDate(invoice.fecha)}
+                    {formatDateShort(invoice.fecha)}
                   </td>
                   <td className="py-3 px-2 text-sm font-medium">
                     {formatCurrency(invoice.total)}
@@ -151,4 +129,3 @@ export function RecentInvoicesTable({
     </Card>
   );
 }
-

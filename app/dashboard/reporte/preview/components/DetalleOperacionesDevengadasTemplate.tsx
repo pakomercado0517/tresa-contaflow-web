@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { ReportGeneratedAtLine } from "@/components/common/ReportGeneratedAtLine";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -188,7 +189,7 @@ export function DetalleOperacionesDevengadasTemplate({
               ) : (
                 data.ingresos.map((row, idx) => (
                   <TableRow
-                    key={`ing-${idx}-${row.folioUuid}`}
+                    key={row.folioUuid}
                     className={cn(
                       "border-gray-200",
                       idx % 2 === 1 && "bg-gray-50/80"
@@ -251,7 +252,7 @@ export function DetalleOperacionesDevengadasTemplate({
               ) : (
                 data.egresos.map((row, idx) => (
                   <TableRow
-                    key={`egr-${idx}-${row.folioUuid}`}
+                    key={row.folioUuid}
                     className={cn(
                       "border-gray-200",
                       idx % 2 === 1 && "bg-gray-50/80"
@@ -308,17 +309,7 @@ export function DetalleOperacionesDevengadasTemplate({
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <p>Generado por: Contafy</p>
-            <p suppressHydrationWarning>
-              Fecha de generación:{" "}
-              {new Date().toLocaleDateString("es-MX", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
-            </p>
+            <ReportGeneratedAtLine />
           </div>
           <p className="max-w-md text-center md:text-right">
             Detalle extendido de operaciones devengadas para conciliación fiscal y contable.

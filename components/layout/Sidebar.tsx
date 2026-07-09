@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { logoutAction } from '@/app/dashboard/setup/actions';
+import { startClientLogout } from '@/lib/auth/client-logout';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -15,7 +15,6 @@ import {
 import { Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types/auth';
-import { clearAllStoredProfileSelections } from '@/lib/storage/profile-selection';
 import { navigationItems } from '@/lib/navigation';
 
 interface SidebarProps {
@@ -36,17 +35,6 @@ export function Sidebar({ user }: SidebarProps) {
   const initials = user.nombre
     ? `${user.nombre[0]}${user.apellido?.[0] || ''}`.toUpperCase()
     : user.email[0].toUpperCase();
-
-  const handleLogout = async () => {
-    // Limpiar localStorage antes de cerrar sesión
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('tour:onboarding');
-      clearAllStoredProfileSelections();
-    }
-
-    // Llamar a la Server Action que elimina cookies y redirige
-    await logoutAction();
-  };
 
   return (
     <aside
@@ -121,7 +109,7 @@ export function Sidebar({ user }: SidebarProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleLogout}
+                onClick={startClientLogout}
                 variant="destructive"
                 className="cursor-pointer"
               >

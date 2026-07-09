@@ -45,8 +45,8 @@ const MONTHS = [
   'Diciembre',
 ];
 
-/** Separador vertical reutilizable dentro del filter bar */
-export function FilterSeparator() {
+/** Separador vertical dentro del filter bar */
+function FilterSeparator() {
   return <div className="bg-border/70 mx-0.5 hidden h-4 w-px sm:block" aria-hidden="true" />;
 }
 
@@ -92,8 +92,10 @@ export function FilterBar({
             />
             {search && (
               <button
+                type="button"
                 onClick={() => onSearchChange('')}
                 className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
+                aria-label="Limpiar búsqueda"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -110,7 +112,7 @@ export function FilterBar({
         </SelectTrigger>
         <SelectContent>
           {MONTHS.map((month, index) => (
-            <SelectItem key={index} value={(index + 1).toString()}>
+            <SelectItem key={month} value={(index + 1).toString()}>
               {month}
             </SelectItem>
           ))}

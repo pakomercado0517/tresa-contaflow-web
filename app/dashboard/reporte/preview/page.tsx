@@ -41,10 +41,11 @@ function buildIngresosRows(
   profileRfc: string | undefined,
   allProfileRfcs: string[]
 ): FilaIngresoDevengado[] {
+  const profileRfcSet = new Set(allProfileRfcs);
   const filtered = profileRfc
     ? invoices.filter((inv) => inv.rfc_emisor === profileRfc)
     : invoices.filter((inv) =>
-        allProfileRfcs.length > 0 ? allProfileRfcs.includes(inv.rfc_emisor) : true
+        profileRfcSet.size > 0 ? profileRfcSet.has(inv.rfc_emisor) : true
       );
   return filtered.map((inv) => ({
     fecha: inv.fecha,
@@ -176,7 +177,7 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
     estimacionesFiscales,
   };
 
-  const allProfileRfcs = (profiles.data ?? []).map((p) => p.rfc).filter(Boolean);
+  const allProfileRfcs = (profiles.data ?? []).flatMap((p) => (p.rfc ? [p.rfc] : []));
   const ingresosRows = buildIngresosRows(
     invoicesRes.data ?? [],
     profileRfc,

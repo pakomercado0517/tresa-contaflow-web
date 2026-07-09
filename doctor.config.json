@@ -1,0 +1,31 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "rules": {
+    "react-doctor/require-pnpm-hardening": "off"
+  },
+  "ignore": {
+    "overrides": [
+      {
+        "files": ["app/auth/**/actions.ts"],
+        "rules": ["react-doctor/server-auth-actions"]
+      },
+      {
+        "files": [
+          "app/components/DashboardPreviewAreaChart.tsx",
+          "app/components/HeroSectionMiniChart.tsx",
+          "app/dashboard/components/FlowTrendChartPlot.tsx",
+          "app/dashboard/components/TaxEstimateHistoryLineChart.tsx",
+          "app/public/[token]/components/PublicFlowBarChartPlot.tsx"
+        ],
+        "rules": ["react-doctor/prefer-dynamic-import"]
+      },
+      {
+        "files": [
+          "app/dashboard/expenses/upload/components/use-upload-expenses-flow.ts",
+          "app/dashboard/invoices/upload/components/use-upload-invoices-flow.ts"
+        ],
+        "rules": ["react-doctor/async-await-in-loop"]
+      }
+    ]
+  }
+}

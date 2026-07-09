@@ -553,6 +553,7 @@ function CustomTourCard({
         <div className="flex items-center gap-2">
           {step.showSkip && (
             <button
+              type="button"
               onClick={skipTour}
               className="text-muted-foreground hover:text-foreground px-3 py-1.5 text-sm transition-colors"
             >
@@ -561,6 +562,7 @@ function CustomTourCard({
           )}
           {currentStep > 0 && (
             <button
+              type="button"
               onClick={prevStep}
               className="bg-muted hover:bg-muted/80 text-foreground rounded-md px-4 py-1.5 text-sm transition-colors"
             >
@@ -568,6 +570,7 @@ function CustomTourCard({
             </button>
           )}
           <button
+            type="button"
             onClick={handleNext}
             className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-1.5 text-sm transition-colors"
           >
@@ -599,12 +602,21 @@ function TourController({ user }: { user?: User }) {
   const hasStartedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const tourStartedRef = useRef<(typeof TOUR_IDS)[keyof typeof TOUR_IDS] | null>(null);
-  const hasCheckedStatusRef = useRef(false);
+  const lastCheckedUserId = useRef<string | null>(null);
   const lastPathnameRef = useRef(pathname);
   const hasFinishedAllToursRef = useRef(false);
   const isManualRunRef = useRef(false);
   const latestIsCompletedRef = useRef(isCompleted);
   const latestIsTourCompletedRef = useRef(isTourCompleted);
+
+  useEffect(() => {
+    if (!user || user.id === lastCheckedUserId.current) {
+      return;
+    }
+    lastCheckedUserId.current = user.id;
+    checkTourStatus(user);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, checkTourStatus]);
 
   useEffect(() => {
     latestIsCompletedRef.current = isCompleted;
@@ -626,6 +638,7 @@ function TourController({ user }: { user?: User }) {
 
   useEffect(() => {
     const handleReset = () => {
+      lastCheckedUserId.current = null;
       isManualRunRef.current = true;
       hasFinishedAllToursRef.current = false;
       hasStartedRef.current = false;
@@ -691,19 +704,6 @@ function TourController({ user }: { user?: User }) {
     };
   }, []);
 
-  // Verificar estado del tour cuando se recibe el usuario (o marcar no autenticado)
-  useEffect(() => {
-    if (hasCheckedStatusRef.current) return;
-
-    if (user) {
-      checkTourStatus(user);
-      hasCheckedStatusRef.current = true;
-      return;
-    }
-
-    checkTourStatus(null);
-    hasCheckedStatusRef.current = true;
-  }, [user, checkTourStatus]);
   useEffect(() => {
     // Iniciar el tour automáticamente solo una vez si no se ha completado
     // Solo iniciar en el dashboard y después de verificar el estado
@@ -775,6 +775,13 @@ function TourController({ user }: { user?: User }) {
         }
       }, 1500);
     }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [
     isAuthenticated,
     isLoading,
@@ -1009,6 +1016,13 @@ function TourController({ user }: { user?: User }) {
         }
       }, 1500);
     }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [
     isAuthenticated,
     isLoading,

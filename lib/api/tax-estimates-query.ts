@@ -1,5 +1,4 @@
 import type {
-  GetTaxEstimateByPeriodParams,
   GetTaxEstimateHistoryParams,
   GetTaxEstimatesParams,
 } from '@/lib/types/tax-estimates';
@@ -26,18 +25,4 @@ export function buildTaxEstimatesHistoryQuery(params: GetTaxEstimateHistoryParam
     queryParams.append('regimen_fiscal', params.regimenFiscal);
   }
   return queryParams.toString();
-}
-
-export function buildTaxEstimatesPeriodQuery(
-  params: Pick<GetTaxEstimateByPeriodParams, 'regimenFiscal' | 'persist'>
-): string {
-  const queryParams = new URLSearchParams();
-  if (params.regimenFiscal) {
-    queryParams.append('regimen_fiscal', params.regimenFiscal);
-  }
-  if (params.persist !== undefined) {
-    queryParams.append('persist', String(params.persist));
-  }
-  const queryString = queryParams.toString();
-  return queryString ? `?${queryString}` : '';
 }

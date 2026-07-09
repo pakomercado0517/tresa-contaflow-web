@@ -73,13 +73,22 @@ export function ExpensesPageClient() {
     };
   }, [searchParams]);
 
-  const profilesQuery = useQuery<GetProfilesResponse, Error>({
+  const {
+    data: profilesData,
+    error: profilesError,
+    isLoading: isProfilesLoading,
+  } = useQuery<GetProfilesResponse, Error>({
     queryKey: ['profiles'],
     queryFn: () => getProfilesClient(),
     staleTime: 60_000,
   });
 
-  const expensesQuery = useQuery<GetExpensesResponse, Error>({
+  const {
+    data: expensesData,
+    error: expensesError,
+    isLoading: isExpensesLoading,
+    isFetching: isExpensesFetching,
+  } = useQuery<GetExpensesResponse, Error>({
     queryKey: [
       'expenses',
       normalizedParams.profileId ?? null,
@@ -102,7 +111,12 @@ export function ExpensesPageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const metricsQuery = useQuery<PeriodMetricsResponse, Error>({
+  const {
+    data: metricsData,
+    error: metricsError,
+    isLoading: isMetricsLoading,
+    isFetching: isMetricsFetching,
+  } = useQuery<PeriodMetricsResponse, Error>({
     queryKey: [
       'invoice-metrics',
       normalizedParams.profileId ?? null,
@@ -115,18 +129,29 @@ export function ExpensesPageClient() {
   });
 
   const periodId = useMemo(
-    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsQuery.data?.period?.id),
-    [normalizedParams.profileId, metricsQuery.data?.period?.id]
+    () => getPeriodIdFromMetrics(normalizedParams.profileId, metricsData?.period?.id),
+    [normalizedParams.profileId, metricsData?.period?.id]
   );
 
-  const accruedExpensesQuery = useQuery<GetAccruedExpensesResponse, Error>({
+  const {
+    data: accruedExpensesData,
+    error: accruedExpensesError,
+    isPending: isAccruedExpensesPending,
+    isFetching: isAccruedExpensesFetching,
+  } = useQuery<GetAccruedExpensesResponse, Error>({
     queryKey: ['accrued-expenses', periodId],
     queryFn: () => getAccruedExpensesClient(periodId as string),
     enabled: !!periodId,
     placeholderData: keepPreviousData,
   });
 
-  const paymentComplementsQuery = useQuery<ListPaymentComplementsResponse, Error>({
+  const {
+    data: paymentComplementsData,
+    error: paymentComplementsQueryError,
+    isPending: isPaymentComplementsPending,
+    isError: isPaymentComplementsError,
+    isFetching: isPaymentComplementsFetching,
+  } = useQuery<ListPaymentComplementsResponse, Error>({
     queryKey: [
       'payment-complements',
       'EGRESO',
@@ -148,10 +173,10 @@ export function ExpensesPageClient() {
   });
 
   const fatalError =
-    profilesQuery.error ??
-    expensesQuery.error ??
-    metricsQuery.error ??
-    (periodId ? accruedExpensesQuery.error : null);
+    profilesError ??
+    expensesError ??
+    metricsError ??
+    (periodId ? accruedExpensesError : null);
   if (fatalError) {
     return (
       <ErrorState
@@ -164,32 +189,32 @@ export function ExpensesPageClient() {
     );
   }
 
-  const expenses = expensesQuery.data?.data ?? [];
+  const expenses = expensesData?.data ?? [];
   const pagination =
-    expensesQuery.data?.pagination ??
+    expensesData?.pagination ??
     ({ total: 0, page: normalizedParams.page, limit: 10, totalPages: 1 } as const);
-  const profiles = profilesQuery.data?.data ?? [];
+  const profiles = profilesData?.data ?? [];
 
-  const expensesUsed = expensesQuery.data?.pagination?.total ?? 0;
+  const expensesUsed = expensesData?.pagination?.total ?? 0;
 
   const isInitialLoading =
-    (profilesQuery.isLoading && !profilesQuery.data) ||
-    (expensesQuery.isLoading && !expensesQuery.data) ||
-    (metricsQuery.isLoading && !metricsQuery.data);
+    (isProfilesLoading && !profilesData) ||
+    (isExpensesLoading && !expensesData) ||
+    (isMetricsLoading && !metricsData);
 
   const isUpdating =
     !isInitialLoading &&
-    (expensesQuery.isFetching || metricsQuery.isFetching || accruedExpensesQuery.isFetching);
+    (isExpensesFetching || isMetricsFetching || isAccruedExpensesFetching);
 
   const tableState = isInitialLoading ? 'loading' : isUpdating ? 'updating' : 'idle';
 
-  const manualExpenses = accruedExpensesQuery.data?.data ?? [];
+  const manualExpenses = accruedExpensesData?.data ?? [];
   const manualExpenseDisabledReason =
     !normalizedParams.profileId ? 'no_profile' : !periodId ? 'no_period' : null;
 
-  const paymentComplements = paymentComplementsQuery.data?.data ?? [];
+  const paymentComplements = paymentComplementsData?.data ?? [];
   const paymentComplementsPagination =
-    paymentComplementsQuery.data?.pagination ??
+    paymentComplementsData?.pagination ??
     ({
       total: 0,
       page: normalizedParams.complementPage,
@@ -197,11 +222,11 @@ export function ExpensesPageClient() {
       totalPages: 1,
     } as const);
 
-  const paymentComplementsState = paymentComplementsQuery.isPending && !paymentComplementsQuery.data
+  const paymentComplementsState = isPaymentComplementsPending && !paymentComplementsData
     ? 'loading'
-    : paymentComplementsQuery.isError
+    : isPaymentComplementsError
       ? 'error'
-      : paymentComplementsQuery.isFetching
+      : isPaymentComplementsFetching
         ? 'updating'
         : 'idle';
 
@@ -213,9 +238,9 @@ export function ExpensesPageClient() {
       manualExpenses={manualExpenses}
       manualExpensesState={
         periodId
-          ? accruedExpensesQuery.isPending && !accruedExpensesQuery.data
+          ? isAccruedExpensesPending && !accruedExpensesData
             ? 'loading'
-            : accruedExpensesQuery.isFetching
+            : isAccruedExpensesFetching
               ? 'updating'
               : 'idle'
           : 'disabled'
@@ -234,7 +259,7 @@ export function ExpensesPageClient() {
       paymentComplements={paymentComplements}
       paymentComplementsPagination={paymentComplementsPagination}
       paymentComplementsState={paymentComplementsState}
-      paymentComplementsError={paymentComplementsQuery.error?.message}
+      paymentComplementsError={paymentComplementsQueryError?.message}
       complementPage={normalizedParams.complementPage}
     />
   );

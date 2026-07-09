@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { updateProfile } from "@/lib/api/auth";
-import { uploadUserLogo } from "@/lib/firebase/storage";
+import { uploadUserLogoAction } from "../actions/upload-user-logo";
 import type { User } from "@/lib/types/auth";
 
 interface UserProfileCardProps {
@@ -45,7 +45,9 @@ export function UserProfileCard({ user }: UserProfileCardProps) {
     setUploadError(null);
 
     try {
-      const logoUrl = await uploadUserLogo(user.id, file);
+      const formData = new FormData();
+      formData.set("logo", file);
+      const logoUrl = await uploadUserLogoAction(formData);
       await updateProfile({ logo_url: logoUrl });
       router.refresh();
     } catch (err) {
@@ -73,10 +75,11 @@ export function UserProfileCard({ user }: UserProfileCardProps) {
             </Avatar>
             <input
               ref={fileInputRef}
+              id="user-logo-upload"
               type="file"
               accept="image/jpeg,image/png,image/gif,image/webp"
               className="sr-only"
-              aria-hidden
+              aria-label="Seleccionar imagen de logo"
               onChange={handleFileChange}
               disabled={isUploading}
             />
@@ -84,6 +87,7 @@ export function UserProfileCard({ user }: UserProfileCardProps) {
               type="button"
               onClick={handleLogoClick}
               disabled={isUploading}
+              aria-label="Cambiar logo"
               className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
               title="Cambiar logo"
             >

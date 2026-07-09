@@ -2,6 +2,7 @@
 
 import { FileText, Clock, DollarSign, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { formatCurrencyCompact } from '@/lib/utils/format';
 
 interface SummaryCardsProps {
   totalCount: number;
@@ -10,15 +11,6 @@ interface SummaryCardsProps {
 }
 
 export function SummaryCards({ totalCount, pendingPaymentCount, totalIncome }: SummaryCardsProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {/* Total de Facturas */}
@@ -67,7 +59,7 @@ export function SummaryCards({ totalCount, pendingPaymentCount, totalIncome }: S
             </div>
             <div className="flex-1">
               <p className="text-muted-foreground mb-1 text-sm">INGRESOS DEL PERIODO</p>
-              <p className="text-3xl font-bold">{formatCurrency(totalIncome)}</p>
+              <p className="text-3xl font-bold">{formatCurrencyCompact(totalIncome)}</p>
               <p className="text-muted-foreground mt-1 text-xs">MXN (Pesos Mexicanos)</p>
             </div>
           </div>

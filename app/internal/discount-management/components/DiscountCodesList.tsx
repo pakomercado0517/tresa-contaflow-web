@@ -9,11 +9,28 @@ import {
   deactivateDiscountCodeClient,
 } from "@/lib/api/discounts.client";
 import type { DiscountCode } from "@/lib/types/discounts";
+import { formatNullableDateTime } from "@/lib/utils/format";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 interface DiscountCodesListProps {
   codes: DiscountCode[];
   onUpdate: () => void;
+}
+
+function getStatusBadge(code: DiscountCode) {
+  if (code.status === "EXPIRED") {
+    return <Badge variant="destructive">Expirado</Badge>;
+  }
+  if (code.status === "INACTIVE" || !code.active) {
+    return <Badge variant="secondary">Inactivo</Badge>;
+  }
+  return <Badge className="bg-green-500/10 text-green-600 dark:text-green-400">Activo</Badge>;
+}
+
+function formatTrialDays(trialDays: number | null): string {
+  if (trialDays === null) return "Default plan";
+  if (trialDays === 0) return "Sin trial";
+  return `${trialDays} días`;
 }
 
 export function DiscountCodesList({ codes, onUpdate }: DiscountCodesListProps) {
@@ -55,33 +72,6 @@ export function DiscountCodesList({ codes, onUpdate }: DiscountCodesListProps) {
     );
   }
 
-  const getStatusBadge = (code: DiscountCode) => {
-    if (code.status === "EXPIRED") {
-      return <Badge variant="destructive">Expirado</Badge>;
-    }
-    if (code.status === "INACTIVE" || !code.active) {
-      return <Badge variant="secondary">Inactivo</Badge>;
-    }
-    return <Badge className="bg-green-500/10 text-green-600 dark:text-green-400">Activo</Badge>;
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatTrialDays = (trialDays: number | null) => {
-    if (trialDays === null) return "Default plan";
-    if (trialDays === 0) return "Sin trial";
-    return `${trialDays} días`;
-  };
-
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
@@ -115,7 +105,7 @@ export function DiscountCodesList({ codes, onUpdate }: DiscountCodesListProps) {
                     {formatTrialDays(code.trialDays ?? null)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(code.expiresAt)}
+                    {formatNullableDateTime(code.expiresAt)}
                   </TableCell>
                   <TableCell>
                     <Button

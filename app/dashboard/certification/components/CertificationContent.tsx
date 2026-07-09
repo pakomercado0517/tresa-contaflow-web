@@ -1,34 +1,36 @@
+'use client';
+
 import React from "react";
 import { StepCard } from "./StepCard";
 import { CTASection } from "./CTASection";
 import { SecurityTip } from "./SecurityTip";
 import { BookOpen, ArrowRight, FileText } from "lucide-react";
 
-export function CertificationContent() {
-  const steps = [
-    {
-      number: 1,
-      icon: <BookOpen className="h-8 w-8" />,
-      title: "Prepara tus credenciales",
-      description:
-        "Ten a la mano tu RFC y tu e.firma (archivos .cer y .key) o tu contraseña del SAT vigente. Sin ellos no podrás acceder al portal privado.",
-    },
-    {
-      number: 2,
-      icon: <ArrowRight className="h-8 w-8" />,
-      title: "Navega a Trámites",
-      description:
-        'Selecciona la pestaña "Obtén la Constancia" y busca la opción de: "1. Ingresa al servicio", da click en "servicio"; te abrira una nueva pestaña con la pantalla de autenticación (ingresa tus credenciales).',
-    },
-    {
-      number: 3,
-      icon: <FileText className="h-8 w-8" />,
-      title: "Genera el PDF",
-      description:
-        'Desliza hacia la derecha y haz clic en el botón "Generar Constancia". Se abrirá una ventana emergente con tu documento listo para guardar.',
-    },
-  ];
+const CERTIFICATION_STEPS = [
+  {
+    number: 1,
+    icon: <BookOpen className="h-8 w-8" />,
+    title: "Prepara tus credenciales",
+    description:
+      "Ten a la mano tu RFC y tu e.firma (archivos .cer y .key) o tu contraseña del SAT vigente. Sin ellos no podrás acceder al portal privado.",
+  },
+  {
+    number: 2,
+    icon: <ArrowRight className="h-8 w-8" />,
+    title: "Navega a Trámites",
+    description:
+      'Selecciona la pestaña "Obtén la Constancia" y busca la opción de: "1. Ingresa al servicio", da click en "servicio"; te abrira una nueva pestaña con la pantalla de autenticación (ingresa tus credenciales).',
+  },
+  {
+    number: 3,
+    icon: <FileText className="h-8 w-8" />,
+    title: "Genera el PDF",
+    description:
+      'Desliza hacia la derecha y haz clic en el botón "Generar Constancia". Se abrirá una ventana emergente con tu documento listo para guardar.',
+  },
+] as const;
 
+export function CertificationContent() {
   return (
     <div className="flex-1 p-6 md:p-8 lg:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -51,8 +53,14 @@ export function CertificationContent() {
 
         {/* Steps */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-tour="certification-steps">
-          {steps.map((step) => (
-            <StepCard key={step.number} {...step} />
+          {CERTIFICATION_STEPS.map((step) => (
+            <StepCard
+              key={step.number}
+              number={step.number}
+              icon={step.icon}
+              title={step.title}
+              description={step.description}
+            />
           ))}
         </div>
 

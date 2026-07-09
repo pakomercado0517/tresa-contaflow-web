@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
-import { logoutAction } from '@/app/dashboard/setup/actions';
+import { startClientLogout } from '@/lib/auth/client-logout';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +19,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types/auth';
-import { clearAllStoredProfileSelections } from '@/lib/storage/profile-selection';
 import { navigationItems } from '@/lib/navigation';
 
 interface MobileNavProps {
@@ -45,14 +44,6 @@ export function MobileNav({ user }: MobileNavProps) {
   const initials = user.nombre
     ? `${user.nombre[0]}${user.apellido?.[0] || ''}`.toUpperCase()
     : user.email[0].toUpperCase();
-
-  const handleLogout = async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('tour:onboarding');
-      clearAllStoredProfileSelections();
-    }
-    await logoutAction();
-  };
 
   return (
     <header className="border-border bg-card fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b px-4 lg:hidden print:hidden">
@@ -134,7 +125,7 @@ export function MobileNav({ user }: MobileNavProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={handleLogout}
+                  onClick={startClientLogout}
                   variant="destructive"
                   className="cursor-pointer"
                 >

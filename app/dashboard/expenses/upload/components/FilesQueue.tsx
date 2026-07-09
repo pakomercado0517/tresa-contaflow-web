@@ -5,7 +5,7 @@ import { FileText, X, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { QueuedFile } from "./UploadExpensesContent";
+import type { QueuedFile } from './upload-expenses-types';
 
 interface FilesQueueProps {
   files: QueuedFile[];
@@ -13,81 +13,81 @@ interface FilesQueueProps {
   onClearAll: () => void;
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getStatusIcon(status: QueuedFile["status"]) {
+  switch (status) {
+    case "error":
+      return (
+        <div className="rounded-full bg-destructive/10 p-2">
+          <AlertCircle className="h-5 w-5 text-destructive" />
+        </div>
+      );
+    case "success":
+      return (
+        <div className="rounded-full bg-green-500/10 p-2">
+          <CheckCircle2 className="h-5 w-5 text-green-500" />
+        </div>
+      );
+    case "uploading":
+      return (
+        <div className="rounded-full bg-blue-500/10 p-2">
+          <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+        </div>
+      );
+    default:
+      return (
+        <div className="rounded-full bg-primary/10 p-2">
+          <FileText className="h-5 w-5 text-primary" />
+        </div>
+      );
+  }
+}
+
+function getStatusBadge(status: QueuedFile["status"]) {
+  switch (status) {
+    case "valid":
+      return (
+        <Badge variant="default">
+          VÁLIDO
+        </Badge>
+      );
+    case "error":
+      return (
+        <Badge variant="destructive">
+          ERROR
+        </Badge>
+      );
+    case "success":
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600">
+          ÉXITO
+        </Badge>
+      );
+    case "uploading":
+      return (
+        <Badge className="bg-blue-500 hover:bg-blue-600">
+          SUBIENDO...
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="secondary">
+          PENDIENTE
+        </Badge>
+      );
+  }
+}
+
 export function FilesQueue({
   files,
   onRemoveFile,
   onClearAll,
 }: FilesQueueProps) {
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const getStatusIcon = (status: QueuedFile["status"]) => {
-    switch (status) {
-      case "error":
-        return (
-          <div className="rounded-full bg-destructive/10 p-2">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-          </div>
-        );
-      case "success":
-        return (
-          <div className="rounded-full bg-green-500/10 p-2">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-          </div>
-        );
-      case "uploading":
-        return (
-          <div className="rounded-full bg-blue-500/10 p-2">
-            <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
-          </div>
-        );
-      default:
-        return (
-          <div className="rounded-full bg-primary/10 p-2">
-            <FileText className="h-5 w-5 text-primary" />
-          </div>
-        );
-    }
-  };
-
-  const getStatusBadge = (status: QueuedFile["status"]) => {
-    switch (status) {
-      case "valid":
-        return (
-          <Badge variant="default">
-            VÁLIDO
-          </Badge>
-        );
-      case "error":
-        return (
-          <Badge variant="destructive">
-            ERROR
-          </Badge>
-        );
-      case "success":
-        return (
-          <Badge className="bg-green-500 hover:bg-green-600">
-            ÉXITO
-          </Badge>
-        );
-      case "uploading":
-        return (
-          <Badge className="bg-blue-500 hover:bg-blue-600">
-            SUBIENDO...
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary">
-            PENDIENTE
-          </Badge>
-        );
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -173,8 +173,8 @@ export function FilesQueue({
                     <div className="flex items-start gap-2 text-xs text-yellow-600 dark:text-yellow-500">
                       <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <div className="space-y-0.5">
-                        {file.validacion.advertencias.map((adv, idx) => (
-                          <p key={idx}>{adv}</p>
+                        {file.validacion.advertencias.map((adv) => (
+                          <p key={`${file.id}-adv-${adv}`}>{adv}</p>
                         ))}
                       </div>
                     </div>
@@ -185,8 +185,8 @@ export function FilesQueue({
                     <div className="flex items-start gap-2 text-xs text-destructive">
                       <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <div className="space-y-0.5">
-                        {file.validacion.errores.map((err, idx) => (
-                          <p key={idx}>{err}</p>
+                        {file.validacion.errores.map((err) => (
+                          <p key={`${file.id}-err-${err}`}>{err}</p>
                         ))}
                       </div>
                     </div>

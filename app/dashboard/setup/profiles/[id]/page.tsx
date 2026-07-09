@@ -49,7 +49,7 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
             Actualiza la información fiscal del perfil RFC.
           </p>
         </div>
-        <EditProfileForm profile={profile} />
+        <EditProfileForm key={profile.id} profile={profile} />
         <ProfileFiscalSettingsSection profile={profile} />
       </div>
     </main>

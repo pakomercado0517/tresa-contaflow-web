@@ -3,6 +3,12 @@
 import { Wallet, FileText, Edit, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
+import { formatCurrency } from "@/lib/utils/format";
+
+function formatExpenseTotal(amount: number): string {
+  const validAmount = Number.isNaN(amount) || !Number.isFinite(amount) ? 0 : amount;
+  return formatCurrency(validAmount);
+}
 
 interface ExpensesSummaryCardsProps {
   totalExpenses: number;
@@ -12,6 +18,11 @@ interface ExpensesSummaryCardsProps {
   selectedMonth?: number;
 }
 
+const EXPENSE_SUMMARY_MONTH_NAMES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+] as const;
+
 export function ExpensesSummaryCards({
   totalExpenses,
   xmlProcessed,
@@ -19,28 +30,11 @@ export function ExpensesSummaryCards({
   manualExpenses,
   selectedMonth,
 }: ExpensesSummaryCardsProps) {
-  const formatCurrency = (amount: number) => {
-    // Validar que amount sea un número válido
-    const validAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
-    
-    return new Intl.NumberFormat("es-MX", {
-      style: "currency",
-      currency: "MXN",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(validAmount);
-  };
-
-  const MONTHS = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ];
-
   // Usar el mes seleccionado o el mes actual (calendario de negocio CDMX)
   const monthIndex = selectedMonth
     ? selectedMonth - 1
     : getCurrentMonthYearInAppTimezone().mes - 1;
-  const monthName = MONTHS[monthIndex];
+  const monthName = EXPENSE_SUMMARY_MONTH_NAMES[monthIndex];
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -52,7 +46,7 @@ export function ExpensesSummaryCards({
               <p className="text-sm text-muted-foreground mb-1">
                 Total Gastos ({monthName})
               </p>
-              <p className="text-3xl font-bold">{formatCurrency(totalExpenses)}</p>
+              <p className="text-3xl font-bold">{formatExpenseTotal(totalExpenses)}</p>
               <div className="flex items-center gap-1 mt-2">
                 <TrendingUp className="h-3 w-3 text-green-500" />
                 <span className="text-xs text-green-500">+5% vs mes anterior</span>

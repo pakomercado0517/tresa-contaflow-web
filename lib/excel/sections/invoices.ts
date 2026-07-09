@@ -41,7 +41,13 @@ function isComplementoOrphan(invoice: Invoice, invoices: Invoice[]): boolean {
   const uuids =
     invoice.complemento_pago?.facturasRelacionadas?.map((r) => r.uuid) ?? [];
   if (uuids.length === 0) return true;
-  return !invoices.some((inv) => uuids.includes(inv.uuid));
+  const invoiceUuidSet = new Set(invoices.map((inv) => inv.uuid));
+  for (const uuid of uuids) {
+    if (invoiceUuidSet.has(uuid)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function filterInvoices(

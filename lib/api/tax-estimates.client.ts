@@ -2,10 +2,8 @@ import { apiClient } from './client';
 import {
   buildTaxEstimatesHistoryQuery,
   buildTaxEstimatesListQuery,
-  buildTaxEstimatesPeriodQuery,
 } from './tax-estimates-query';
 import type {
-  GetTaxEstimateByPeriodParams,
   GetTaxEstimateHistoryParams,
   GetTaxEstimatesParams,
   TaxEstimateHistoryResponse,
@@ -34,20 +32,4 @@ export async function getTaxEstimateHistoryClient(
   return apiClient<TaxEstimateHistoryResponse>(`/api/tax-estimates/history?${query}`, {
     requireAuth: true,
   });
-}
-
-/**
- * Estimación por period_id (Client Component).
- */
-export async function getTaxEstimateByPeriodClient(
-  params: GetTaxEstimateByPeriodParams
-): Promise<TaxEstimateListResponse> {
-  const { periodId, regimenFiscal, persist } = params;
-  const query = buildTaxEstimatesPeriodQuery({ regimenFiscal, persist });
-  return apiClient<TaxEstimateListResponse>(
-    `/api/tax-estimates/period/${periodId}${query}`,
-    {
-      requireAuth: true,
-    }
-  );
 }

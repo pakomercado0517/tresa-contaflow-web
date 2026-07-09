@@ -1,6 +1,5 @@
 import { serverApiClient } from './server-client';
-import { apiClient } from './client';
-import type { GetInvoicesResponse, UploadInvoiceResponse } from '@/lib/types/invoices';
+import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 import {
   getCurrentMonthYearInAppTimezone,
@@ -210,20 +209,4 @@ export async function getTrendData(
   });
 
   return [...previousYearData, ...currentYearData];
-}
-
-/**
- * Sube un archivo XML de factura al backend (Client Component only)
- * El sistema determina automáticamente si es factura o gasto basándose en el RFC
- */
-export async function uploadInvoice(file: File, profileId: string): Promise<UploadInvoiceResponse> {
-  const formData = new FormData();
-  formData.append('xml', file);
-  formData.append('profileId', profileId);
-
-  return apiClient<UploadInvoiceResponse>('/api/invoices/upload', {
-    method: 'POST',
-    body: formData,
-    requireAuth: true,
-  });
 }

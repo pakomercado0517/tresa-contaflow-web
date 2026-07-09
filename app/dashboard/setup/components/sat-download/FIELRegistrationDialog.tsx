@@ -96,6 +96,7 @@ function FileDropZone({
           </div>
           <button
             type="button"
+            aria-label="Quitar archivo seleccionado"
             onClick={() => {
               onFileSelect(null);
               if (inputRef.current) inputRef.current.value = "";
@@ -249,6 +250,7 @@ export function FIELRegistrationDialog({
               />
               <button
                 type="button"
+                aria-label={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 onClick={() => setIsPasswordVisible((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >

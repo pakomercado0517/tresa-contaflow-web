@@ -45,6 +45,72 @@ const planMetadata = {
   },
 };
 
+function formatPrice(price: number): string {
+  if (price === 0) return 'Gratis';
+  return `$${price.toLocaleString('es-MX')} MXN`;
+}
+
+function getFeaturesFromLimits(plan: PublicPlan): Array<{ label: string; value: string }> {
+  const features: Array<{ label: string; value: string }> = [];
+
+  if (plan.limits.profiles !== null) {
+    features.push({ label: 'RFCs Emisores', value: plan.limits.profiles.toString() });
+  } else {
+    features.push({ label: 'RFCs Emisores', value: 'Ilimitados' });
+  }
+
+  if (plan.limits.invoicesPerMonth !== null) {
+    features.push({
+      label: 'Facturas/mes',
+      value: plan.limits.invoicesPerMonth.toString(),
+    });
+  } else {
+    features.push({ label: 'Facturas/mes', value: 'Ilimitadas' });
+  }
+
+  if (plan.limits.exportPDF) {
+    features.push({ label: 'Exportación PDF', value: 'Sí' });
+  }
+
+  if (plan.limits.exportExcel) {
+    features.push({ label: 'Exportación Excel', value: 'Sí' });
+  }
+
+  if (plan.limits.reports !== 'basic') {
+    const reportLabel = plan.limits.reports === 'complete' ? 'Completos' : 'Avanzados';
+    features.push({ label: 'Reportes', value: reportLabel });
+  }
+
+  if (plan.limits.support !== 'none') {
+    const supportLabel = plan.limits.support === 'email' ? 'Email' : 'Prioritario';
+    features.push({ label: 'Soporte', value: supportLabel });
+  }
+
+  if (plan.limits.apiAccess) {
+    features.push({ label: 'Acceso a API', value: 'Sí' });
+  }
+
+  if (
+    plan.limits.satAISearchesPerMonth !== null &&
+    plan.limits.satAISearchesPerMonth !== undefined
+  ) {
+    features.push({
+      label: 'Búsquedas SAT con IA',
+      value: plan.limits.satAISearchesPerMonth.toString(),
+    });
+  }
+
+  if (plan.limits.satHasHistory) {
+    features.push({ label: 'Historial SAT', value: 'Sí' });
+  }
+
+  if (plan.limits.satHasFavorites) {
+    features.push({ label: 'Favoritos SAT', value: 'Sí' });
+  }
+
+  return features.slice(0, 5);
+}
+
 export function PricingSection({ initialPlans }: PricingSectionProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
@@ -75,74 +141,6 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
   const plans = useMemo(() => {
     return data?.plans || initialPlans;
   }, [data, initialPlans]);
-
-  const formatPrice = (price: number): string => {
-    if (price === 0) return 'Gratis';
-    return `$${price.toLocaleString('es-MX')} MXN`;
-  };
-
-  // Funciones auxiliares para obtener features desde los límites
-  const getFeaturesFromLimits = (plan: PublicPlan): Array<{ label: string; value: string }> => {
-    const features: Array<{ label: string; value: string }> = [];
-
-    if (plan.limits.profiles !== null) {
-      features.push({ label: 'RFCs Emisores', value: plan.limits.profiles.toString() });
-    } else {
-      features.push({ label: 'RFCs Emisores', value: 'Ilimitados' });
-    }
-
-    if (plan.limits.invoicesPerMonth !== null) {
-      features.push({
-        label: 'Facturas/mes',
-        value: plan.limits.invoicesPerMonth.toString(),
-      });
-    } else {
-      features.push({ label: 'Facturas/mes', value: 'Ilimitadas' });
-    }
-
-    if (plan.limits.exportPDF) {
-      features.push({ label: 'Exportación PDF', value: 'Sí' });
-    }
-
-    if (plan.limits.exportExcel) {
-      features.push({ label: 'Exportación Excel', value: 'Sí' });
-    }
-
-    if (plan.limits.reports !== 'basic') {
-      const reportLabel = plan.limits.reports === 'complete' ? 'Completos' : 'Avanzados';
-      features.push({ label: 'Reportes', value: reportLabel });
-    }
-
-    if (plan.limits.support !== 'none') {
-      const supportLabel = plan.limits.support === 'email' ? 'Email' : 'Prioritario';
-      features.push({ label: 'Soporte', value: supportLabel });
-    }
-
-    if (plan.limits.apiAccess) {
-      features.push({ label: 'Acceso a API', value: 'Sí' });
-    }
-
-    // Características SAT
-    if (
-      plan.limits.satAISearchesPerMonth !== null &&
-      plan.limits.satAISearchesPerMonth !== undefined
-    ) {
-      features.push({
-        label: 'Búsquedas SAT con IA',
-        value: plan.limits.satAISearchesPerMonth.toString(),
-      });
-    }
-
-    if (plan.limits.satHasHistory) {
-      features.push({ label: 'Historial SAT', value: 'Sí' });
-    }
-
-    if (plan.limits.satHasFavorites) {
-      features.push({ label: 'Favoritos SAT', value: 'Sí' });
-    }
-
-    return features.slice(0, 5); // Mostrar máximo 5 características
-  };
 
   if (isError && initialPlans.length === 0) {
     return (
@@ -197,6 +195,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
       <div className="mb-12 flex justify-center">
         <div className="bg-muted flex items-center gap-2 rounded-lg p-1">
           <button
+            type="button"
             onClick={() => setBillingCycle('monthly')}
             disabled={isLoading}
             className={`rounded-md px-6 py-2.5 text-sm font-medium transition-colors ${
@@ -208,6 +207,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
             Mensual
           </button>
           <button
+            type="button"
             onClick={() => setBillingCycle('annual')}
             disabled={isLoading}
             className={`rounded-md px-6 py-2.5 text-sm font-medium transition-colors ${
@@ -289,8 +289,8 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                 </div>
 
                 <ul className="space-y-2">
-                  {features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
+                  {features.map((feature) => (
+                    <li key={feature.label} className="flex items-start gap-2">
                       <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                       <span className="text-sm">
                         {feature.label}: {feature.value}

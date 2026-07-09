@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { SetupTabs } from "./components/SetupTabs";
 import { ProfilesSection } from "./components/ProfilesSection";
 import { AccountContent } from "./components/AccountContent";
@@ -36,21 +38,27 @@ export default async function SetupPage() {
             Gestiona tus perfiles, cuenta y suscripción
           </p>
         </div>
-        <SetupTabs
-          profilesContent={<ProfilesSection />}
-          accountContent={<AccountContent subscription={subscription} user={currentUser.user} />}
-          subscriptionContent={
-            <SubscriptionContent
-              subscription={subscription}
-              currentProfilesCount={profiles.count || 0}
-              xmlUsed={xmlUsed}
-              satPlanInfo={satStats?.planInfo}
-            />
+        <Suspense
+          fallback={
+            <div className="flex min-h-40 items-center justify-center">
+              <LoadingSpinner />
+            </div>
           }
-          satDownloadContent={
-            <SATDownloadContent profiles={profiles.data || []} />
-          }
-        />
+        >
+          <SetupTabs
+            profilesContent={<ProfilesSection />}
+            accountContent={<AccountContent subscription={subscription} user={currentUser.user} />}
+            subscriptionContent={
+              <SubscriptionContent
+                subscription={subscription}
+                currentProfilesCount={profiles.count || 0}
+                xmlUsed={xmlUsed}
+                satPlanInfo={satStats?.planInfo}
+              />
+            }
+            satDownloadContent={<SATDownloadContent profiles={profiles.data || []} />}
+          />
+        </Suspense>
       </div>
     </main>
   );

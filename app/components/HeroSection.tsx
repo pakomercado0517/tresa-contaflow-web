@@ -1,31 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, Check } from 'lucide-react';
 
-// Datos de ejemplo para el mini chart (ingresos y egresos por mes)
-const HERO_CHART_DATA = [
-  { mes: 'Ene', ingresos: 120, egresos: 80 },
-  { mes: 'Feb', ingresos: 145, egresos: 90 },
-  { mes: 'Mar', ingresos: 130, egresos: 85 },
-  { mes: 'Abr', ingresos: 165, egresos: 95 },
-  { mes: 'May', ingresos: 180, egresos: 100 },
-];
-
-const CHART_COLORS = {
-  primary: 'hsl(142, 76%, 36%)',
-  muted: 'hsl(0, 0%, 45%)',
-};
+const HeroSectionMiniChart = dynamic(() => import('./HeroSectionMiniChart'), {
+  ssr: false,
+  loading: () => <div className="bg-muted/30 h-full w-full animate-pulse rounded-md" />,
+});
 
 export function HeroSection() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isValidEmail, setIsValidEmail] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const validateEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,8 +31,9 @@ export function HeroSection() {
 
   const handleStartFree = () => {
     if (!isValidEmail) return;
-    setIsLoading(true);
-    router.push(`/auth/register?email=${encodeURIComponent(email)}`);
+    startTransition(() => {
+      router.push(`/auth/register?email=${encodeURIComponent(email)}`);
+    });
   };
 
   return (
@@ -72,7 +64,7 @@ export function HeroSection() {
                 placeholder="Ingresa tu correo profesional"
                 value={email}
                 onChange={handleEmailChange}
-                disabled={isLoading}
+                disabled={isPending}
                 className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               {isValidEmail && <Check className="h-5 w-5 text-green-500" />}
@@ -81,9 +73,9 @@ export function HeroSection() {
               size="lg"
               className="bg-primary hover:bg-primary/90 whitespace-nowrap disabled:opacity-50"
               onClick={handleStartFree}
-              disabled={!isValidEmail || isLoading}
+              disabled={!isValidEmail || isPending}
             >
-              {isLoading ? 'Redirigiendo...' : 'Empieza gratis'}
+              {isPending ? 'Redirigiendo...' : 'Empieza gratis'}
             </Button>
           </div>
 
@@ -100,55 +92,7 @@ export function HeroSection() {
 
             <div className="space-y-4">
               <div className="from-primary/20 to-primary/5 flex h-48 items-center justify-center rounded-lg bg-linear-to-br px-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={HERO_CHART_DATA}
-                    margin={{ top: 8, right: 4, left: -16, bottom: 0 }}
-                    barGap={4}
-                    barCategoryGap="20%"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,20%)" vertical={false} />
-                    <XAxis
-                      dataKey="mes"
-                      tick={{ fill: 'hsl(0,0%,63.9%)', fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis hide domain={[0, (max: number) => Math.max(max, 200)]} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(0,0%,7%)',
-                        border: '1px solid hsl(0,0%,14.9%)',
-                        borderRadius: '8px',
-                        fontSize: 12,
-                      }}
-                      formatter={(value, name) => [
-                        value != null ? `$${value}K MXN` : '',
-                        name ?? '',
-                      ]}
-                      labelFormatter={(_, payload) =>
-                        payload?.[0]?.payload?.mes ? `${payload[0].payload.mes}` : ''
-                      }
-                      cursor={{ fill: 'hsl(0,0%,14.9%)' }}
-                    />
-                    <Bar
-                      dataKey="ingresos"
-                      fill={CHART_COLORS.primary}
-                      radius={[4, 4, 0, 0]}
-                      name="Ingresos"
-                      isAnimationActive
-                      animationDuration={800}
-                    />
-                    <Bar
-                      dataKey="egresos"
-                      fill={CHART_COLORS.muted}
-                      radius={[4, 4, 0, 0]}
-                      name="Egresos"
-                      isAnimationActive
-                      animationDuration={800}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+                <HeroSectionMiniChart />
               </div>
 
               <div className="bg-muted/50 flex items-center gap-3 rounded-lg p-4">

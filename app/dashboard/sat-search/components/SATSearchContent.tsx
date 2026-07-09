@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useReducer } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +12,10 @@ import { UpgradeModal } from '@/components/subscription/UpgradeModal';
 import { searchSATWithAI, type SearchSATSuccess } from '../actions';
 import { getSATStatsClient } from '@/lib/api/sat.client';
 import { useSubscription } from '@/lib/hooks/useSubscription';
-import type { SATProductServiceAttributes, SATPlanInfo } from '@/lib/types/sat';
+import {
+  initialSatSearchUiState,
+  satSearchUiReducer,
+} from './sat-search-ui-reducer';
 import type { Plan } from '@/lib/types/subscription';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -30,17 +33,20 @@ const LIMIT_REACHED_MESSAGE =
   'La sugerencia inteligente está limitada en tu plan, actualiza para obtener resultados más precisos';
 
 export function SATSearchContent() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<SATProductServiceAttributes[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [aiExplanation, setAiExplanation] = useState<string | undefined>();
-  const [confidence, setConfidence] = useState<'high' | 'medium' | 'low' | undefined>();
-  const [hasSearched, setHasSearched] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [planInfo, setPlanInfo] = useState<SATPlanInfo | null>(null);
-  const [limitReached, setLimitReached] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [upgradeModalMessage, setUpgradeModalMessage] = useState(LIMIT_REACHED_MESSAGE);
+  const [ui, dispatch] = useReducer(satSearchUiReducer, initialSatSearchUiState);
+  const {
+    searchQuery,
+    results,
+    isSearching,
+    aiExplanation,
+    confidence,
+    hasSearched,
+    currentPage,
+    planInfo,
+    limitReached,
+    showUpgradeModal,
+    upgradeModalMessage,
+  } = ui;
 
   const { subscription } = useSubscription();
   const currentPlan: Plan = subscription?.plan ?? 'FREE';
@@ -48,61 +54,61 @@ export function SATSearchContent() {
   useEffect(() => {
     getSATStatsClient()
       .then((r) => {
-        setPlanInfo(r.planInfo);
-        if (r.planInfo?.aiSearchesRemaining === 0) setLimitReached(true);
+        dispatch({
+          type: 'plan_info_loaded',
+          planInfo: r.planInfo,
+          limitReached: r.planInfo?.aiSearchesRemaining === 0,
+        });
       })
       .catch(() => {});
   }, []);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) {
-      setResults([]);
-      setHasSearched(false);
-      setAiExplanation(undefined);
-      setConfidence(undefined);
-      setCurrentPage(1);
+      dispatch({ type: 'clear_search' });
       return;
     }
 
     if (planInfo?.aiSearchesRemaining === 0 || limitReached) {
-      setUpgradeModalMessage(LIMIT_REACHED_MESSAGE);
-      setShowUpgradeModal(true);
+      dispatch({ type: 'search_blocked_show_upgrade', message: LIMIT_REACHED_MESSAGE });
       return;
     }
 
-    setIsSearching(true);
-    setHasSearched(true);
-    setSearchQuery(query);
-    setCurrentPage(1);
+    dispatch({ type: 'search_start', query });
 
     try {
       const data = await searchSATWithAI(query);
 
       if ('error' in data && data.error === 'limit_reached') {
-        setLimitReached(true);
-        setUpgradeModalMessage(data.message);
-        setShowUpgradeModal(true);
-        if (planInfo && planInfo.aiSearchesRemaining !== null) {
-          setPlanInfo({ ...planInfo, aiSearchesRemaining: 0 });
-        }
+        dispatch({
+          type: 'search_limit_reached',
+          message: data.message,
+          planInfo:
+            planInfo && planInfo.aiSearchesRemaining !== null
+              ? { ...planInfo, aiSearchesRemaining: 0 }
+              : planInfo,
+        });
         return;
       }
 
       const success = data as SearchSATSuccess;
-      setResults(success.results);
-      setAiExplanation(success.aiExplanation);
-      setConfidence(success.confidence);
-      if (success.planInfo) setPlanInfo(success.planInfo);
+      dispatch({
+        type: 'search_success',
+        results: success.results,
+        aiExplanation: success.aiExplanation,
+        confidence: success.confidence,
+        planInfo: success.planInfo,
+      });
     } catch (error) {
       console.error('Error en búsqueda con IA:', error);
-      setResults([]);
+      dispatch({ type: 'search_error' });
     } finally {
-      setIsSearching(false);
+      dispatch({ type: 'search_end' });
     }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setSearchQuery(suggestion);
+    dispatch({ type: 'set_search_query', value: suggestion });
     handleSearch(suggestion);
   };
 
@@ -131,7 +137,7 @@ export function SATSearchContent() {
         {/* Barra de búsqueda */}
         <SATSearchBar
           value={searchQuery}
-          onChange={setSearchQuery}
+          onChange={(value) => dispatch({ type: 'set_search_query', value })}
           onSearch={handleSearch}
           isSearching={isSearching}
           disabledByLimit={planInfo?.aiSearchesRemaining === 0 || limitReached}
@@ -177,10 +183,9 @@ export function SATSearchContent() {
               <Button
                 size="sm"
                 className="w-fit shrink-0 gap-2"
-                onClick={() => {
-                  setUpgradeModalMessage(LIMIT_REACHED_MESSAGE);
-                  setShowUpgradeModal(true);
-                }}
+                onClick={() =>
+                  dispatch({ type: 'search_blocked_show_upgrade', message: LIMIT_REACHED_MESSAGE })
+                }
               >
                 <Sparkles className="size-4" />
                 Mejorar plan
@@ -225,7 +230,7 @@ export function SATSearchContent() {
 
         <UpgradeModal
           isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
+          onClose={() => dispatch({ type: 'close_upgrade_modal' })}
           currentPlan={currentPlan}
           feature={upgradeModalMessage}
           recommendedPlan="BASIC"
@@ -259,7 +264,7 @@ export function SATSearchContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      onClick={() => dispatch({ type: 'set_current_page', page: Math.max(1, currentPage - 1) })}
                       disabled={currentPage === 1}
                       className="gap-2"
                     >
@@ -273,7 +278,7 @@ export function SATSearchContent() {
                           key={page}
                           variant={currentPage === page ? 'default' : 'outline'}
                           size="sm"
-                          onClick={() => setCurrentPage(page)}
+                          onClick={() => dispatch({ type: 'set_current_page', page })}
                           className="h-10 w-10"
                         >
                           {page}
@@ -284,7 +289,12 @@ export function SATSearchContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      onClick={() =>
+                        dispatch({
+                          type: 'set_current_page',
+                          page: Math.min(totalPages, currentPage + 1),
+                        })
+                      }
                       disabled={currentPage === totalPages}
                       className="gap-2"
                     >

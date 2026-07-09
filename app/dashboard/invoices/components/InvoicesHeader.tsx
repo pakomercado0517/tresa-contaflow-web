@@ -1,7 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, HandCoins, FileText, FileSpreadsheet, Upload, ChevronDown } from 'lucide-react';
+import { Plus, HandCoins, FileText, Upload, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,29 +10,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { PageHeader } from '@/components/common/PageHeader';
-import { FilterBar } from '@/components/common/FilterBar';
+import { InvoicesHeaderFilters } from './InvoicesHeaderFilters';
 import { ProfileSelector } from './ProfileSelector';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { getExportUpgradeMessage } from '@/lib/utils/subscription';
+import { DashboardListHeaderExportButtons } from '@/app/dashboard/components/DashboardListHeaderExportButtons';
+import type {
+  ListHeaderExportConfig,
+  ManualEntryHeaderAction,
+  RegimenFilterConfig,
+} from '@/app/dashboard/components/dashboard-list-header-types';
 import type { Profile } from '@/lib/types/profiles';
-
-interface RegimenOption {
-  value: string;
-  label: string;
-}
 
 interface InvoicesHeaderProps {
   profiles: Profile[];
@@ -41,22 +29,22 @@ interface InvoicesHeaderProps {
   onMesChange: (mes: number) => void;
   selectedAño: number;
   onAñoChange: (año: number) => void;
-  selectedRegimenFiscal: string;
-  onRegimenFiscalChange: (regimen: string) => void;
-  regimenOptions: RegimenOption[];
-  isRegimenDisabled: boolean;
   search: string;
   onSearchChange: (value: string) => void;
   onClearFilters: () => void;
-  /** Si se proporciona, el botón PDF es un Link al preview; si no, usa onExportPDF */
-  exportPdfHref?: string;
-  onExportPDF: () => void;
-  canExportPDF: boolean;
-  onExportExcel: () => void;
-  canExportExcel: boolean;
-  onAddManualIncome: () => void;
-  canAddManualIncome: boolean;
-  manualIncomeDisabledReason: 'no_profile' | 'no_period' | null;
+  regimenFilter: RegimenFilterConfig;
+  exportConfig: ListHeaderExportConfig;
+  manualEntry: ManualEntryHeaderAction;
+}
+
+function getManualIncomeMenuTitle(blockReason: ManualEntryHeaderAction['blockReason']): string {
+  if (blockReason === null) {
+    return 'Registrar un ingreso sin factura CFDI';
+  }
+  if (blockReason === 'no_profile') {
+    return 'Selecciona un perfil para agregar ingresos manuales';
+  }
+  return 'Se requiere un período válido para habilitar ingresos manuales';
 }
 
 export function InvoicesHeader({
@@ -67,22 +55,43 @@ export function InvoicesHeader({
   onMesChange,
   selectedAño,
   onAñoChange,
-  selectedRegimenFiscal,
-  onRegimenFiscalChange,
-  regimenOptions,
-  isRegimenDisabled,
   search,
   onSearchChange,
   onClearFilters,
-  exportPdfHref,
-  onExportPDF,
-  canExportPDF,
-  onExportExcel,
-  canExportExcel,
-  onAddManualIncome,
-  canAddManualIncome,
-  manualIncomeDisabledReason,
+  regimenFilter,
+  exportConfig,
+  manualEntry,
 }: InvoicesHeaderProps) {
+  const filters = useMemo(
+    () => (
+      <InvoicesHeaderFilters
+        selectedMes={selectedMes}
+        onMesChange={onMesChange}
+        selectedAño={selectedAño}
+        onAñoChange={onAñoChange}
+        search={search}
+        onSearchChange={onSearchChange}
+        onClearFilters={onClearFilters}
+        selectedRegimenFiscal={regimenFilter.selected}
+        onRegimenFiscalChange={regimenFilter.onChange}
+        regimenOptions={regimenFilter.options}
+        isRegimenDisabled={regimenFilter.disabled}
+      />
+    ),
+    [
+      selectedMes,
+      onMesChange,
+      selectedAño,
+      onAñoChange,
+      search,
+      onSearchChange,
+      onClearFilters,
+      regimenFilter,
+    ]
+  );
+
+  const isManualEntryEnabled = manualEntry.blockReason === null;
+
   return (
     <PageHeader
       icon={FileText}
@@ -101,84 +110,7 @@ export function InvoicesHeader({
 
           <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
 
-          {canExportPDF ? (
-            exportPdfHref ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground gap-1.5"
-                asChild
-              >
-                <Link href={exportPdfHref}>
-                  <FileText className="h-4 w-4" />
-                  <span>PDF</span>
-                </Link>
-              </Button>
-            ) : (
-              <Button
-                onClick={onExportPDF}
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground gap-1.5"
-              >
-                <FileText className="h-4 w-4" />
-                <span>PDF</span>
-              </Button>
-            )
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled
-                      className="text-muted-foreground gap-1.5 disabled:opacity-50 cursor-not-allowed"
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span>PDF</span>
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" sideOffset={6}>
-                  {getExportUpgradeMessage('pdf_export')}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {canExportExcel ? (
-            <Button
-              onClick={onExportExcel}
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground gap-1.5"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              <span>Excel</span>
-            </Button>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled
-                      className="text-muted-foreground gap-1.5 disabled:opacity-50 cursor-not-allowed"
-                    >
-                      <FileSpreadsheet className="h-4 w-4" />
-                      <span>Excel</span>
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" sideOffset={6}>
-                  {getExportUpgradeMessage('excel_export')}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <DashboardListHeaderExportButtons exportConfig={exportConfig} />
 
           <div className="bg-border/70 mx-0.5 hidden h-6 w-px sm:block" aria-hidden="true" />
 
@@ -202,16 +134,10 @@ export function InvoicesHeader({
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={onAddManualIncome}
-                disabled={!canAddManualIncome}
+                onClick={manualEntry.onAdd}
+                disabled={!isManualEntryEnabled}
                 className="flex items-center gap-2"
-                title={
-                  canAddManualIncome
-                    ? 'Registrar un ingreso sin factura CFDI'
-                    : manualIncomeDisabledReason === 'no_profile'
-                      ? 'Selecciona un perfil para agregar ingresos manuales'
-                      : 'Se requiere un período válido para habilitar ingresos manuales'
-                }
+                title={getManualIncomeMenuTitle(manualEntry.blockReason)}
               >
                 <HandCoins className="h-4 w-4" />
                 Ingreso manual
@@ -220,38 +146,7 @@ export function InvoicesHeader({
           </DropdownMenu>
         </>
       }
-      filters={
-        <FilterBar
-          selectedMes={selectedMes}
-          onMesChange={onMesChange}
-          selectedAño={selectedAño}
-          onAñoChange={onAñoChange}
-          search={search}
-          onSearchChange={onSearchChange}
-          searchPlaceholder="Buscar RFC, Nombre, UUID..."
-          onClearFilters={onClearFilters}
-          extraFilters={
-            <div className="w-full min-w-0 sm:w-auto">
-              <Select
-                value={selectedRegimenFiscal}
-                onValueChange={onRegimenFiscalChange}
-                disabled={isRegimenDisabled}
-              >
-                <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-[180px]">
-                  <SelectValue placeholder="Régimen: Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  {regimenOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.value === 'all' ? 'Régimen: Todos' : opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          }
-        />
-      }
+      filters={filters}
     />
   );
 }

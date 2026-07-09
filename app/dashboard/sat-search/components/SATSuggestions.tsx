@@ -14,9 +14,9 @@ export function SATSuggestions({ suggestions, onSuggestionClick }: SATSuggestion
         SUGERENCIAS
       </h2>
       <div className="flex flex-wrap gap-2">
-        {suggestions.map((suggestion, index) => (
+        {suggestions.map((suggestion) => (
           <Badge
-            key={index}
+            key={suggestion}
             variant="secondary"
             className="hover:bg-primary hover:text-primary-foreground cursor-pointer px-4 py-2 text-sm transition-colors"
             onClick={() => onSuggestionClick(suggestion)}

@@ -103,16 +103,18 @@ export const PLANS: PlanDetails[] = [
   },
 ];
 
+const MXN_PLAN_PRICE_FORMATTER = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+  minimumFractionDigits: 0,
+});
+
 export function getPlanDetails(planId: Plan): PlanDetails {
   return PLANS.find((p) => p.id === planId) || PLANS[0];
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    minimumFractionDigits: 0,
-  }).format(price);
+  return MXN_PLAN_PRICE_FORMATTER.format(price);
 }
 
 /**

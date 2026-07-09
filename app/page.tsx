@@ -28,7 +28,6 @@ export default function HomePage() {
     <div className="bg-background min-h-screen">
       <Header />
       <HeroSection />
-      {/* <TrustSection /> */}
       <FeaturesSection />
       <DashboardPreview />
       <Suspense

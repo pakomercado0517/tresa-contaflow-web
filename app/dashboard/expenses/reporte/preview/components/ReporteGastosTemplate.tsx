@@ -235,7 +235,7 @@ export function ReporteGastosTemplate({
               ) : (
                 data.filas.map((fila, idx) => (
                   <tr
-                    key={`${fila.folio}-${idx}`}
+                    key={`${fila.folio}-${fila.fecha}-${fila.rfcEmisor}`}
                     className={cn(
                       "border-t border-gray-100",
                       idx % 2 === 1 && "bg-gray-50/50"

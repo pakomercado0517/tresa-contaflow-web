@@ -12,7 +12,7 @@ import { ReconciliationBadge } from './ReconciliationBadge';
 
 interface PaymentComplementDetailContentProps {
   detail: PaymentComplementDetail;
-  role: ComplementRole;
+  complementRole: ComplementRole;
   profileId: string | undefined;
   mes: number;
   año: number;
@@ -30,14 +30,14 @@ function formatDate(iso: string): string {
 
 export function PaymentComplementDetailContent({
   detail,
-  role,
+  complementRole,
   profileId,
   mes,
   año,
   listBasePath,
   listHref,
 }: PaymentComplementDetailContentProps) {
-  const roleLabel = role === 'INGRESO' ? 'Cobro (REP emitido)' : 'Pago (REP recibido)';
+  const roleLabel = complementRole === 'INGRESO' ? 'Cobro (REP emitido)' : 'Pago (REP recibido)';
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 lg:p-8">
