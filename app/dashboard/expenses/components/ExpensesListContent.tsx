@@ -27,7 +27,7 @@ export type ExpensesListContentProps = ExpensesListViewModelInput;
 
 export function ExpensesListContent(props: ExpensesListContentProps) {
   const {
-    storedProfileUrlRestoreRef,
+    dashboardFiltersUrlRestoreRef,
     profiles,
     selectedProfileId,
     handleProfileChange,
@@ -103,7 +103,7 @@ export function ExpensesListContent(props: ExpensesListContentProps) {
 
   return (
     <div className="w-full min-w-0 overflow-x-hidden">
-      <div ref={storedProfileUrlRestoreRef} className="hidden" aria-hidden />
+      <div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
       <ExpensesHeader
         profiles={profiles}
         selectedProfileId={selectedProfileId}

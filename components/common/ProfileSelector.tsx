@@ -10,8 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Profile } from '@/lib/types/profiles';
-import { setStoredProfileSelection } from '@/lib/storage/profile-selection';
-import { useStoredProfileUrlRestoreRef } from '@/lib/navigation/use-stored-profile-url-restore-ref';
+import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
+import { useDashboardFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-filters-url-restore-ref';
 
 interface ProfileSelectorProps {
   profiles: Profile[];
@@ -30,7 +30,7 @@ export function ProfileSelector({
 }: ProfileSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const storedProfileUrlRestoreRef = useStoredProfileUrlRestoreRef('/dashboard', profiles);
+  const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef('/dashboard', profiles);
 
   function handleProfileChange(profileId: string) {
     // Verificar que el perfil no esté congelado
@@ -40,7 +40,7 @@ export function ProfileSelector({
         return; // Prevenir selección de perfil congelado
       }
     }
-    setStoredProfileSelection(profileId || 'all');
+    setStoredDashboardFilters({ profileId: profileId || 'all' });
 
     const params = new URLSearchParams(searchParams.toString());
     if (profileId) {
@@ -57,7 +57,7 @@ export function ProfileSelector({
 
   return (
     <>
-      <div ref={storedProfileUrlRestoreRef} className="hidden" aria-hidden />
+      <div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
       <Select value={selectedProfileId || 'all'} onValueChange={handleProfileChange}>
         <SelectTrigger className={triggerClassName}>
           <SelectValue placeholder="Seleccionar perfil" />

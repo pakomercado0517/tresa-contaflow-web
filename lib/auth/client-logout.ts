@@ -1,5 +1,5 @@
 import { logoutAction } from '@/app/dashboard/setup/actions';
-import { clearAllStoredProfileSelections } from '@/lib/storage/profile-selection';
+import { clearAllStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
 
 interface PerformClientLogoutOptions {
   clearProfileSelections?: boolean;
@@ -13,7 +13,7 @@ export async function performClientLogout(
   if (typeof window !== 'undefined') {
     localStorage.removeItem('tour:onboarding');
     if (clearProfileSelections) {
-      clearAllStoredProfileSelections();
+      clearAllStoredDashboardFilters();
     }
   }
 
