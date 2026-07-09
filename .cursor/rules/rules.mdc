@@ -17,6 +17,7 @@ alwaysApply: true
 9. [React y Next.js](#react-y-nextjs)
 10. [Fetching de Datos y API](#fetching-de-datos-y-api)
 11. [Performance y Optimización](#performance-y-optimización)
+12. [React Doctor — prevenir hallazgos](#react-doctor--prevenir-hallazgos)
 
 ---
 
@@ -615,6 +616,57 @@ const ChartComponent = dynamic(() => import("@/components/Chart"), {
 
 ---
 
+## 12. React Doctor — prevenir hallazgos
+
+Objetivo: **no acumular recetas** de React Doctor. Aplicar estas costumbres en cada implementación (no solo en un pase de limpieza).
+
+Falsos positivos verificados y overrides viven en `.react-doctor/false-positives.md` y `doctor.config.json`. **No** silenciar reglas nuevas sin documentar el porqué ahí.
+
+### Navegación: no redirect en `useEffect`
+
+- ❌ **NO** usar `router.push` / `router.replace` / `window.location` / `location.href` dentro de `useEffect` o `useLayoutEffect` para “arreglar” la URL al montar (parpadeo de UI incorrecta + botón Atrás raro).
+- ✅ Navegación disparada por el usuario: `onClick` / `onSubmit` / handlers de filtros.
+- ✅ Destino conocido en servidor: `redirect()` de `next/navigation` en Server Component, layout o Server Action.
+- ✅ Sincronizar filtros de dashboard (URL ↔ localStorage / perfiles) en Facturas y Gastos: usar [`useDashboardFiltersUrlRestoreRef`](lib/navigation/use-dashboard-filters-url-restore-ref.ts) + [`tryRestoreDashboardFiltersInUrl`](lib/navigation/dashboard-filters-url.ts) (callback ref), **no** un `useEffect` con `router.replace`.
+- ✅ Mientras la URL canónica no esté lista, mostrar loading y no pintar la lista “a medias”.
+
+```tsx
+// ❌ INCORRECTO — redirect al montar
+useEffect(() => {
+  if (!canonicalSearch) return;
+  router.replace(`/dashboard/invoices?${canonicalSearch}`);
+}, [canonicalSearch, router]);
+
+// ✅ CORRECTO — mismo patrón que Facturas/Gastos
+const dashboardFiltersUrlRestoreRef = useDashboardFiltersUrlRestoreRef(
+  "/dashboard/invoices",
+  profiles
+);
+// Montar el ref cuando filtersReady (p. ej. en el fallback de loading)
+<div ref={dashboardFiltersUrlRestoreRef} className="hidden" aria-hidden />
+```
+
+### Superficie pública: sin exports muertos
+
+- ❌ **NO** dejar `export` “por si acaso” ni wrappers server/client duplicados sin consumidor.
+- ✅ Al refactorizar (p. ej. sustituir `getTrendData` por `getTrendDataClient` + helper SSR), **borrar** la función vieja en el mismo cambio.
+- ✅ Antes de merge: buscar el símbolo en el repo; si nadie lo importa, quitar el `export` o la declaración.
+
+### BaaS en el cliente (Firebase / Supabase)
+
+- ✅ Firebase en el browser = **solo** Auth Google (`lib/firebase/config.ts`). No añadir Firestore/Realtime ni queries de colecciones desde el cliente.
+- ✅ Supabase = server-only (`lib/supabase/server-client.ts` + service role); uploads vía Server Actions.
+- ❌ **NO** pelear el warning `artifact-baas-authority-surface` quitando `firebase` o migrando a GIS: es FP documentado (el SDK Auth trae `tenantId`/`apiKey` en el chunk). Re-evaluar solo si se añade acceso BaaS real desde el browser.
+
+### Rutina al cerrar un feature
+
+1. Evitar los anti-patrones de esta sección mientras se escribe el código.
+2. Antes de commit: `npx react-doctor@latest --verbose --scope changed` (solo lo nuevo vs la base).
+3. Si el score baja: corregir en el mismo PR; no dejar “para un pase /doctor”.
+4. Scan completo (`npx react-doctor@latest --verbose`): de vez en cuando o antes de release, no en cada micro-cambio.
+
+---
+
 ## 📝 Checklist de Desarrollo
 
 Antes de hacer commit, verificar:
@@ -634,6 +686,10 @@ Antes de hacer commit, verificar:
 - [ ] ¿Se usó la estrategia híbrida correcta (Server Components vs React Query)?
 - [ ] ¿Se usó el cliente HTTP configurado en lugar de fetch directo?
 - [ ] ¿Login Google sigue usando Firebase Auth (`lib/firebase/config.ts`), sin GIS ni quitar `firebase`?
+- [ ] ¿No hay `router.replace`/`push` (ni `location`) dentro de `useEffect` para sincronizar URL?
+- [ ] ¿Filtros de dashboard usan `useDashboardFiltersUrlRestoreRef` cuando hace falta restaurar URL?
+- [ ] ¿No quedaron exports sin importadores en el cambio?
+- [ ] ¿Se corrió `npx react-doctor@latest --verbose --scope changed` y el score no bajó?
 
 ---
 
@@ -644,5 +700,6 @@ Este documento debe actualizarse cuando:
 - Se agreguen nuevas convenciones del equipo
 - Se identifiquen patrones comunes que deban documentarse
 - Se tomen decisiones arquitectónicas importantes
+- React Doctor señale un anti-patrón recurrente que deba prevenirse en implementación
 
-**Última actualización**: 2024
+**Última actualización**: 2026-07-08
