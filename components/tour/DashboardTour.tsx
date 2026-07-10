@@ -109,18 +109,6 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         pointerRadius: 10,
       },
       {
-        icon: '🧮',
-        title: 'Estimación fiscal informativa',
-        content:
-          'Aquí verás ISR e IVA netos orientativos según tus CFDI y la configuración fiscal del ejercicio. Es una guía para el mes, no reemplaza tu declaración oficial ante el SAT. Para mayor precisión (por ejemplo régimen 601 o pagos provisionales), completa los datos fiscales del perfil.',
-        selector: "[data-tour='tax-estimate-section']",
-        side: 'top',
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        pointerRadius: 10,
-      },
-      {
         icon: '📈',
         title: 'Gráfico de Tendencias',
         content:
@@ -150,6 +138,18 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
         content:
           'Revisa tus últimos gastos registrados. El sistema valida automáticamente cada gasto y muestra su estado de validación.',
         selector: "[data-tour='recent-expenses']",
+        side: 'top',
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        pointerRadius: 10,
+      },
+      {
+        icon: '🧮',
+        title: 'Estimación fiscal',
+        content:
+          'ISR e IVA netos del periodo según régimen. Es orientativo y no reemplaza tu declaración ante el SAT. Para más precisión, completa los datos fiscales del perfil.',
+        selector: "[data-tour='tax-estimate-section']",
         side: 'top',
         showControls: true,
         showSkip: true,

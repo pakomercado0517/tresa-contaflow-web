@@ -86,12 +86,6 @@ export function DashboardHomeView({
 
         <DashboardHomeIntro userName={userName} profileId={profileId} mes={mes} año={año} />
         <MetricsCards metrics={metrics} profileId={profileId} mes={mes} año={año} />
-        <DashboardTaxEstimateSection
-          profileId={profileId}
-          mes={mes}
-          año={año}
-          regimenFiscal={regimenFiscal}
-        />
         <Suspense
           fallback={
             <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
@@ -115,6 +109,12 @@ export function DashboardHomeView({
             <RecentExpensesTable expenses={expenses} />
           </div>
         </div>
+        <DashboardTaxEstimateSection
+          profileId={profileId}
+          mes={mes}
+          año={año}
+          regimenFiscal={regimenFiscal}
+        />
       </main>
     </>
   );

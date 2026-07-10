@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { Building2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { TaxEstimatePanel } from '@/components/common/TaxEstimatePanel';
 import { getRegimenLabel } from '@/lib/constants/sat';
+import { TAX_ESTIMATE_PANEL_COPY } from '@/lib/constants/tax-estimate-field-labels';
 import { ApiError } from '@/lib/api/client';
 import { useTaxEstimates } from '@/lib/hooks/useTaxEstimates';
 import { useSelectedDashboardProfile } from '@/lib/hooks/useSelectedDashboardProfile';
@@ -18,7 +20,7 @@ const TaxEstimateHistorySection = dynamic(
       default: mod.TaxEstimateHistorySection,
     })),
   {
-    loading: () => <div className="bg-muted h-[28rem] w-full animate-pulse rounded-lg" />,
+    loading: () => <div className="bg-muted h-80 w-full animate-pulse rounded-lg" />,
     ssr: false,
   }
 );
@@ -48,8 +50,32 @@ function getTaxEstimateErrorMessage(error: Error): string {
   return body?.error || error.message || 'No se pudo cargar la estimación fiscal.';
 }
 
-function TaxEstimateSectionSkeleton() {
-  return <Card className="border-border h-64 w-full animate-pulse shadow-sm" />;
+function TaxEstimateSectionShell({ children }: { children: ReactNode }) {
+  return (
+    <section
+      id="tax-estimate-section"
+      data-tour="tax-estimate-section"
+      className="w-full min-w-0 space-y-5"
+    >
+      {children}
+    </section>
+  );
+}
+
+function TaxEstimateSectionHeading() {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-semibold tracking-[0.18em] text-violet-400 uppercase">
+        {TAX_ESTIMATE_PANEL_COPY.sectionEyebrow}
+      </p>
+      <h2 className="text-lg font-semibold tracking-tight">
+        {TAX_ESTIMATE_PANEL_COPY.sectionTitle}
+      </h2>
+      <p className="text-muted-foreground max-w-2xl text-sm">
+        {TAX_ESTIMATE_PANEL_COPY.sectionDescription}
+      </p>
+    </div>
+  );
 }
 
 export function DashboardTaxEstimateSection({
@@ -70,28 +96,39 @@ export function DashboardTaxEstimateSection({
 
   if (!profileId) {
     return (
-      <EmptyState
-        icon={Building2}
-        title="Selecciona un perfil"
-        description="Elige un perfil en el encabezado para ver la estimación fiscal informativa."
-        compact
-      />
+      <TaxEstimateSectionShell>
+        <TaxEstimateSectionHeading />
+        <EmptyState
+          icon={Building2}
+          title="Selecciona un perfil"
+          description="Elige un perfil en el encabezado para ver la estimación fiscal."
+          compact
+        />
+      </TaxEstimateSectionShell>
     );
   }
 
   if (isLoading) {
-    return <TaxEstimateSectionSkeleton />;
+    return (
+      <TaxEstimateSectionShell>
+        <TaxEstimateSectionHeading />
+        <Card className="h-64 w-full animate-pulse border-violet-500/20 bg-[hsl(250,28%,14%)] shadow-sm" />
+      </TaxEstimateSectionShell>
+    );
   }
 
   if (isError && error) {
     return (
-      <ErrorState
-        title="Estimación fiscal no disponible"
-        message={getTaxEstimateErrorMessage(error)}
-        onRetry={() => {
-          void refetch();
-        }}
-      />
+      <TaxEstimateSectionShell>
+        <TaxEstimateSectionHeading />
+        <ErrorState
+          title="Estimación fiscal no disponible"
+          message={getTaxEstimateErrorMessage(error)}
+          onRetry={() => {
+            void refetch();
+          }}
+        />
+      </TaxEstimateSectionShell>
     );
   }
 
@@ -113,17 +150,10 @@ export function DashboardTaxEstimateSection({
       }));
 
   return (
-    <div className="space-y-6" id="tax-estimate-section" data-tour="tax-estimate-section">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight">Estimación fiscal del periodo</h2>
-        <p className="text-muted-foreground max-w-3xl text-sm">
-          Las tarjetas de arriba muestran impuestos desglosados por CFDI (flujo y devengado). Aquí
-          verás ISR e IVA netos orientativos según régimen, incluyendo provisionales y saldos
-          configurados.
-        </p>
-      </div>
+    <TaxEstimateSectionShell>
+      <TaxEstimateSectionHeading />
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {panels.map((item) => (
           <TaxEstimatePanel
             key={item.key}
@@ -131,6 +161,7 @@ export function DashboardTaxEstimateSection({
             estimate={item.tax_estimate}
             regimenLabel={getRegimenLabel(item.regimen)}
             profileId={profileId}
+            headerMode="regimen"
           />
         ))}
       </div>
@@ -143,6 +174,6 @@ export function DashboardTaxEstimateSection({
         headerRegimenFiscal={regimenFiscal}
         regimenesFiscales={regimenesFiscales}
       />
-    </div>
+    </TaxEstimateSectionShell>
   );
 }

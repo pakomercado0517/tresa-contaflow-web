@@ -8,7 +8,10 @@ import { TaxEstimateAlertsList } from './tax-estimate/TaxEstimateAlertsList';
 import { TaxEstimateDisclaimer } from './tax-estimate/TaxEstimateDisclaimer';
 import { TaxEstimateIsrSection } from './tax-estimate/TaxEstimateIsrSection';
 import { TaxEstimateIvaSection } from './tax-estimate/TaxEstimateIvaSection';
-import { TaxEstimatePanelHeader } from './tax-estimate/TaxEstimatePanelHeader';
+import {
+  TaxEstimatePanelHeader,
+  type TaxEstimatePanelHeaderMode,
+} from './tax-estimate/TaxEstimatePanelHeader';
 
 export type TaxEstimatePanelAppearance = 'default' | 'report';
 
@@ -19,6 +22,8 @@ export interface TaxEstimatePanelProps {
   panelKey?: string;
   profileId?: string;
   appearance?: TaxEstimatePanelAppearance;
+  /** En dashboard: `regimen` evita repetir el título de la sección. */
+  headerMode?: TaxEstimatePanelHeaderMode;
   className?: string;
 }
 
@@ -35,14 +40,18 @@ export function TaxEstimatePanel({
   panelKey = 'default',
   profileId,
   appearance = 'default',
+  headerMode = 'full',
   className,
 }: TaxEstimatePanelProps) {
   const panelTitleId = getPanelTitleId(panelKey);
   const isReport = appearance === 'report';
+  const isCompactHeader = headerMode === 'regimen';
   const rootClass = isReport ? TAX_ESTIMATE_REPORT_ROOT_CLASS : undefined;
   const cardClass = isReport
     ? 'border-gray-200 bg-white w-full shadow-none'
-    : 'border-border w-full shadow-sm';
+    : isCompactHeader
+      ? 'w-full border-violet-500/20 bg-[hsl(250,28%,14%)] shadow-sm'
+      : 'border-border w-full shadow-sm';
 
   if (estimate === null) {
     return (
@@ -54,6 +63,7 @@ export function TaxEstimatePanel({
           <TaxEstimatePanelHeader
             panelTitleId={panelTitleId}
             regimenLabel={regimenLabel ?? ''}
+            mode={headerMode}
           />
         </div>
         <EmptyState
@@ -71,19 +81,22 @@ export function TaxEstimatePanel({
   return (
     <section
       aria-labelledby={panelTitleId}
-      className={cn('space-y-4', rootClass, className)}
+      className={cn(isCompactHeader ? 'space-y-3' : 'space-y-4', rootClass, className)}
     >
       <TaxEstimatePanelHeader
         panelTitleId={panelTitleId}
         regimenLabel={displayRegimenLabel}
         tipoPersona={estimate.tipo_persona}
-        subtitle={TAX_ESTIMATE_PANEL_COPY.subtitle}
+        subtitle={isCompactHeader ? undefined : TAX_ESTIMATE_PANEL_COPY.subtitle}
+        mode={headerMode}
       />
 
       <TaxEstimateAlertsList alerts={estimate.alerts} profileId={profileId} />
 
       <Card className={cardClass}>
-        <CardContent className="space-y-8 p-6">
+        <CardContent
+          className={isCompactHeader ? 'space-y-6 p-5 md:p-6' : 'space-y-8 p-6'}
+        >
           <TaxEstimateIsrSection estimate={estimate} />
           <TaxEstimateIvaSection iva={estimate.iva} />
           <TaxEstimateDisclaimer disclaimer={estimate.disclaimer} />

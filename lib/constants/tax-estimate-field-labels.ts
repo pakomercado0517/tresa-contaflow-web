@@ -4,6 +4,10 @@ export const TAX_ESTIMATE_PANEL_COPY = {
   title: 'Estimación fiscal informativa',
   subtitle:
     'ISR e IVA orientativos según tus CFDI y configuración del ejercicio.',
+  sectionTitle: 'Estimación fiscal',
+  sectionEyebrow: 'Impuestos',
+  sectionDescription:
+    'ISR e IVA netos del periodo según régimen. Orientativo; no sustituye tu declaración ante el SAT.',
   isrSectionTitle: 'ISR (estimado)',
   ivaSectionTitle: 'IVA (mes, flujo)',
   isrDetailsToggle: 'Ver desglose de ISR',

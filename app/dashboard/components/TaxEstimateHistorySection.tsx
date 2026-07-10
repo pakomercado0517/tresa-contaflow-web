@@ -44,7 +44,9 @@ interface TaxEstimateHistorySectionProps {
 }
 
 function HistorySectionSkeleton() {
-  return <Card className="border-border h-[28rem] w-full animate-pulse shadow-sm" />;
+  return (
+    <Card className="h-80 w-full animate-pulse border-violet-500/20 bg-[hsl(250,28%,14%)] shadow-sm" />
+  );
 }
 
 function formatNetCell(value: number | null): string {
@@ -131,12 +133,12 @@ export function TaxEstimateHistorySection({
   }
 
   return (
-    <Card className="border-border w-full p-4 shadow-sm md:p-6">
+    <Card className="w-full border-violet-500/20 bg-[hsl(250,28%,14%)] p-4 shadow-sm md:p-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold tracking-tight">
-              Tendencia ISR/IVA (ejercicio {ejercicio})
+            <h3 className="text-base font-semibold tracking-tight">
+              Tendencia ISR/IVA · {ejercicio}
             </h3>
             <p className="text-muted-foreground text-sm">{regimenLabel}</p>
           </div>
@@ -159,51 +161,54 @@ export function TaxEstimateHistorySection({
           ) : null}
         </div>
 
-        <TaxEstimateHistoryLineChart chartData={chartData} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+          <div className="min-w-0 space-y-3">
+            <TaxEstimateHistoryLineChart chartData={chartData} />
+            <p className="text-muted-foreground text-xs">
+              Valores informativos por mes; no sustituyen la declaración ante el SAT.
+            </p>
+          </div>
 
-        <p className="text-muted-foreground text-xs">
-          Valores informativos por mes; no sustituyen la declaración ante el SAT.
-        </p>
-
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mes</TableHead>
-                <TableHead className="text-right">ISR neto a pagar</TableHead>
-                <TableHead className="text-right">IVA neto a pagar</TableHead>
-                <TableHead className="text-right">Saldo a favor ISR</TableHead>
-                <TableHead className="text-right">Saldo a favor IVA</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow
-                  key={row.mes}
-                  className={cn(row.isCurrentMonth && 'bg-muted/50')}
-                >
-                  <TableCell className="font-medium">
-                    {row.mesLabel}
-                    {row.isCurrentMonth ? (
-                      <span className="text-muted-foreground ml-2 text-xs">(actual)</span>
-                    ) : null}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatNetCell(row.isrNeto)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(row.ivaNeto)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatNetCell(row.isrSaldoFavor)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(row.ivaSaldoFavor)}
-                  </TableCell>
+          <div className="min-w-0 overflow-x-auto rounded-md border lg:max-h-88 lg:overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mes</TableHead>
+                  <TableHead className="text-right">ISR neto a pagar</TableHead>
+                  <TableHead className="text-right">IVA neto a pagar</TableHead>
+                  <TableHead className="text-right">Saldo a favor ISR</TableHead>
+                  <TableHead className="text-right">Saldo a favor IVA</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow
+                    key={row.mes}
+                    className={cn(row.isCurrentMonth && 'bg-muted/50')}
+                  >
+                    <TableCell className="font-medium">
+                      {row.mesLabel}
+                      {row.isCurrentMonth ? (
+                        <span className="text-muted-foreground ml-2 text-xs">(actual)</span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatNetCell(row.isrNeto)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatCurrency(row.ivaNeto)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatNetCell(row.isrSaldoFavor)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatCurrency(row.ivaSaldoFavor)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </Card>
