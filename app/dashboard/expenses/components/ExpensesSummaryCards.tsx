@@ -12,6 +12,7 @@ function formatExpenseTotal(amount: number): string {
 
 interface ExpensesSummaryCardsProps {
   totalExpenses: number;
+  totalTaxesAndWithholdings: number;
   xmlProcessed: number;
   validXmlPercentage: number;
   manualExpenses: number;
@@ -25,6 +26,7 @@ const EXPENSE_SUMMARY_MONTH_NAMES = [
 
 export function ExpensesSummaryCards({
   totalExpenses,
+  totalTaxesAndWithholdings,
   xmlProcessed,
   validXmlPercentage,
   manualExpenses,
@@ -47,6 +49,9 @@ export function ExpensesSummaryCards({
                 Total Gastos ({monthName})
               </p>
               <p className="text-3xl font-bold">{formatExpenseTotal(totalExpenses)}</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Impuestos y retenciones: {formatExpenseTotal(totalTaxesAndWithholdings)}
+              </p>
               <div className="flex items-center gap-1 mt-2">
                 <TrendingUp className="h-3 w-3 text-green-500" />
                 <span className="text-xs text-green-500">+5% vs mes anterior</span>
@@ -98,4 +103,3 @@ export function ExpensesSummaryCards({
     </div>
   );
 }
-

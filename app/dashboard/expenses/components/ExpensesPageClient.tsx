@@ -227,6 +227,13 @@ export function ExpensesPageClient() {
         ? 'updating'
         : 'idle';
 
+  const totalExpensesAmount = metricsData?.devengado.egresos_devengados ?? 0;
+  const imp = metricsData?.impuestos;
+  const totalTaxesAndWithholdings =
+    (imp?.iva_acreditable?.devengado ?? imp?.iva_acreditable?.pagado ?? 0) +
+    (imp?.retenciones_iva?.devengado ?? imp?.retenciones_iva?.cobrado ?? 0) +
+    (imp?.retenciones_isr?.devengado ?? imp?.retenciones_isr?.cobrado ?? 0);
+
   return (
     <ExpensesListContent
       expenses={expenses}
@@ -245,6 +252,8 @@ export function ExpensesPageClient() {
       manualExpenseDisabledReason={manualExpenseDisabledReason}
       periodId={periodId}
       profileId={filters.profileId}
+      totalExpensesAmount={totalExpensesAmount}
+      totalTaxesAndWithholdings={totalTaxesAndWithholdings}
       subscription={subscription}
       expensesUsed={expensesUsed}
       initialProfileId={filters.profileId}

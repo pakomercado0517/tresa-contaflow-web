@@ -1,10 +1,15 @@
 import "./report-pdf.css";
 import { getExpenses } from "@/lib/api/expenses";
+import { listPaymentComplements } from "@/lib/api/payment-complements";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
 import { ExpensesReportPreviewContent } from "./components/ExpensesReportPreviewContent";
-import type { ReporteGastosData, FilaGastoReporte } from "./components/ReporteGastosTemplate";
+import type {
+  ReporteGastosData,
+  FilaGastoReporte,
+  FilaComplementoReporte,
+} from "./components/ReporteGastosTemplate";
 import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 const MESES = [
@@ -34,6 +39,12 @@ function shortUuid(uuid: string | null): string {
   return uuid.length > 16 ? `${uuid.slice(0, 8)}-${uuid.slice(-6)}` : uuid;
 }
 
+function truncateUuid(uuid: string): string {
+  if (!uuid) return "—";
+  if (uuid.length <= 16) return uuid;
+  return `${uuid.slice(0, 8)}…${uuid.slice(-8)}`;
+}
+
 export default async function ExpensesReportePreviewPage({ searchParams }: PreviewPageProps) {
   const params = await searchParams;
   const { mes: defaultMes, año: defaultAño } = getCurrentMonthYearInAppTimezone();
@@ -49,28 +60,40 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
     : defaultAño;
 
-  const [profilesRes, expensesRes, regimenesCatalog, currentUser] = await Promise.all([
-    getProfiles(),
-    getExpenses({
-      profileId,
-      mes,
-      año,
-      regimen_fiscal: regimenFiscal,
-      limit: 1000,
-      page: 1,
-      search,
-    }),
-    getRegimenesFiscales(),
-    getCurrentUser(),
-  ]);
+  const [profilesRes, expensesRes, complementsRes, regimenesCatalog, currentUser] =
+    await Promise.all([
+      getProfiles(),
+      getExpenses({
+        profileId,
+        mes,
+        año,
+        regimen_fiscal: regimenFiscal,
+        limit: 1000,
+        page: 1,
+        search,
+      }),
+      listPaymentComplements({
+        role: "EGRESO",
+        profile_id: profileId,
+        mes,
+        año,
+        limit: 100,
+        page: 1,
+      }),
+      getRegimenesFiscales(),
+      getCurrentUser(),
+    ]);
 
   const profiles = profilesRes.data ?? [];
-  const expenses = expensesRes.data ?? [];
+  const expensesRaw = expensesRes.data ?? [];
+  const expenses = expensesRaw.filter((exp) => exp.tipo !== "COMPLEMENTO_PAGO");
+  const complements = complementsRes.data ?? [];
   const activeProfile = profileId
     ? (profiles.find((p) => p.id === profileId) ?? null)
     : null;
   const profileName = activeProfile?.nombre ?? "Todos los perfiles";
   const rfc = activeProfile?.rfc ?? "";
+  const showComplementProfileColumn = !profileId;
 
   const catalogByClave = new Map(
     (regimenesCatalog?.data ?? []).map((r) => [r.clave, r.descripcion])
@@ -120,6 +143,29 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     total: toNumber(exp.total),
   }));
 
+  const filasComplementos: FilaComplementoReporte[] = complements.map((item) => {
+    const relacionadas = item.cantidad_facturas_relacionadas;
+    const sinConciliar = item.cantidad_items_sin_conciliar;
+    const conciliados = Math.max(0, relacionadas - sinConciliar);
+    const conciliacionLabel =
+      sinConciliar > 0
+        ? `${sinConciliar} sin conciliar · ${relacionadas} facturas`
+        : relacionadas > 0
+          ? `Conciliado · ${relacionadas} facturas`
+          : `${conciliados}/${relacionadas} conciliados`;
+
+    return {
+      linkId: item.link_id,
+      fechaEmision: item.fecha_emision,
+      uuidCorto: truncateUuid(item.uuid),
+      rfcContraparte: item.rfc_emisor || "—",
+      totalPagado: toNumber(item.total_pagado),
+      conciliacionLabel,
+      perfilNombre: showComplementProfileColumn ? item.profile.nombre : undefined,
+      perfilRfc: showComplementProfileColumn ? item.profile.rfc : undefined,
+    };
+  });
+
   const reportData: ReporteGastosData = {
     profileName,
     rfc,
@@ -136,6 +182,8 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     totalRetencionesIva,
     totalRetencionesIsr,
     filas,
+    filasComplementos,
+    showComplementProfileColumn,
     logoUrl: currentUser?.user?.logo_url ?? null,
     nombreComercial: currentUser?.user?.nombre_comercial ?? null,
   };

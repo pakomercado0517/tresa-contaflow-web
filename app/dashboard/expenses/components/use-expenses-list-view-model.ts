@@ -43,6 +43,10 @@ export interface ExpensesListViewModelInput {
   manualExpenseDisabledReason: 'no_profile' | 'no_period' | null;
   periodId: string | null;
   profileId: string | undefined;
+  /** Total de egresos del período/filtros (subtotal, sin impuestos); viene de métricas, no de la página actual */
+  totalExpensesAmount: number;
+  /** IVA acreditable + retenciones IVA/ISR del período (métricas) */
+  totalTaxesAndWithholdings: number;
   subscription?: Subscription | null;
   expensesUsed?: number;
   initialProfileId?: string;
@@ -67,6 +71,8 @@ export function useExpensesListViewModel({
   manualExpenseDisabledReason,
   periodId,
   profileId,
+  totalExpensesAmount,
+  totalTaxesAndWithholdings,
   subscription,
   expensesUsed = 0,
   initialProfileId,
@@ -439,12 +445,6 @@ export function useExpensesListViewModel({
   const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
   const canAddManualExpense = !!profileId && !!periodId;
 
-  const totalExpensesAmount = expenses.reduce((sum, expense) => {
-    const total =
-      typeof expense.total === 'number' ? expense.total : parseFloat(String(expense.total)) || 0;
-    return sum + total;
-  }, 0);
-
   const invalidateAfterManualExpense = () => {
     queryClient.invalidateQueries({ queryKey: ['accrued-expenses'] });
     queryClient.invalidateQueries({ queryKey: ['invoice-metrics'] });
@@ -483,6 +483,7 @@ export function useExpensesListViewModel({
     canAddManualExpense,
     manualExpenseDisabledReason,
     totalExpensesAmount,
+    totalTaxesAndWithholdings,
     xmlExpenses,
     validXmlExpenses,
     manualExpensesForSection,

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
-import { formatCurrency } from '@/lib/utils/format';
+import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 
 const DELETE_KEYWORD = 'ELIMINAR';
 
@@ -53,7 +53,7 @@ export function DeleteManualIncomeDialog({
               Total: {formatCurrency(income.subtotal + income.iva_amount)}
             </p>
             <p className="text-muted-foreground mt-1 text-xs">
-              Fecha: {new Date(income.fecha).toLocaleDateString('es-MX')}
+              Fecha: {formatDateShort(income.fecha)}
             </p>
           </div>
         )}

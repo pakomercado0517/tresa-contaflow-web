@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/utils/format';
+import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import type { PaymentComplementItemRow } from '@/lib/types/payment-complements';
 import { RelatedDocumentLink } from './RelatedDocumentLink';
 
@@ -18,14 +18,6 @@ interface PaymentComplementItemsTableProps {
   mes: number;
   año: number;
   listBasePath: '/dashboard/invoices' | '/dashboard/expenses';
-}
-
-function formatPaymentDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 export function PaymentComplementItemsTable({
@@ -67,7 +59,7 @@ export function PaymentComplementItemsTable({
               </TableCell>
               <TableCell>{item.num_parcialidad}</TableCell>
               <TableCell className="whitespace-nowrap text-sm">
-                {formatPaymentDate(item.fecha_pago)}
+                {formatDateShort(item.fecha_pago)}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {formatCurrency(item.imp_pagado)}

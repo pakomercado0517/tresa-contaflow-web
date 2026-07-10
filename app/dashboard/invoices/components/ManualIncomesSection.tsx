@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/common/EmptyState';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
-import { formatCurrency } from '@/lib/utils/format';
+import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 
 interface ManualIncomesSectionProps {
   canAddManualIncome: boolean;
@@ -91,11 +91,7 @@ export function ManualIncomesSection({
                   <TableRow key={income.id}>
                     <TableCell className="font-medium">{income.concept}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {new Date(income.fecha).toLocaleDateString('es-MX', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                      {formatDateShort(income.fecha)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCurrency(income.subtotal)}

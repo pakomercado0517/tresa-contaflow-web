@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/utils/format';
+import { formatCurrency, formatDateLong } from '@/lib/utils/format';
 import type { ComplementRole, PaymentComplementDetail } from '@/lib/types/payment-complements';
 import { PaymentComplementItemsTable } from './PaymentComplementItemsTable';
 import { ComplementRawCollapsible } from './ComplementRawCollapsible';
@@ -18,14 +18,6 @@ interface PaymentComplementDetailContentProps {
   año: number;
   listBasePath: '/dashboard/invoices' | '/dashboard/expenses';
   listHref: string;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 }
 
 export function PaymentComplementDetailContent({
@@ -59,7 +51,7 @@ export function PaymentComplementDetailContent({
       <div className="bg-card grid gap-4 rounded-lg border p-4 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="text-muted-foreground text-xs uppercase">Emisión</p>
-          <p className="text-sm font-medium">{formatDate(detail.fecha_emision)}</p>
+          <p className="text-sm font-medium">{formatDateLong(detail.fecha_emision)}</p>
         </div>
         <div>
           <p className="text-muted-foreground text-xs uppercase">Emisor</p>

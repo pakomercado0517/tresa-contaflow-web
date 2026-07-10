@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { ReportGeneratedAtLine } from "@/components/common/ReportGeneratedAtLine";
+import { formatDateNumeric } from "@/lib/utils/format";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -58,15 +59,6 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-}
-
-function formatDate(dateString: string): string {
-  const d = new Date(dateString);
-  return d.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
 }
 
 function truncate(str: string, max: number): string {
@@ -195,7 +187,7 @@ export function DetalleOperacionesDevengadasTemplate({
                       idx % 2 === 1 && "bg-gray-50/80"
                     )}
                   >
-                    <TableCell className={TD_FECHA}>{formatDate(row.fecha)}</TableCell>
+                    <TableCell className={TD_FECHA}>{formatDateNumeric(row.fecha)}</TableCell>
                     <TableCell className={TD_FOLIO} title={row.folioUuid}>
                       {truncate(row.folioUuid, 20)}
                     </TableCell>
@@ -258,7 +250,7 @@ export function DetalleOperacionesDevengadasTemplate({
                       idx % 2 === 1 && "bg-gray-50/80"
                     )}
                   >
-                    <TableCell className={TD_FECHA}>{formatDate(row.fecha)}</TableCell>
+                    <TableCell className={TD_FECHA}>{formatDateNumeric(row.fecha)}</TableCell>
                     <TableCell className={TD_FOLIO} title={row.folioUuid}>
                       {truncate(row.folioUuid, 20)}
                     </TableCell>

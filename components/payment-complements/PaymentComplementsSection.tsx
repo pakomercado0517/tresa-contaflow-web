@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/common/EmptyState';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
-import { formatCurrency } from '@/lib/utils/format';
+import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import type {
   ComplementRole,
   PaymentComplementListItem,
@@ -40,14 +40,6 @@ interface PaymentComplementsSectionProps {
 function truncateUuid(uuid: string): string {
   if (uuid.length <= 16) return uuid;
   return `${uuid.slice(0, 8)}…${uuid.slice(-8)}`;
-}
-
-function formatEmissionDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 function CopyUuidButton({ uuid }: { uuid: string }) {
@@ -161,7 +153,7 @@ export function PaymentComplementsSection({
                 {items.map((item) => (
                   <TableRow key={item.link_id}>
                     <TableCell className="whitespace-nowrap text-sm">
-                      {formatEmissionDate(item.fecha_emision)}
+                      {formatDateShort(item.fecha_emision)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

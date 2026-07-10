@@ -1,10 +1,15 @@
 import "./report-pdf.css";
 import { getInvoices } from "@/lib/api/invoices";
+import { listPaymentComplements } from "@/lib/api/payment-complements";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
 import { InvoicesReportPreviewContent } from "./components/InvoicesReportPreviewContent";
-import type { ReporteFacturasData, FilaFacturaReporte } from "./components/ReporteFacturasTemplate";
+import type {
+  ReporteFacturasData,
+  FilaFacturaReporte,
+  FilaComplementoReporte,
+} from "./components/ReporteFacturasTemplate";
 import { getCurrentMonthYearInAppTimezone } from "@/lib/utils/app-calendar";
 
 const MESES = [
@@ -34,6 +39,12 @@ function shortUuid(uuid: string): string {
   return uuid.length > 16 ? `${uuid.slice(0, 8)}-${uuid.slice(-6)}` : uuid;
 }
 
+function truncateUuid(uuid: string): string {
+  if (!uuid) return "—";
+  if (uuid.length <= 16) return uuid;
+  return `${uuid.slice(0, 8)}…${uuid.slice(-8)}`;
+}
+
 export default async function InvoicesReportePreviewPage({ searchParams }: PreviewPageProps) {
   const params = await searchParams;
   const { mes: defaultMes, año: defaultAño } = getCurrentMonthYearInAppTimezone();
@@ -50,28 +61,40 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
     : defaultAño;
 
-  const [profilesRes, invoicesRes, regimenesCatalog, currentUser] = await Promise.all([
-    getProfiles(),
-    getInvoices({
-      profileId,
-      mes,
-      año,
-      regimen_fiscal: regimenFiscal,
-      limit: 1000,
-      page: 1,
-      search,
-    }),
-    getRegimenesFiscales(),
-    getCurrentUser(),
-  ]);
+  const [profilesRes, invoicesRes, complementsRes, regimenesCatalog, currentUser] =
+    await Promise.all([
+      getProfiles(),
+      getInvoices({
+        profileId,
+        mes,
+        año,
+        regimen_fiscal: regimenFiscal,
+        limit: 1000,
+        page: 1,
+        search,
+      }),
+      listPaymentComplements({
+        role: "INGRESO",
+        profile_id: profileId,
+        mes,
+        año,
+        limit: 100,
+        page: 1,
+      }),
+      getRegimenesFiscales(),
+      getCurrentUser(),
+    ]);
 
   const profiles = profilesRes.data ?? [];
-  const invoices = invoicesRes.data ?? [];
+  const invoicesRaw = invoicesRes.data ?? [];
+  const invoices = invoicesRaw.filter((inv) => inv.tipo !== "COMPLEMENTO_PAGO");
+  const complements = complementsRes.data ?? [];
   const activeProfile = profileId
     ? (profiles.find((p) => p.id === profileId) ?? null)
     : null;
   const profileName = activeProfile?.nombre ?? "Todos los perfiles";
   const rfc = activeProfile?.rfc ?? "";
+  const showComplementProfileColumn = !profileId;
 
   const catalogByClave = new Map(
     (regimenesCatalog?.data ?? []).map((r) => [r.clave, r.descripcion])
@@ -125,6 +148,29 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     total: toNumber(inv.total),
   }));
 
+  const filasComplementos: FilaComplementoReporte[] = complements.map((item) => {
+    const relacionadas = item.cantidad_facturas_relacionadas;
+    const sinConciliar = item.cantidad_items_sin_conciliar;
+    const conciliados = Math.max(0, relacionadas - sinConciliar);
+    const conciliacionLabel =
+      sinConciliar > 0
+        ? `${sinConciliar} sin conciliar · ${relacionadas} facturas`
+        : relacionadas > 0
+          ? `Conciliado · ${relacionadas} facturas`
+          : `${conciliados}/${relacionadas} conciliados`;
+
+    return {
+      linkId: item.link_id,
+      fechaEmision: item.fecha_emision,
+      uuidCorto: truncateUuid(item.uuid),
+      rfcContraparte: item.rfc_receptor || "—",
+      totalPagado: toNumber(item.total_pagado),
+      conciliacionLabel,
+      perfilNombre: showComplementProfileColumn ? item.profile.nombre : undefined,
+      perfilRfc: showComplementProfileColumn ? item.profile.rfc : undefined,
+    };
+  });
+
   const reportData: ReporteFacturasData = {
     profileName,
     rfc,
@@ -141,6 +187,8 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     totalRetencionesIva,
     totalRetencionesIsr,
     filas,
+    filasComplementos,
+    showComplementProfileColumn,
     logoUrl: currentUser?.user?.logo_url ?? null,
     nombreComercial: currentUser?.user?.nombre_comercial ?? null,
   };

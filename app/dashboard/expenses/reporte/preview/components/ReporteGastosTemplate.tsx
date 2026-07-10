@@ -1,58 +1,21 @@
 "use client";
 
 import { type ReactNode } from "react";
-import Image from "next/image";
-import { Building2, Info } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { ReporteGastosData } from "./reporte-gastos-types";
+import { ReporteGastosHeader } from "./ReporteGastosHeader";
+import { ReporteGastosTitleSection } from "./ReporteGastosTitleSection";
+import { ReporteGastosSummaryCards } from "./ReporteGastosSummaryCards";
+import { ReporteGastosTable } from "./ReporteGastosTable";
+import { ReporteGastosComplementosSection } from "./ReporteGastosComplementosSection";
+import { ReporteGastosLegalNote } from "./ReporteGastosLegalNote";
+import { ReporteGastosFooter } from "./ReporteGastosFooter";
 
-export interface FilaGastoReporte {
-  fecha: string;
-  folio: string;
-  uuidCorto?: string;
-  rfcEmisor: string;
-  subtotal: number;
-  impuestos: number;
-  total: number;
-}
-
-export interface ReporteGastosData {
-  profileName: string;
-  rfc: string;
-  reportId: string;
-  generatedDate: string;
-  generatedTime: string;
-  mes: number;
-  año: number;
-  periodoLabel: string;
-  regimenFiscalLabel: string;
-  estadoCfdi: string;
-  totalEgresos: number;
-  totalIva: number;
-  totalRetencionesIva: number;
-  totalRetencionesIsr: number;
-  filas: FilaGastoReporte[];
-  /** URL del logo del despacho (branding) */
-  logoUrl?: string | null;
-  /** Nombre comercial del despacho (branding) */
-  nombreComercial?: string | null;
-}
-
-function formatCurrency(amount: number): string {
-  return `$${amount.toLocaleString("es-MX", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function formatDate(dateString: string): string {
-  const d = new Date(dateString);
-  return d.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
+export type {
+  FilaGastoReporte,
+  FilaComplementoReporte,
+  ReporteGastosData,
+} from "./reporte-gastos-types";
 
 interface ReporteGastosTemplateProps {
   data: ReporteGastosData;
@@ -73,10 +36,6 @@ export function ReporteGastosTemplate({
   totalPages = 1,
   className,
 }: ReporteGastosTemplateProps) {
-  const subtotalReporte = data.filas.reduce((s, f) => s + f.subtotal, 0);
-  const impuestosReporte = data.filas.reduce((s, f) => s + f.impuestos, 0);
-  const totalReporte = data.filas.reduce((s, f) => s + f.total, 0);
-
   return (
     <article
       className={cn(
@@ -87,238 +46,31 @@ export function ReporteGastosTemplate({
       data-reporte-contenido
     >
       {!hideHeaderForCapture && (
-        <header
-          className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-6 py-4"
-          data-html-header
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-gray-900">{data.profileName}</p>
-              <p className="text-sm text-gray-500">RFC: {data.rfc || "—"}</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <span className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white">
-              ID REPORTE: {data.reportId}
-            </span>
-            <p className="text-xs text-gray-500">Generado: {data.generatedDate}</p>
-            <p className="text-xs text-gray-500">Hora: {data.generatedTime}</p>
-          </div>
-          {headerAction}
-        </header>
+        <ReporteGastosHeader
+          profileName={data.profileName}
+          rfc={data.rfc}
+          reportId={data.reportId}
+          generatedDate={data.generatedDate}
+          generatedTime={data.generatedTime}
+          headerAction={headerAction}
+        />
       )}
 
       <div className="px-6 py-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            {(data.logoUrl || data.nombreComercial) && (
-              <div className="mb-4 flex items-center gap-3">
-                {data.logoUrl && (
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white">
-                    <Image
-                      src={data.logoUrl}
-                      alt=""
-                      width={56}
-                      height={56}
-                      className="object-contain"
-                    />
-                  </div>
-                )}
-                {data.nombreComercial && (
-                  <p className="text-lg font-semibold tracking-tight text-gray-900">
-                    {data.nombreComercial}
-                  </p>
-                )}
-              </div>
-            )}
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">
-              REPORTE DETALLADO DE GASTOS
-            </h1>
-            <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-              <span>TIPO:</span>
-              <span className="rounded bg-amber-600 px-2 py-0.5 text-xs font-medium text-white">
-                EGRESOS
-              </span>
-            </p>
-          </div>
-          <div className="flex flex-col items-end text-right text-sm text-gray-600">
-            <p className="font-medium text-gray-900">{data.profileName}</p>
-            <p className="mt-0.5 font-mono text-xs text-gray-700">RFC: {data.rfc || "—"}</p>
-            <p className="mt-2 font-medium text-gray-900">Período reportado: {data.periodoLabel}</p>
-            <p className="mt-1 flex items-center justify-end gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-              Estado de CFDI: {data.estadoCfdi}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="border border-gray-200 bg-gray-50/80">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Régimen fiscal
-              </p>
-              <p className="mt-1 font-medium text-gray-900">{data.regimenFiscalLabel}</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-gray-200 bg-gray-50/80">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Retenciones IVA
-              </p>
-              <p className="mt-1 text-xl font-bold text-gray-900">
-                {formatCurrency(data.totalRetencionesIva)}
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border border-gray-200 bg-gray-50/80">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Retenciones ISR
-              </p>
-              <p className="mt-1 text-xl font-bold text-gray-900">
-                {formatCurrency(data.totalRetencionesIsr)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card className="border border-amber-200 bg-amber-50/60">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">
-                Total egresos CFDI
-              </p>
-              <p className="mt-1 text-2xl font-bold text-amber-700">
-                {formatCurrency(data.totalEgresos)}
-              </p>
-              <p className="text-xs text-gray-600">MXN</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-gray-200 bg-gray-50/80">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Total IVA
-              </p>
-              <p className="mt-1 text-2xl font-bold text-gray-900">
-                {formatCurrency(data.totalIva)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-6 overflow-hidden rounded-lg border border-gray-200">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-emerald-600 text-white">
-                <th className="px-4 py-3 text-left font-semibold">Fecha</th>
-                <th className="px-4 py-3 text-left font-semibold">Folio CFDI</th>
-                <th className="px-4 py-3 text-left font-semibold">RFC emisor</th>
-                <th className="px-4 py-3 text-right font-semibold">Subtotal</th>
-                <th className="px-4 py-3 text-right font-semibold">Impuestos</th>
-                <th className="px-4 py-3 text-right font-semibold">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.filas.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="border-t border-gray-200 px-4 py-8 text-center text-gray-500"
-                  >
-                    Sin gastos en este período
-                  </td>
-                </tr>
-              ) : (
-                data.filas.map((fila, idx) => (
-                  <tr
-                    key={`${fila.folio}-${fila.fecha}-${fila.rfcEmisor}`}
-                    className={cn(
-                      "border-t border-gray-100",
-                      idx % 2 === 1 && "bg-gray-50/50"
-                    )}
-                  >
-                    <td className="px-4 py-2.5 text-gray-900">{formatDate(fila.fecha)}</td>
-                    <td className="px-4 py-2.5">
-                      <span className="font-medium text-gray-900">{fila.folio}</span>
-                      {fila.uuidCorto && (
-                        <span className="mt-0.5 block text-xs text-gray-500">
-                          {fila.uuidCorto}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-gray-700">
-                      {fila.rfcEmisor}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-gray-900">
-                      {formatCurrency(fila.subtotal)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-gray-900">
-                      {formatCurrency(fila.impuestos)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-medium text-amber-700">
-                      {formatCurrency(fila.total)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-            {data.filas.length > 0 && (
-              <tfoot>
-                <tr className="border-t-2 border-amber-200 bg-amber-50/40 font-semibold">
-                  <td colSpan={3} className="px-4 py-3 text-gray-800">
-                    Totales de reporte
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
-                    {formatCurrency(subtotalReporte)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
-                    {formatCurrency(impuestosReporte)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-amber-700">
-                    {formatCurrency(totalReporte)}
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-
-        <div className="mt-6 flex gap-3 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-            <Info className="h-3.5 w-3.5" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">Nota legal y fiscal</p>
-            <p className="mt-1 text-xs leading-relaxed text-gray-600">
-              Este documento es una representación impresa de los CFDI de gastos considerados en el
-              reporte. Las cifras son informativas y no sustituyen la conciliación bancaria ni la
-              validación interna de la empresa. Generado por Contafy.
-            </p>
-          </div>
-        </div>
+        <ReporteGastosTitleSection data={data} />
+        <ReporteGastosSummaryCards data={data} />
+        <ReporteGastosTable filas={data.filas} />
+        <ReporteGastosComplementosSection
+          mes={data.mes}
+          año={data.año}
+          filasComplementos={data.filasComplementos}
+          showComplementProfileColumn={data.showComplementProfileColumn}
+        />
+        <ReporteGastosLegalNote />
       </div>
 
       {!hideFooterForCapture && (
-        <footer
-          className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 bg-gray-50 px-6 py-4 text-xs text-gray-600"
-          data-html-footer
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-emerald-100 text-emerald-600">
-              <Building2 className="h-3 w-3" />
-            </div>
-            <p>
-              Reporte generado por <span className="font-semibold text-emerald-700">Contafy</span>
-            </p>
-          </div>
-          <p className="font-medium text-gray-700">
-            Página {pageNumber} de {totalPages}
-          </p>
-        </footer>
+        <ReporteGastosFooter pageNumber={pageNumber} totalPages={totalPages} />
       )}
     </article>
   );

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getPlanDetails, formatPrice } from "@/lib/utils/plans";
+import { formatDateShort } from "@/lib/utils/format";
 import type { Subscription } from "@/lib/types/subscription";
 
 interface SubscriptionCardProps {
@@ -17,11 +18,7 @@ export function SubscriptionCard({ subscription }: SubscriptionCardProps) {
   const price = subscription?.planPrice || planDetails.price.monthly;
 
   const nextRenewal = subscription?.currentPeriodEnd
-    ? new Date(subscription.currentPeriodEnd).toLocaleDateString("es-MX", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
+    ? formatDateShort(subscription.currentPeriodEnd)
     : "N/A";
 
   return (
