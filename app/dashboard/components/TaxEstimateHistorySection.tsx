@@ -26,6 +26,8 @@ import { useTaxEstimateHistory } from '@/lib/hooks/useTaxEstimateHistory';
 import { formatCurrency } from '@/lib/utils/format';
 import { mapTaxEstimateSnapshotsToRows } from '@/lib/utils/tax-estimate-history';
 import { cn } from '@/lib/utils';
+import { MOBILE_CHART_MAX_POINTS } from '@/lib/constants/chart-ui';
+import { useIsMdUp } from '@/lib/hooks/use-media-query';
 
 const TaxEstimateHistoryLineChart = dynamic(
   () => import('./TaxEstimateHistoryLineChart'),
@@ -63,6 +65,7 @@ export function TaxEstimateHistorySection({
   headerRegimenFiscal,
   regimenesFiscales = [],
 }: TaxEstimateHistorySectionProps) {
+  const isMdUp = useIsMdUp();
   const regimenOptions = regimenesFiscales.length > 0 ? regimenesFiscales : [];
   const defaultLocalRegimen = regimenOptions[0] ?? '';
 
@@ -100,6 +103,10 @@ export function TaxEstimateHistorySection({
       })),
     [rows]
   );
+
+  const chartDataForPlot = isMdUp
+    ? chartData
+    : chartData.slice(-MOBILE_CHART_MAX_POINTS);
 
   if (!effectiveRegimen) {
     return null;
@@ -163,7 +170,7 @@ export function TaxEstimateHistorySection({
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
           <div className="min-w-0 space-y-3">
-            <TaxEstimateHistoryLineChart chartData={chartData} />
+            <TaxEstimateHistoryLineChart chartData={chartDataForPlot} compact={!isMdUp} />
             <p className="text-muted-foreground text-xs">
               Valores informativos por mes; no sustituyen la declaración ante el SAT.
             </p>

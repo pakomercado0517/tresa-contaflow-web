@@ -13,6 +13,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/common/EmptyState';
+import { DashboardListItemCard } from '@/components/common/DashboardListItemCard';
+import {
+  DashboardListDesktop,
+  DashboardListMobile,
+} from '@/components/common/dashboard-list-responsive';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import type {
@@ -90,6 +95,18 @@ function buildDetailHref(
   return `${basePath}/${complementId}?${params.toString()}`;
 }
 
+function ComplementDetailButton({
+  href,
+}: {
+  href: string;
+}) {
+  return (
+    <Button variant="outline" size="sm" asChild>
+      <Link href={href}>Ver detalle</Link>
+    </Button>
+  );
+}
+
 export function PaymentComplementsSection({
   title,
   complementRole,
@@ -120,23 +137,81 @@ export function PaymentComplementsSection({
         <div className="p-6">
           <p className="text-destructive text-sm">{errorMessage}</p>
         </div>
+      ) : isLoading ? (
+        <div className="p-6">
+          <TableRowsSkeleton rows={4} />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="p-6">
+          <EmptyState
+            icon={FileText}
+            title="No hay complementos con pagos en este período"
+            description="Prueba otro mes o año, o sube un REP (complemento de pago) desde la carga de XML."
+            variant="empty"
+            compact
+          />
+        </div>
       ) : (
-        <div className="relative min-w-0 overflow-x-auto">
-          {isLoading ? (
-            <div className="p-6">
-              <TableRowsSkeleton rows={4} />
-            </div>
-          ) : items.length === 0 ? (
-            <div className="p-6">
-              <EmptyState
-                icon={FileText}
-                title="No hay complementos con pagos en este período"
-                description="Prueba otro mes o año, o sube un REP (complemento de pago) desde la carga de XML."
-                variant="empty"
-                compact
-              />
-            </div>
-          ) : (
+        <div className="relative min-w-0">
+          <DashboardListMobile className="p-3">
+            {items.map((item) => {
+              const detailHref = buildDetailHref(
+                detailBasePath,
+                item.id,
+                item.profile_id,
+                mes,
+                año
+              );
+              const fields = [
+                {
+                  label: 'Contraparte',
+                  value: (
+                    <span className="font-mono text-xs">
+                      {getCounterparty(item, complementRole)}
+                    </span>
+                  ),
+                },
+                ...(showProfileColumn
+                  ? [
+                      {
+                        label: 'Perfil',
+                        value: (
+                          <span className="block truncate" title={item.profile.nombre}>
+                            {item.profile.nombre}
+                          </span>
+                        ),
+                      },
+                    ]
+                  : []),
+              ];
+
+              return (
+                <DashboardListItemCard
+                  key={item.link_id}
+                  title={
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono text-xs" title={item.uuid}>
+                        {truncateUuid(item.uuid)}
+                      </span>
+                      <CopyUuidButton uuid={item.uuid} />
+                    </div>
+                  }
+                  badge={
+                    <ReconciliationBadge
+                      cantidadItemsSinConciliar={item.cantidad_items_sin_conciliar}
+                      cantidadFacturasRelacionadas={item.cantidad_facturas_relacionadas}
+                    />
+                  }
+                  meta={formatDateShort(item.fecha_emision)}
+                  amount={formatCurrency(item.total_pagado)}
+                  fields={fields}
+                  actions={<ComplementDetailButton href={detailHref} />}
+                />
+              );
+            })}
+          </DashboardListMobile>
+
+          <DashboardListDesktop>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -169,7 +244,9 @@ export function PaymentComplementsSection({
                         <p className="text-muted-foreground text-xs">{item.profile.rfc}</p>
                       </TableCell>
                     )}
-                    <TableCell className="font-mono text-xs">{getCounterparty(item, complementRole)}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {getCounterparty(item, complementRole)}
+                    </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(item.total_pagado)}
                     </TableCell>
@@ -180,27 +257,23 @@ export function PaymentComplementsSection({
                       />
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link
-                          href={buildDetailHref(
-                            detailBasePath,
-                            item.id,
-                            item.profile_id,
-                            mes,
-                            año
-                          )}
-                        >
-                          Ver detalle
-                        </Link>
-                      </Button>
+                      <ComplementDetailButton
+                        href={buildDetailHref(
+                          detailBasePath,
+                          item.id,
+                          item.profile_id,
+                          mes,
+                          año
+                        )}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          )}
+          </DashboardListDesktop>
 
-          {isUpdating && items.length > 0 && (
+          {isUpdating && (
             <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
               <TableRowsSkeleton rows={4} />
             </div>

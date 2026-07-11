@@ -11,6 +11,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/common/EmptyState';
+import { DashboardListItemCard } from '@/components/common/DashboardListItemCard';
+import {
+  DashboardListDesktop,
+  DashboardListMobile,
+} from '@/components/common/dashboard-list-responsive';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
 import type { Expense } from '@/lib/types/expenses';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
@@ -27,6 +32,53 @@ interface ExpensesXmlTableSectionProps {
   onDelete: (expense: Expense) => void;
 }
 
+function ExpensesEmptyState({ search }: { search: string }) {
+  return (
+    <EmptyState
+      icon={FileX}
+      title={
+        search
+          ? `No se encontraron gastos que coincidan con "${search}"`
+          : 'No se encontraron gastos'
+      }
+      description={
+        search
+          ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
+          : 'Comienza subiendo archivos XML o creando gastos manuales'
+      }
+      actionLabel={search ? undefined : 'Subir Gastos XML'}
+      actionHref={search ? undefined : '/dashboard/expenses/upload'}
+      variant="search"
+      compact
+    />
+  );
+}
+
+function ExpenseDeleteButton({
+  expense,
+  onDelete,
+}: {
+  expense: Expense;
+  onDelete: (expense: Expense) => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      title="Eliminar gasto"
+      onClick={() => onDelete(expense)}
+      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  );
+}
+
+function formatExpenseUuid(uuid: string | null): string {
+  if (!uuid) return '--';
+  return `${uuid.slice(0, 8)}...${uuid.slice(-4)}`;
+}
+
 export function ExpensesXmlTableSection({
   expenses,
   search,
@@ -34,8 +86,66 @@ export function ExpensesXmlTableSection({
   onDelete,
 }: ExpensesXmlTableSectionProps) {
   return (
-    <div data-tour="expenses-table" className="bg-card min-w-0 overflow-hidden rounded-lg border">
-      <div className="min-w-0 overflow-x-auto">
+    <div
+      data-tour="expenses-table"
+      className="bg-card relative min-w-0 overflow-hidden rounded-lg border"
+    >
+      <DashboardListMobile className="p-3">
+        {expenses.length > 0 ? (
+          expenses.map((expense) => (
+            <DashboardListItemCard
+              key={expense.id}
+              title={
+                <p className="truncate" title={expense.nombre_emisor || 'Sin emisor'}>
+                  {expense.nombre_emisor || 'Sin emisor'}
+                </p>
+              }
+              subtitle={
+                <div className="space-y-0.5">
+                  <p className="truncate" title={expense.concepto || 'Sin concepto'}>
+                    {expense.concepto || 'Sin concepto'}
+                  </p>
+                  <p className="font-mono" title={expense.uuid || undefined}>
+                    {formatExpenseUuid(expense.uuid)}
+                  </p>
+                </div>
+              }
+              badge={
+                <div className="flex flex-col items-end gap-1">
+                  {getExpensePaymentStatusBadge(expense)}
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {getExpenseCategoryBadge(expense.categoria)}
+                    {getExpenseOriginBadge(expense.tipo_origen)}
+                  </div>
+                </div>
+              }
+              meta={formatDateShort(expense.fecha)}
+              amount={formatCurrency(expense.subtotal)}
+              fields={[
+                {
+                  label: 'IVA Trasl.',
+                  value: formatCurrency(expense.iva_amount ?? expense.iva ?? 0),
+                },
+                {
+                  label: 'Ret. IVA',
+                  value: formatCurrency(expense.retencion_iva_amount ?? 0),
+                },
+                {
+                  label: 'Ret. ISR',
+                  value: formatCurrency(expense.retencion_isr_amount ?? 0),
+                },
+              ]}
+              actions={<ExpenseDeleteButton expense={expense} onDelete={onDelete} />}
+            />
+          ))
+        ) : (
+          <div className="py-4">
+            <ExpensesEmptyState search={search} />
+          </div>
+        )}
+      </DashboardListMobile>
+
+      <DashboardListDesktop>
         <div className="relative max-h-150 overflow-y-auto">
           <Table>
             <TableHeader className="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -80,9 +190,7 @@ export function ExpensesXmlTableSection({
                     <TableCell>{getExpenseOriginBadge(expense.tipo_origen)}</TableCell>
                     <TableCell className="font-mono text-xs">
                       <div className="max-w-37.5 truncate" title={expense.uuid || '--'}>
-                        {expense.uuid
-                          ? `${expense.uuid.slice(0, 8)}...${expense.uuid.slice(-4)}`
-                          : '--'}
+                        {formatExpenseUuid(expense.uuid)}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
@@ -100,15 +208,7 @@ export function ExpensesXmlTableSection({
                     <TableCell>{getExpensePaymentStatusBadge(expense)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Eliminar gasto"
-                          onClick={() => onDelete(expense)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <ExpenseDeleteButton expense={expense} onDelete={onDelete} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -116,36 +216,20 @@ export function ExpensesXmlTableSection({
               ) : (
                 <TableRow>
                   <TableCell colSpan={11} className="py-8">
-                    <EmptyState
-                      icon={FileX}
-                      title={
-                        search
-                          ? `No se encontraron gastos que coincidan con "${search}"`
-                          : 'No se encontraron gastos'
-                      }
-                      description={
-                        search
-                          ? 'Intenta con otros términos de búsqueda o ajusta los filtros'
-                          : 'Comienza subiendo archivos XML o creando gastos manuales'
-                      }
-                      actionLabel={search ? undefined : 'Subir Gastos XML'}
-                      actionHref={search ? undefined : '/dashboard/expenses/upload'}
-                      variant="search"
-                      compact
-                    />
+                    <ExpensesEmptyState search={search} />
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-
-          {tableState !== 'idle' && (
-            <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
-              <TableRowsSkeleton rows={10} />
-            </div>
-          )}
         </div>
-      </div>
+      </DashboardListDesktop>
+
+      {tableState !== 'idle' && (
+        <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
+          <TableRowsSkeleton rows={10} />
+        </div>
+      )}
     </div>
   );
 }

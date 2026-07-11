@@ -1,15 +1,15 @@
-import { Suspense } from "react";
-import { LoginForm } from "./components/LoginForm";
+import { Suspense } from 'react';
+import { LoginForm } from './components/LoginForm';
 import { SiteFooter } from '@/components/layout/SiteFooter';
-import { AuthLogo } from "./components/AuthLogo";
+import { AuthLogo } from './components/AuthLogo';
 
 function LoginFormFallback() {
   return (
-    <div className="w-full max-w-md p-8 bg-card border-border shadow-lg rounded-lg animate-pulse">
-      <div className="h-16 w-16 mx-auto mb-6 bg-muted rounded-full" />
+    <div className="bg-card border-border w-full max-w-md animate-pulse rounded-lg p-8 shadow-lg">
+      <div className="bg-muted mx-auto mb-6 h-16 w-16 rounded-full" />
       <div className="space-y-4">
-        <div className="h-8 bg-muted rounded w-3/4 mx-auto" />
-        <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
+        <div className="bg-muted mx-auto h-8 w-3/4 rounded" />
+        <div className="bg-muted mx-auto h-4 w-1/2 rounded" />
       </div>
     </div>
   );
@@ -17,9 +17,9 @@ function LoginFormFallback() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-primary/5 flex flex-col relative">
+    <div className="from-background via-primary/10 to-primary/5 relative flex min-h-screen flex-col bg-linear-to-br">
       <AuthLogo />
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+      <div className="flex flex-1 flex-col items-center justify-start px-4 py-8 md:justify-center md:py-12">
         <Suspense fallback={<LoginFormFallback />}>
           <LoginForm />
         </Suspense>
@@ -28,4 +28,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

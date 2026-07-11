@@ -20,17 +20,22 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { getTrendDataClient, type TrendDataPoint } from '@/lib/api/invoices.client';
-import { FLOW_TREND_PERIOD_VIEW_LABELS } from '@/lib/constants/chart-ui';
+import {
+  FLOW_TREND_PERIOD_VIEW_LABELS,
+  MOBILE_CHART_MAX_POINTS,
+} from '@/lib/constants/chart-ui';
 import type { TrendPeriodView } from '@/lib/api/invoices';
 import { Filter } from 'lucide-react';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { metricsTrendQueryKey } from '@/lib/query/query-keys';
+import { MD_UP_QUERY, useIsMdUp } from '@/lib/hooks/use-media-query';
+import { sliceTrendDataForMobileWindow } from '@/lib/utils/slice-trend-data-for-mobile';
 
 const FlowTrendChartPlot = dynamic(() => import('./FlowTrendChartPlot'), {
   ssr: false,
   loading: () => (
-    <div className="relative flex h-80 items-center justify-center">
+    <div className="relative flex h-64 items-center justify-center md:h-80">
       <LoadingSpinner message="Cargando gráfica..." />
     </div>
   ),
@@ -74,6 +79,20 @@ const DEFAULT_VISIBLE: VisibleSeries = {
   egresos_devengados: true,
 };
 
+const MOBILE_DEFAULT_VISIBLE: VisibleSeries = {
+  ingresos_cobrados: true,
+  egresos_pagados: true,
+  ingresos_devengados: false,
+  egresos_devengados: false,
+};
+
+function getInitialVisibleSeries(): VisibleSeries {
+  if (typeof window === 'undefined') {
+    return DEFAULT_VISIBLE;
+  }
+  return window.matchMedia(MD_UP_QUERY).matches ? DEFAULT_VISIBLE : MOBILE_DEFAULT_VISIBLE;
+}
+
 interface FlowTrendChartProps {
   initialData: TrendDataPoint[];
   profileId?: string;
@@ -89,11 +108,12 @@ export function FlowTrendChart({
   mes,
   regimenFiscal,
 }: FlowTrendChartProps) {
-  const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(DEFAULT_VISIBLE);
+  const isMdUp = useIsMdUp();
+  const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(getInitialVisibleSeries);
   const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
-  const { año: appBusinessAño } = getCurrentMonthYearInAppTimezone();
+  const { mes: appBusinessMes, año: appBusinessAño } = getCurrentMonthYearInAppTimezone();
   const selectedYear = año ?? appBusinessAño;
-  const selectedMonth = mes;
+  const selectedMonth = mes ?? appBusinessMes;
   const shouldUseInitialData = periodView === 'año-actual';
 
   const {
@@ -111,7 +131,24 @@ export function FlowTrendChart({
   const data = shouldUseInitialData ? initialData : (fetchedData ?? []);
   const displayLoading = !shouldUseInitialData && (isLoading || isFetching);
 
-  const chartData = data.map((item) => {
+  const mobileCutoffAño = selectedYear > appBusinessAño ? appBusinessAño : selectedYear;
+  const mobileCutoffMes =
+    selectedYear > appBusinessAño
+      ? appBusinessMes
+      : selectedYear === appBusinessAño
+        ? Math.min(selectedMonth, appBusinessMes)
+        : selectedMonth;
+
+  const dataForPlot = isMdUp
+    ? data
+    : sliceTrendDataForMobileWindow(
+        data,
+        mobileCutoffMes,
+        mobileCutoffAño,
+        MOBILE_CHART_MAX_POINTS
+      );
+
+  const chartData = dataForPlot.map((item) => {
     const monthLabel = MONTHS_SHORT[item.mes - 1];
     const label = item.año === appBusinessAño ? monthLabel : `${monthLabel} ${item.año}`;
     return {
@@ -136,7 +173,7 @@ export function FlowTrendChart({
   };
 
   return (
-    <Card data-tour="trend-chart" className="bg-card border-border w-full p-6">
+    <Card data-tour="trend-chart" className="bg-card border-border w-full p-4 md:p-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h3 className="text-lg font-semibold">Tendencia de Flujo</h3>
@@ -190,6 +227,7 @@ export function FlowTrendChart({
           visibleSeries={visibleSeries}
           hasData={hasData}
           displayLoading={displayLoading}
+          compact={!isMdUp}
         />
       </div>
     </Card>

@@ -74,7 +74,7 @@ export function DashboardHomeView({
         selectedYear={año}
         selectedRegimenFiscal={regimenFiscal ?? 'all'}
       />
-      <main className="w-full min-w-0 flex-1 space-y-6 p-4 pt-60 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
+      <main className="w-full min-w-0 flex-1 space-y-6 p-4 pt-72 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
         <TrialBannerWrapper />
 
         <DashboardTaxEstimateCriticalBanner

@@ -34,6 +34,8 @@ interface FlowTrendChartPlotProps {
   visibleSeries: FlowTrendChartPlotSeriesVisibility;
   hasData: boolean;
   displayLoading: boolean;
+  /** Altura reducida para viewport &lt; md. */
+  compact?: boolean;
 }
 
 export default function FlowTrendChartPlot({
@@ -41,10 +43,13 @@ export default function FlowTrendChartPlot({
   visibleSeries,
   hasData,
   displayLoading,
+  compact = false,
 }: FlowTrendChartPlotProps) {
+  const chartHeight = compact ? 256 : 320;
+
   return (
-    <div className="relative h-80 min-w-0 w-full">
-      <ResponsiveContainer width="100%" height={320} minWidth={1}>
+    <div className={`relative min-w-0 w-full ${compact ? 'h-64' : 'h-80'}`}>
+      <ResponsiveContainer width="100%" height={chartHeight} minWidth={1}>
         <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorIngresosCobrados" x1="0" y1="0" x2="0" y2="1">

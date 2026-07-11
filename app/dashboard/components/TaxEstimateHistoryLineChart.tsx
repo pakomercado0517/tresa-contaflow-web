@@ -22,12 +22,19 @@ export interface TaxEstimateHistoryChartPoint {
 
 interface TaxEstimateHistoryLineChartProps {
   chartData: TaxEstimateHistoryChartPoint[];
+  /** Altura reducida para viewport &lt; md. */
+  compact?: boolean;
 }
 
-export default function TaxEstimateHistoryLineChart({ chartData }: TaxEstimateHistoryLineChartProps) {
+export default function TaxEstimateHistoryLineChart({
+  chartData,
+  compact = false,
+}: TaxEstimateHistoryLineChartProps) {
+  const chartHeight = compact ? 256 : 288;
+
   return (
-    <div className="h-72 min-w-0 w-full">
-      <ResponsiveContainer width="100%" height={288} minWidth={1}>
+    <div className={`min-w-0 w-full ${compact ? 'h-64' : 'h-72'}`}>
+      <ResponsiveContainer width="100%" height={chartHeight} minWidth={1}>
         <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis dataKey="mesLabel" className="text-muted-foreground text-xs" />
