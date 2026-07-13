@@ -119,6 +119,7 @@ export function ExpensesHeader({
               <Button
                 size="sm"
                 data-tour="expenses-upload-button"
+                aria-label="Agregar"
                 className="bg-primary hover:bg-primary/90 gap-1.5 shadow-sm"
               >
                 <Plus className="h-4 w-4" />
