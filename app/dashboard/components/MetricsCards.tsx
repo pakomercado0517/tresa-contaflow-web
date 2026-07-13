@@ -182,7 +182,11 @@ export function MetricsCards({ metrics, profileId, mes, año }: MetricsCardsProp
                 </p>
                 {ingresosCobrados > 0 ? (
                   <div className="mt-4 space-y-2">
-                    <Progress value={margenPorcentaje} className="h-2" />
+                    <Progress
+                      value={margenPorcentaje}
+                      className="h-2"
+                      aria-label={`Margen operativo ${margenPorcentaje.toFixed(1)}%`}
+                    />
                     <p className="text-muted-foreground text-xs">
                       Margen operativo del {margenPorcentaje.toFixed(1)}%
                     </p>

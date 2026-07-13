@@ -33,7 +33,7 @@ export function getExpenseCategoryBadge(categoria: string | null) {
 
 export function getExpenseOriginBadge(tipoOrigen: 'XML' | 'MANUAL') {
   if (tipoOrigen === 'XML') {
-    return <Badge className="bg-green-500 text-white hover:bg-green-600">XML</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">XML</Badge>;
   }
   return (
     <Badge variant="secondary" className="border-orange-500/30 bg-orange-500/20 text-orange-400">
@@ -64,7 +64,7 @@ export function getExpensePaymentStatusBadge(expense: Expense) {
   }
 
   if (expense.tipo === 'PUE') {
-    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">✓ Pagado</Badge>;
   }
 
   if (expense.tipo === 'PPD') {
@@ -79,7 +79,7 @@ export function getExpensePaymentStatusBadge(expense: Expense) {
     }
 
     if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+      return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">✓ Pagado</Badge>;
     }
 
     if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {

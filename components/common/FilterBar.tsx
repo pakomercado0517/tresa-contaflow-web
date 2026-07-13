@@ -107,7 +107,7 @@ export function FilterBar({
 
       {/* Mes - ancho completo en móvil */}
       <Select value={selectedMes.toString()} onValueChange={(v) => onMesChange(Number(v))}>
-        <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-32.5">
+        <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-32.5" aria-label="Mes">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -121,7 +121,7 @@ export function FilterBar({
 
       {/* Año */}
       <Select value={selectedAño.toString()} onValueChange={(v) => onAñoChange(Number(v))}>
-        <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-22.5">
+        <SelectTrigger className="h-8 w-full min-w-0 text-sm sm:w-22.5" aria-label="Año">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

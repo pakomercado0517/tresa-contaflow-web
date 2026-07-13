@@ -40,7 +40,7 @@ export function getInvoiceStatusBadge(invoice: Invoice) {
   }
 
   if (invoice.tipo === 'PUE') {
-    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">✓ Pagado</Badge>;
   }
 
   if (invoice.tipo === 'PPD') {
@@ -55,7 +55,7 @@ export function getInvoiceStatusBadge(invoice: Invoice) {
     }
 
     if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-      return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ Pagado</Badge>;
+      return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">✓ Pagado</Badge>;
     }
 
     if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
@@ -74,8 +74,8 @@ export function getInvoiceStatusBadge(invoice: Invoice) {
   }
 
   if (invoice.tipo === 'COMPLEMENTO_PAGO') {
-    return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">✓ VÁLIDO</Badge>;
   }
 
-  return <Badge className="bg-green-500 text-white hover:bg-green-600">✓ VÁLIDO</Badge>;
+  return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">✓ VÁLIDO</Badge>;
 }

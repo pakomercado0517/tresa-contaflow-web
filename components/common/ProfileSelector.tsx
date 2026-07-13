@@ -53,7 +53,7 @@ export function ProfileSelector({
 
   return (
     <Select value={selectedProfileId || 'all'} onValueChange={handleProfileChange}>
-      <SelectTrigger className={triggerClassName}>
+      <SelectTrigger className={triggerClassName} aria-label="Seleccionar perfil">
         <SelectValue placeholder="Seleccionar perfil" />
       </SelectTrigger>
       <SelectContent>

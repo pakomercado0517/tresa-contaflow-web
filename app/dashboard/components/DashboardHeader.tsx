@@ -151,7 +151,7 @@ export function DashboardHeader({
             data-tour="new-invoice-button"
             className="bg-primary hover:bg-primary/90 gap-1.5 shadow-sm"
           >
-            <Link href="/dashboard/invoices/upload">
+            <Link href="/dashboard/invoices/upload" aria-label="Nueva Factura">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Nueva Factura</span>
             </Link>

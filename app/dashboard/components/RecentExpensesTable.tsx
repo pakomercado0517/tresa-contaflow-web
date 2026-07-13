@@ -31,7 +31,7 @@ function getPaymentStatusBadge(expense: Expense) {
   }
 
   if (expense.tipo === 'PUE') {
-    return <Badge className="mt-1 bg-green-500 text-xs text-white">Pagado</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 text-xs">Pagado</Badge>;
   }
 
   if (expense.tipo === 'PPD') {
@@ -46,7 +46,7 @@ function getPaymentStatusBadge(expense: Expense) {
     }
 
     if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-      return <Badge className="mt-1 bg-green-500 text-xs text-white">Pagado</Badge>;
+      return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 text-xs">Pagado</Badge>;
     }
 
     if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {
