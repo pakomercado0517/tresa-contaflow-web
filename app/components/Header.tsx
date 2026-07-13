@@ -9,7 +9,7 @@ export function Header() {
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
             src="/logotipo-contafy.svg"
-            alt="Contafy"
+            alt="Contafy_logo"
             width={32}
             height={32}
             className="h-8 w-8"
@@ -43,14 +43,14 @@ export function Header() {
             asChild
             variant="outline"
             size="sm"
-            className="border-primary-accent px-2.5 text-xs text-primary-accent hover:bg-primary/10 md:h-9 md:px-4 md:text-sm"
+            className="border-primary-accent text-primary-accent hover:bg-primary/10 px-2.5 text-xs md:h-9 md:px-4 md:text-sm"
           >
             <Link href="/auth/login">Iniciar Sesión</Link>
           </Button>
           <Button
             asChild
             size="sm"
-            className="bg-primary px-2.5 text-xs hover:bg-primary/90 md:h-9 md:px-4 md:text-sm"
+            className="bg-primary hover:bg-primary/90 px-2.5 text-xs md:h-9 md:px-4 md:text-sm"
           >
             <Link href="/auth/register">Registrarse</Link>
           </Button>
