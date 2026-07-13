@@ -32,7 +32,7 @@ const CERTIFICATION_STEPS = [
 
 export function CertificationContent() {
   return (
-    <div className="flex-1 p-6 md:p-8 lg:p-12">
+    <main className="flex-1 p-6 md:p-8 lg:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4" data-tour="certification-hero">
@@ -70,6 +70,6 @@ export function CertificationContent() {
         {/* Security Tip */}
         <SecurityTip />
       </div>
-    </div>
+    </main>
   );
 }

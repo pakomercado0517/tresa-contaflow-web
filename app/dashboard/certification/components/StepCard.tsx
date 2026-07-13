@@ -21,7 +21,7 @@ export function StepCard({ number, icon, title, description }: StepCardProps) {
           <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-muted/50">
             {icon}
           </div>
-          <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {description}
           </p>
