@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useMemo, useRef } from 'react';
+import { useReducer, useMemo, useState } from 'react';
 import { createAccruedExpenseClient } from '@/lib/api/accrued-expenses.client';
 import { ApiError } from '@/lib/api/client';
 import {
@@ -43,13 +43,15 @@ export function useManualExpenseDialogForm({
     createInitialManualExpenseFormState
   );
 
-  const prevIsOpenRef = useRef(isOpen);
-  const prevProfileIdRef = useRef(profileId);
-  if (isOpen && (!prevIsOpenRef.current || profileId !== prevProfileIdRef.current)) {
-    dispatchForm({ type: 'dialog_opened', profileId });
+  const [prevDialogOpen, setPrevDialogOpen] = useState(isOpen);
+  const [prevDialogProfileId, setPrevDialogProfileId] = useState(profileId);
+  if (isOpen !== prevDialogOpen || profileId !== prevDialogProfileId) {
+    setPrevDialogOpen(isOpen);
+    setPrevDialogProfileId(profileId);
+    if (isOpen && (!prevDialogOpen || profileId !== prevDialogProfileId)) {
+      dispatchForm({ type: 'dialog_opened', profileId });
+    }
   }
-  prevIsOpenRef.current = isOpen;
-  prevProfileIdRef.current = profileId;
 
   const {
     isSubmitting,

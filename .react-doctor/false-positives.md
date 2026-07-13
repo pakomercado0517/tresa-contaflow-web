@@ -4,7 +4,7 @@ Supresiones acotadas en `doctor.config.json` (`ignore.overrides` / `rules`). Est
 
 ## `react-doctor/no-event-handler`
 
-`use-manual-expense-dialog-form.ts`: al abrir el diálogo controlado desde el padre (`isOpen`), se reinicia el formulario en render al detectar transición `isOpen` / `profileId` (patrón recomendado en React para reset por props), no con `useEffect`.
+`use-manual-expense-dialog-form.ts`: al abrir el diálogo controlado desde el padre (`isOpen`), se reinicia el formulario en render al detectar transición `isOpen` / `profileId` con estado previo (`useState`), patrón recomendado en React para reset por props — no con `useEffect` ni mutando refs en render.
 
 ## `react-doctor/server-auth-actions`
 

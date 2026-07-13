@@ -86,13 +86,12 @@ export function DashboardHomePageClient() {
     placeholderData: keepPreviousData,
   });
 
-  const monthItem = useMemo(
-    () =>
-      trendRangeData && filters
-        ? findMetricsItemForMonth(trendRangeData.items, filters.mes, filters.año)
-        : undefined,
-    [trendRangeData, filters]
-  );
+  const monthItem = useMemo(() => {
+    const resolvedFilters = resolved?.filters;
+    return trendRangeData && resolvedFilters
+      ? findMetricsItemForMonth(trendRangeData.items, resolvedFilters.mes, resolvedFilters.año)
+      : undefined;
+  }, [trendRangeData, resolved]);
 
   const needsMetricsFallback = canFetchData && trendRangeData !== undefined && monthItem === undefined;
 
@@ -115,17 +114,24 @@ export function DashboardHomePageClient() {
   });
 
   const metrics: PeriodMetricsResponse | undefined = useMemo(() => {
-    if (!filters || !trendRangeData) return undefined;
+    const resolvedFilters = resolved?.filters;
+    if (!resolvedFilters || !trendRangeData) return undefined;
     if (monthItem !== undefined) {
       return metricsByMonthItemToPeriodMetrics(monthItem);
     }
     return fallbackMetrics;
-  }, [filters, trendRangeData, monthItem, fallbackMetrics]);
+  }, [resolved, trendRangeData, monthItem, fallbackMetrics]);
 
   const trendData = useMemo(() => {
-    if (!trendRangeData || !filters) return [];
-    return buildTrendSeriesForView(trendRangeData.items, 'año-actual', filters.año, filters.mes);
-  }, [trendRangeData, filters]);
+    const resolvedFilters = resolved?.filters;
+    if (!trendRangeData || !resolvedFilters) return [];
+    return buildTrendSeriesForView(
+      trendRangeData.items,
+      'año-actual',
+      resolvedFilters.año,
+      resolvedFilters.mes
+    );
+  }, [trendRangeData, resolved]);
 
   const {
     data: invoicesData,
