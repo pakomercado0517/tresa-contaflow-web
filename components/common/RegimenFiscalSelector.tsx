@@ -68,7 +68,7 @@ export function RegimenFiscalSelector({
       onValueChange={onRegimenFiscalChange}
       disabled={disabled || isRegimenesCatalogLoading}
     >
-      <SelectTrigger className={triggerClassName}>
+      <SelectTrigger className={triggerClassName} aria-label="Régimen fiscal">
         <SelectValue placeholder="Régimen fiscal" />
       </SelectTrigger>
       <SelectContent>

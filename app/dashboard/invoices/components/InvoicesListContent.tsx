@@ -129,7 +129,7 @@ export function InvoicesListContent(props: InvoicesListContentProps) {
         }}
       />
 
-      <div className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
+      <main className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
         <SummaryCards
           totalCount={metrics.totalFacturas}
           pendingPaymentCount={metrics.facturasPendientesPago}
@@ -174,7 +174,7 @@ export function InvoicesListContent(props: InvoicesListContentProps) {
           mes={selectedMes}
           año={selectedAño}
         />
-      </div>
+      </main>
 
       <DeleteInvoiceDialog
         invoice={invoiceToDelete}
