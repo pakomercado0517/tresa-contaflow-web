@@ -107,11 +107,11 @@ export function FinalCTA() {
           </p>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="text-primary h-5 w-5" />
+              <CheckCircle2 className="text-primary-accent h-5 w-5" />
               <span className="text-foreground">Centraliza tus CFDI en minutos</span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="text-primary h-5 w-5" />
+              <CheckCircle2 className="text-primary-accent h-5 w-5" />
               <span className="text-foreground">Sin compromisos ni cargos ocultos</span>
             </div>
           </div>
@@ -154,13 +154,13 @@ export function FinalCTA() {
                     }}
                     onBlur={(e) => validatePassword(e.target.value)}
                     disabled={isLoading}
-                    className={`bg-background pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                    className={`bg-background pr-11 ${errors.password ? 'border-red-500' : ''}`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1.5 inline-flex size-9 -translate-y-1/2 items-center justify-center"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

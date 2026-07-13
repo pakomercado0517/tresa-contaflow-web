@@ -147,7 +147,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
       <section id="precios" className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8">
         <div className="mb-12 text-center">
           <div className="bg-primary/10 mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5">
-            <span className="text-primary text-sm font-medium">
+            <span className="text-primary-accent text-sm font-medium">
               Planes transparentes y sin letra chica
             </span>
           </div>
@@ -178,7 +178,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
     <section id="precios" className="mx-auto w-full max-w-7xl px-4 py-16 md:py-24 lg:px-8">
       <div className="mb-12 text-center">
         <div className="bg-primary/10 mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5">
-          <span className="text-primary text-sm font-medium">
+          <span className="text-primary-accent text-sm font-medium">
             Planes transparentes y sin letra chica
           </span>
         </div>
@@ -221,7 +221,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
               className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
                 billingCycle === 'annual'
                   ? 'bg-white/20 text-white'
-                  : 'bg-green-500/20 text-green-600'
+                  : 'bg-primary/20 text-primary-accent'
               }`}
             >
               Ahorra 15%
@@ -253,8 +253,8 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
 
               <CardHeader>
                 <div className="mb-2 flex items-center gap-3">
-                  <Icon className="text-primary h-6 w-6" />
-                  <h4 className="text-xl font-semibold">{plan.name}</h4>
+                  <Icon className="text-primary-accent h-6 w-6" />
+                  <h3 className="text-xl font-semibold">{plan.name}</h3>
                 </div>
                 <p className="text-muted-foreground text-sm">{metadata.description}</p>
               </CardHeader>
@@ -282,7 +282,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                     </p>
                   )}
                   {plan.trialDays !== null && plan.id !== 'FREE' && (
-                    <p className="text-primary mt-1 text-xs font-medium">
+                    <p className="text-primary-accent mt-1 text-xs font-medium">
                       {plan.trialDays} días de prueba gratuita
                     </p>
                   )}
@@ -291,7 +291,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
                 <ul className="space-y-2">
                   {features.map((feature) => (
                     <li key={feature.label} className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                      <Check className="text-primary-accent mt-0.5 h-4 w-4 shrink-0" />
                       <span className="text-sm">
                         {feature.label}: {feature.value}
                       </span>
@@ -327,7 +327,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
       <div className="mt-12 text-center">
         <p className="text-muted-foreground text-sm">
           ¿Tienes dudas sobre qué plan elegir?{' '}
-          <Link href="/auth/register" className="text-primary font-medium hover:underline">
+          <Link href="/auth/register" className="text-primary-accent font-medium hover:underline">
             Empieza gratis
           </Link>{' '}
           y decide después.

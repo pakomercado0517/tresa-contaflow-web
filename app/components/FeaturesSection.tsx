@@ -128,7 +128,7 @@ export function FeaturesSection() {
           {features.map((feature) => (
             <Card key={feature.id} className="p-6 bg-card border-border">
               <div className="flex flex-col gap-4">
-                <div className="text-primary">{feature.icon}</div>
+                <div className="text-primary-accent">{feature.icon}</div>
                 <h3 className="text-xl font-semibold">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground">
                   {feature.description}

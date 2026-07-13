@@ -43,7 +43,7 @@ export function Header() {
             asChild
             variant="outline"
             size="sm"
-            className="border-primary px-2.5 text-xs text-primary hover:bg-primary/10 md:h-9 md:px-4 md:text-sm"
+            className="border-primary-accent px-2.5 text-xs text-primary-accent hover:bg-primary/10 md:h-9 md:px-4 md:text-sm"
           >
             <Link href="/auth/login">Iniciar Sesión</Link>
           </Button>
