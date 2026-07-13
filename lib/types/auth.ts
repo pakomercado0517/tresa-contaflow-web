@@ -16,6 +16,10 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
 export interface VerifyEmailRequest {
   token: string;
 }

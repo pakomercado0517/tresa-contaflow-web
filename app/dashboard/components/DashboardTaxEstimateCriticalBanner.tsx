@@ -48,14 +48,12 @@ export function DashboardTaxEstimateCriticalBanner({
     persist: true,
   });
 
-  const estimates = data?.estimates;
-
   const criticalAlerts = useMemo(() => {
-    if (!estimates) {
+    if (!data?.estimates) {
       return [];
     }
-    return collectCriticalTaxEstimateAlerts(estimates);
-  }, [estimates]);
+    return collectCriticalTaxEstimateAlerts(data.estimates);
+  }, [data]);
 
   const hasFiscalSettingsAction = criticalAlerts.some(
     (item) => getTaxEstimateAlertMeta(item.alert.code)?.action === 'open_fiscal_settings'

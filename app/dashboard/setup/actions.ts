@@ -6,7 +6,7 @@ import { logger } from "@/lib/utils/logger";
 import { createProfile, updateProfile } from "@/lib/api/profiles";
 import { getProfiles } from "@/lib/api/profiles";
 import { getSubscription } from "@/lib/api/subscription";
-import { logoutUser } from "@/lib/api/auth";
+import { logoutUser } from "@/lib/api/auth.server";
 import { ServerApiError } from "@/lib/api/server-client";
 import {
   canCreateProfile,

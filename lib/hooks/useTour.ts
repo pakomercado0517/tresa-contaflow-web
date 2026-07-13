@@ -135,49 +135,46 @@ export function useTour(): UseTourReturn {
 
   const markTourCompleted = useCallback(
     (tourName: string): void => {
-      setCompletedTours((prevCompletedTours) => {
-        if (prevCompletedTours.includes(tourName)) {
-          return prevCompletedTours;
-        }
+      if (completedTours.includes(tourName)) {
+        return;
+      }
 
-        const newCompletedTours = [...prevCompletedTours, tourName];
+      const newCompletedTours = [...completedTours, tourName];
+      const allTours = Object.values(TOUR_IDS);
+      const completedSet = new Set(newCompletedTours);
+      const allCompleted = allTours.every((tour) => completedSet.has(tour));
 
-        if (typeof window !== 'undefined') {
-          const tourData = {
-            version: CURRENT_TOUR_VERSION,
-            completedTours: newCompletedTours,
-            completed: false,
-            updatedAt: new Date().toISOString(),
-          };
-          localStorage.setItem(TOUR_LOCALSTORAGE_KEY, JSON.stringify(tourData));
-        }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          TOUR_LOCALSTORAGE_KEY,
+          JSON.stringify(
+            allCompleted
+              ? {
+                  version: CURRENT_TOUR_VERSION,
+                  completedTours: newCompletedTours,
+                  completed: true,
+                  completedAt: new Date().toISOString(),
+                }
+              : {
+                  version: CURRENT_TOUR_VERSION,
+                  completedTours: newCompletedTours,
+                  completed: false,
+                  updatedAt: new Date().toISOString(),
+                }
+          )
+        );
+      }
 
-        const allTours = Object.values(TOUR_IDS);
-        const completedSet = new Set(newCompletedTours);
-        const allCompleted = allTours.every((tour) => completedSet.has(tour));
+      setCompletedTours(newCompletedTours);
 
-        if (allCompleted) {
-          if (typeof window !== 'undefined') {
-            const tourData = {
-              version: CURRENT_TOUR_VERSION,
-              completedTours: newCompletedTours,
-              completed: true,
-              completedAt: new Date().toISOString(),
-            };
-            localStorage.setItem(TOUR_LOCALSTORAGE_KEY, JSON.stringify(tourData));
-          }
-
-          setIsCompleted(true);
-
-          void completeTourAsync().catch((error) => {
-            console.error('[useTour] Error al sincronizar tour completado:', error);
-          });
-        }
-
-        return newCompletedTours;
-      });
+      if (allCompleted) {
+        setIsCompleted(true);
+        void completeTourAsync().catch((error) => {
+          console.error('[useTour] Error al sincronizar tour completado:', error);
+        });
+      }
     },
-    [completeTourAsync]
+    [completedTours, completeTourAsync]
   );
 
   const checkTourStatus = useCallback((user: User | null) => {

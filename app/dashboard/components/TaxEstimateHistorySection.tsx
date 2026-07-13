@@ -85,14 +85,12 @@ export function TaxEstimateHistorySection({
     regimenFiscal: effectiveRegimen || undefined,
   });
 
-  const snapshots = data?.snapshots;
-
   const rows = useMemo(() => {
-    if (!snapshots) {
+    if (!data?.snapshots) {
       return [];
     }
-    return mapTaxEstimateSnapshotsToRows(snapshots, mes);
-  }, [snapshots, mes]);
+    return mapTaxEstimateSnapshotsToRows(data.snapshots, mes);
+  }, [data, mes]);
 
   const chartData = useMemo(
     () =>

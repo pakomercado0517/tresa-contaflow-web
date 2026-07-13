@@ -31,15 +31,13 @@ export function DashboardHeader({
   const searchParams = useSearchParams();
   const { profiles, activeProfile, companyName } = useSelectedDashboardProfile(selectedProfileId);
   const { mes: appMes, año: appAño } = getCurrentMonthYearInAppTimezone();
-  const currentMonth = selectedMonth ?? appMes;
-  const currentYear = selectedYear ?? appAño;
 
   const updateFilters = useCallback(
     (month?: number, year?: number, regimenFiscal?: string) => {
       const params = new URLSearchParams(searchParams.toString());
 
-      const newMonth = month !== undefined ? month : currentMonth;
-      const newYear = year !== undefined ? year : currentYear;
+      const newMonth = month !== undefined ? month : (selectedMonth ?? appMes);
+      const newYear = year !== undefined ? year : (selectedYear ?? appAño);
 
       params.set('mes', newMonth.toString());
       params.set('año', newYear.toString());
@@ -68,7 +66,7 @@ export function DashboardHeader({
       // Un refresh extra duplica /api/metrics, tax-estimates, etc.
       router.push(`/dashboard?${params.toString()}`, { scroll: false });
     },
-    [searchParams, currentMonth, currentYear, selectedProfileId, router]
+    [searchParams, selectedMonth, appMes, selectedYear, appAño, selectedProfileId, router]
   );
 
   const regimenesFiscales = useMemo(
@@ -78,16 +76,16 @@ export function DashboardHeader({
 
   const handleMonthChange = useCallback(
     (month: number) => {
-      updateFilters(month, currentYear);
+      updateFilters(month, selectedYear ?? appAño);
     },
-    [updateFilters, currentYear]
+    [updateFilters, selectedYear, appAño]
   );
 
   const handleYearChange = useCallback(
     (year: number) => {
-      updateFilters(currentMonth, year);
+      updateFilters(selectedMonth ?? appMes, year);
     },
-    [updateFilters, currentMonth]
+    [updateFilters, selectedMonth, appMes]
   );
 
   const handleRegimenChange = useCallback(
@@ -100,8 +98,8 @@ export function DashboardHeader({
   const filters = useMemo(
     () => (
       <DashboardHeaderFilters
-        currentMonth={currentMonth}
-        currentYear={currentYear}
+        currentMonth={selectedMonth ?? appMes}
+        currentYear={selectedYear ?? appAño}
         selectedRegimenFiscal={selectedRegimenFiscal}
         regimenesFiscales={regimenesFiscales}
         onMesChange={handleMonthChange}
@@ -110,8 +108,10 @@ export function DashboardHeader({
       />
     ),
     [
-      currentMonth,
-      currentYear,
+      selectedMonth,
+      appMes,
+      selectedYear,
+      appAño,
       selectedRegimenFiscal,
       regimenesFiscales,
       handleMonthChange,

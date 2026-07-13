@@ -1,10 +1,32 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { ServerApiError, serverApiClient } from "./server-client";
-import type { GetCurrentUserResponse } from "@/lib/types/auth";
+import type {
+  GetCurrentUserResponse,
+  LogoutRequest,
+  LogoutResponse,
+} from "@/lib/types/auth";
 
 async function fetchCurrentUser(): Promise<GetCurrentUserResponse> {
   return serverApiClient<GetCurrentUserResponse>("/api/auth/me", {
     redirectOnAuthError: true,
+  });
+}
+
+/**
+ * Cierra sesión en el backend con Bearer (accessToken) y refreshToken en el body.
+ * No redirige en 401: el caller debe seguir limpiando cookies locales.
+ */
+export async function logoutUser(): Promise<LogoutResponse> {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+
+  return serverApiClient<LogoutResponse>("/api/auth/logout", {
+    method: "POST",
+    redirectOnAuthError: false,
+    body: JSON.stringify(
+      refreshToken ? ({ refreshToken } satisfies LogoutRequest) : {}
+    ),
   });
 }
 
