@@ -74,8 +74,9 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
       return;
     }
 
+    const nextLoadingPlan = planId;
     setCheckoutError(null);
-    setLoadingPlan(planId);
+    setLoadingPlan(nextLoadingPlan);
 
     try {
       // Llamar a createCheckoutSession con el código de promoción (si existe)

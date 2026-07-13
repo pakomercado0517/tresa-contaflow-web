@@ -62,7 +62,8 @@ export function useProfilesTable({ profiles, subscription }: UseProfilesTableOpt
   const paginatedProfiles = filteredProfiles.slice(startIndex, endIndex);
 
   const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value);
+    const nextQuery = value;
+    setSearchQuery(nextQuery);
     setCurrentPage(1);
   }, []);
 
@@ -101,7 +102,8 @@ export function useProfilesTable({ profiles, subscription }: UseProfilesTableOpt
   };
 
   const handleDeleteClick = (profile: Profile) => {
-    setProfileToDelete(profile);
+    const nextProfile = profile;
+    setProfileToDelete(nextProfile);
     setDeleteError(null);
     setDeleteConfirmation('');
   };

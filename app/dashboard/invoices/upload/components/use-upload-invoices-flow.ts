@@ -34,9 +34,11 @@ export function useUploadInvoicesFlow({
   const [queuedFiles, setQueuedFiles] = useState<QueuedInvoiceFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogTitle, setDialogTitle] = useState('');
-  const [dialogMessage, setDialogMessage] = useState('');
+  const [limitDialog, setLimitDialog] = useState({
+    open: false,
+    title: '',
+    message: '',
+  });
 
   const plan = subscription?.plan || 'FREE';
   const invoicesLimit = getInvoicesLimit(plan, subscription);
@@ -64,9 +66,11 @@ export function useUploadInvoicesFlow({
   );
 
   const showDialog = useCallback((title: string, message: string) => {
-    setDialogTitle(title);
-    setDialogMessage(message);
-    setIsDialogOpen(true);
+    setLimitDialog({ open: true, title, message });
+  }, []);
+
+  const setIsDialogOpen = useCallback((open: boolean) => {
+    setLimitDialog((prev) => ({ ...prev, open }));
   }, []);
 
   const showLimitReachedMessage = useCallback(() => {
@@ -304,10 +308,10 @@ export function useUploadInvoicesFlow({
     isProcessing,
     isProcessDialogOpen,
     setIsProcessDialogOpen,
-    isDialogOpen,
+    isDialogOpen: limitDialog.open,
     setIsDialogOpen,
-    dialogTitle,
-    dialogMessage,
+    dialogTitle: limitDialog.title,
+    dialogMessage: limitDialog.message,
     invoicesLimit,
     invoicesUsed,
     usagePercentage,

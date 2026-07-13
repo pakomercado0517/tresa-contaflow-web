@@ -1061,8 +1061,9 @@ export function DashboardTour({ children, user }: DashboardTourProps) {
   }, []);
 
   const handleDialogChange = (open: boolean) => {
-    setIsCompletionDialogOpen(open);
-    if (!open && shouldRedirectRef.current) {
+    const nextOpen = open;
+    setIsCompletionDialogOpen(nextOpen);
+    if (!nextOpen && shouldRedirectRef.current) {
       shouldRedirectRef.current = false;
       router.push('/dashboard');
     }

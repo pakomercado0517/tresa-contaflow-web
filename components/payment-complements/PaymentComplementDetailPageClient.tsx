@@ -148,10 +148,11 @@ export function PaymentComplementDetailPageClient({
           if (!open) setProfileDialogDismissed(true);
         }}
         onConfirm={(profileId) => {
-          setResolvedProfileId(profileId);
+          const nextProfileId = profileId;
+          setResolvedProfileId(nextProfileId);
           setProfileDialogDismissed(true);
           const params = new URLSearchParams(searchParams.toString());
-          params.set('profileId', profileId);
+          params.set('profileId', nextProfileId);
           router.replace(`${detailRouteBase}/${complementId}?${params.toString()}`);
         }}
       />
