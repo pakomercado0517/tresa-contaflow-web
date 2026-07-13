@@ -93,6 +93,7 @@ export function Sidebar({ user }: SidebarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger
               data-tour="settings-button"
+              aria-label="Configuración"
               className={cn(
                 'text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md p-2 transition-colors outline-none focus-visible:ring-2',
                 pathname?.includes('/dashboard/setup') && 'text-primary'

@@ -43,7 +43,7 @@ export function EmptyState({
         </div>
       )}
       <div className="space-y-2">
-        <h3 className={cn("font-semibold", compact ? "text-base" : "text-lg")}>{title}</h3>
+        <p className={cn("font-semibold", compact ? "text-base" : "text-lg")}>{title}</p>
         {description && (
           <p className={cn("text-muted-foreground", compact ? "text-xs max-w-sm" : "text-sm max-w-md")}>
             {description}

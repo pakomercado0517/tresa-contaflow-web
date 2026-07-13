@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { loginAction } from '../actions';
-import { GoogleLoginButton } from './GoogleLoginButton';
+
+const GoogleLoginButton = dynamic(
+  () => import('./GoogleLoginButton').then((mod) => mod.GoogleLoginButton),
+  {
+    ssr: false,
+    loading: () => (
+      <Button type="button" variant="outline" className="w-full border-border" size="lg" disabled>
+        Continuar con Google
+      </Button>
+    ),
+  }
+);
 
 export function LoginForm() {
   const searchParams = useSearchParams();

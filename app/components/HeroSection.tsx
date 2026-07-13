@@ -41,14 +41,14 @@ export function HeroSection() {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="flex flex-1 flex-col gap-6">
           <div className="bg-primary/10 inline-flex w-fit items-center gap-2 rounded-full px-4 py-1.5">
-            <span className="text-primary text-sm font-medium">
+            <span className="text-primary-accent text-sm font-medium">
               Control y reportes desde tus XML CFDI
             </span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
             Convierte tus XML CFDI en visibilidad financiera clara {' '}
-            <span className="text-primary">sin depender de Excel</span>
+            <span className="text-primary-accent">sin depender de Excel</span>
           </h1>
 
           <p className="text-muted-foreground max-w-xl text-lg">
@@ -105,7 +105,7 @@ export function HeroSection() {
                     Ingresos y egresos consolidados desde tus XML
                   </div>
                 </div>
-                <div className="text-primary font-semibold">Listo</div>
+                <div className="text-primary-accent font-semibold">Listo</div>
               </div>
             </div>
           </div>

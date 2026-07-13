@@ -12,7 +12,7 @@ interface RecentInvoicesTableProps {
 
 function getStatusBadge(invoice: Invoice) {
   if (invoice.tipo === 'PUE') {
-    return <Badge className="bg-green-500 text-white">Pagado</Badge>;
+    return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Pagado</Badge>;
   }
 
   if (invoice.tipo === 'PPD') {
@@ -27,7 +27,7 @@ function getStatusBadge(invoice: Invoice) {
     }
 
     if (estadoPago.completamentePagado || estadoPago.estado === 'PAGADO') {
-      return <Badge className="bg-green-500 text-white">Pagado</Badge>;
+      return <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">Pagado</Badge>;
     }
 
     if (estadoPago.estado === 'PAGO_PARCIAL' || estadoPago.porcentajePagado > 0) {

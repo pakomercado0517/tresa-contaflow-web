@@ -137,7 +137,7 @@ export function ExpensesListContent(props: ExpensesListContentProps) {
         }}
       />
 
-      <div className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
+      <main className="w-full min-w-0 space-y-6 p-4 pt-120 md:p-6 md:pt-56 lg:p-8 lg:pt-40">
         <ExpensesSummaryCards
           totalExpenses={totalExpensesAmount}
           totalTaxesAndWithholdings={totalTaxesAndWithholdings}
@@ -246,7 +246,7 @@ export function ExpensesListContent(props: ExpensesListContentProps) {
           onOpenChange={handleCloseDeleteDialog}
           onConfirm={handleConfirmDelete}
         />
-      </div>
+      </main>
     </div>
   );
 }

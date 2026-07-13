@@ -182,7 +182,7 @@ export function FlowTrendChart({
               value={periodView}
               onValueChange={(value) => setPeriodView(value as TrendPeriodView)}
             >
-              <SelectTrigger className="w-45">
+              <SelectTrigger className="w-45" aria-label="Periodo de tendencia">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

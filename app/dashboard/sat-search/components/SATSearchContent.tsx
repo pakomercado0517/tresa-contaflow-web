@@ -122,7 +122,7 @@ export function SATSearchContent() {
 
   return (
     <div className="from-background to-muted/20 flex min-h-screen flex-col bg-gradient-to-b">
-      <div className="container mx-auto flex flex-1 flex-col gap-8 px-4 py-8 md:px-6 lg:px-8">
+      <main className="container mx-auto flex flex-1 flex-col gap-8 px-4 py-8 md:px-6 lg:px-8">
         {/* Header */}
         <div data-tour="sat-search-hero" className="flex flex-col items-center gap-4 text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
@@ -313,7 +313,7 @@ export function SATSearchContent() {
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
