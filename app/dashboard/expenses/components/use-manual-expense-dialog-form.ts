@@ -43,12 +43,12 @@ export function useManualExpenseDialogForm({
     createInitialManualExpenseFormState
   );
 
-  const [prevDialogOpen, setPrevDialogOpen] = useState(isOpen);
-  const [prevDialogProfileId, setPrevDialogProfileId] = useState(profileId);
-  if (isOpen !== prevDialogOpen || profileId !== prevDialogProfileId) {
-    setPrevDialogOpen(isOpen);
-    setPrevDialogProfileId(profileId);
-    if (isOpen && (!prevDialogOpen || profileId !== prevDialogProfileId)) {
+  const [dialogSnapshot, setDialogSnapshot] = useState({ isOpen, profileId });
+  if (isOpen !== dialogSnapshot.isOpen || profileId !== dialogSnapshot.profileId) {
+    const wasClosed = !dialogSnapshot.isOpen;
+    const profileChanged = profileId !== dialogSnapshot.profileId;
+    setDialogSnapshot({ isOpen, profileId });
+    if (isOpen && (wasClosed || profileChanged)) {
       dispatchForm({ type: 'dialog_opened', profileId });
     }
   }

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { startClientLogout } from '@/lib/auth/client-logout';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -99,6 +99,9 @@ export function MobileNav({ user }: MobileNavProps) {
 
           <div className="border-border flex items-center gap-3 border-t p-4">
             <Avatar className="h-10 w-10">
+              {user.logo_url ? (
+                <AvatarImage src={user.logo_url} alt={displayName} />
+              ) : null}
               <AvatarFallback className="border border-orange-500/30 bg-orange-500/20 text-orange-400">
                 {initials}
               </AvatarFallback>

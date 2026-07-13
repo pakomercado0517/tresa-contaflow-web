@@ -63,7 +63,8 @@ export function useCreateProfileForm({
 
   const handleTipoPersonaChange = (nuevoTipo: 'FISICA' | 'MORAL') => {
     if (nuevoTipo === tipoPersona) return;
-    setTipoPersona(nuevoTipo);
+    const nextTipo = nuevoTipo;
+    setTipoPersona(nextTipo);
     setRegimenesFiscales([]);
     setRegimenToAdd('');
   };

@@ -27,13 +27,14 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
   const [prevUser, setPrevUser] = useState(user);
 
   if (user !== prevUser && !isEditing) {
-    setPrevUser(user);
+    const nextUser = user;
+    setPrevUser(nextUser);
     setFormData({
-      nombre: user?.nombre || "",
-      apellido: user?.apellido || "",
-      email: user?.email || "",
-      telefono: user?.telefono || "",
-      nombre_comercial: user?.nombre_comercial || "",
+      nombre: nextUser?.nombre || "",
+      apellido: nextUser?.apellido || "",
+      email: nextUser?.email || "",
+      telefono: nextUser?.telefono || "",
+      nombre_comercial: nextUser?.nombre_comercial || "",
     });
   }
 
