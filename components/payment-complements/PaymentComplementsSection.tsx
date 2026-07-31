@@ -19,6 +19,7 @@ import {
   DashboardListMobile,
 } from '@/components/common/dashboard-list-responsive';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
+import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import type {
   ComplementRole,
@@ -273,11 +274,7 @@ export function PaymentComplementsSection({
             </Table>
           </DashboardListDesktop>
 
-          {isUpdating && (
-            <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
-              <TableRowsSkeleton rows={4} />
-            </div>
-          )}
+          {isUpdating ? <DashboardUpdatingOverlay /> : null}
         </div>
       )}
 

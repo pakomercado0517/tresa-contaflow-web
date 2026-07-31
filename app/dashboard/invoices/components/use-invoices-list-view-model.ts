@@ -18,6 +18,7 @@ import { ApiError } from '@/lib/api/client';
 import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
 import {
   buildListFiltersSearchParams,
+  getDefaultRegimenFiscalForProfile,
   listFiltersQueryMatchesUrl,
 } from '@/lib/navigation/resolve-dashboard-list-filters';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
@@ -351,7 +352,14 @@ export function useInvoicesListViewModel({
   };
 
   const handleProfileChange = (nextProfileId: string) => {
-    dispatchUi({ type: 'profile_change', profileId: nextProfileId });
+    const nextProfile = profiles.find((profile) => profile.id === nextProfileId);
+    const defaultRegimen = getDefaultRegimenFiscalForProfile(nextProfile);
+    const nextRegimenFiscal = defaultRegimen ?? 'all';
+    dispatchUi({
+      type: 'profile_change',
+      profileId: nextProfileId,
+      regimenFiscal: nextRegimenFiscal,
+    });
     setStoredDashboardFilters({ profileId: nextProfileId || 'all' });
     const params = new URLSearchParams(searchParams.toString());
     if (nextProfileId && nextProfileId !== 'all') {
@@ -359,7 +367,11 @@ export function useInvoicesListViewModel({
     } else {
       params.delete('profileId');
     }
-    params.delete('regimen_fiscal');
+    if (defaultRegimen) {
+      params.set('regimen_fiscal', defaultRegimen);
+    } else {
+      params.delete('regimen_fiscal');
+    }
     params.set('page', '1');
     params.set('complementPage', '1');
     router.push(`/dashboard/invoices?${params.toString()}`);

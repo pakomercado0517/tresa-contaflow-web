@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Profile } from '@/lib/types/profiles';
+import { getDefaultRegimenFiscalForProfile } from '@/lib/navigation/resolve-dashboard-list-filters';
 import { setStoredDashboardFilters } from '@/lib/storage/dashboard-filters';
 
 interface ProfileSelectorProps {
@@ -41,6 +42,10 @@ export function ProfileSelector({
     params.set('profileId', profileId);
     for (const param of clearParamsOnChange) {
       params.delete(param);
+    }
+    const defaultRegimen = getDefaultRegimenFiscalForProfile(selectedProfile);
+    if (defaultRegimen) {
+      params.set('regimen_fiscal', defaultRegimen);
     }
     router.push(`/dashboard?${params.toString()}`, { scroll: false });
   }

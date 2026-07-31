@@ -8,6 +8,7 @@ import { RecentExpensesTable } from './RecentExpensesTable';
 import { RecentTableSkeleton } from './RecentTableSkeleton';
 import { TrialBannerWrapper } from './TrialBannerWrapper';
 import { DashboardHomeIntro } from './DashboardHomeIntro';
+import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Expense } from '@/lib/types/expenses';
 import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
@@ -45,7 +46,7 @@ export interface DashboardHomeViewProps {
   año: number;
   regimenFiscal?: string;
   metrics?: PeriodMetricsResponse;
-  isMetricsFetching?: boolean;
+  isContentUpdating?: boolean;
   invoices?: Invoice[];
   isInvoicesLoading?: boolean;
   expenses?: Expense[];
@@ -59,7 +60,7 @@ export function DashboardHomeView({
   año,
   regimenFiscal,
   metrics,
-  isMetricsFetching = false,
+  isContentUpdating = false,
   invoices,
   isInvoicesLoading = false,
   expenses,
@@ -76,7 +77,9 @@ export function DashboardHomeView({
         selectedYear={año}
         selectedRegimenFiscal={regimenFiscal ?? 'all'}
       />
-      <main className="w-full min-w-0 flex-1 space-y-6 p-4 pt-72 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
+      <main className="relative w-full min-w-0 flex-1 space-y-6 p-4 pt-72 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
+        {isContentUpdating ? <DashboardUpdatingOverlay /> : null}
+
         <TrialBannerWrapper />
 
         <DashboardTaxEstimateCriticalBanner
@@ -88,9 +91,7 @@ export function DashboardHomeView({
 
         <DashboardHomeIntro userName={userName} profileId={profileId} mes={mes} año={año} />
 
-        <div className={isMetricsFetching ? 'opacity-80 transition-opacity duration-300' : undefined}>
-          <MetricsCards metrics={displayMetrics} profileId={profileId} mes={mes} año={año} />
-        </div>
+        <MetricsCards metrics={displayMetrics} profileId={profileId} mes={mes} año={año} />
 
         <FlowTrendChart profileId={profileId} año={año} mes={mes} regimenFiscal={regimenFiscal} />
 

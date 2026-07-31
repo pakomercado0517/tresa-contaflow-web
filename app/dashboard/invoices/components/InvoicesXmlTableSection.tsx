@@ -17,6 +17,7 @@ import {
   DashboardListMobile,
 } from '@/components/common/dashboard-list-responsive';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
+import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { Invoice } from '@/lib/types/invoices';
 import { formatCurrency, formatDateTime } from '@/lib/utils/format';
 import { getInvoiceStatusBadge } from './invoices-list-display-utils';
@@ -214,11 +215,13 @@ export function InvoicesXmlTableSection({
         </div>
       </DashboardListDesktop>
 
-      {tableState !== 'idle' && (
-        <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
+      {tableState === 'loading' && (
+        <div className="absolute inset-0 z-10">
+          <DashboardUpdatingOverlay />
           <TableRowsSkeleton rows={10} />
         </div>
       )}
+      {tableState === 'updating' && <DashboardUpdatingOverlay />}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   AreaChart,
 } from 'recharts';
 import { CHART_ANIMATION_PROPS } from '@/lib/constants/chart-ui';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import { formatCurrencyCompact } from '@/lib/utils/format';
 
 export interface FlowTrendChartPlotSeriesVisibility {
@@ -158,11 +158,7 @@ export default function FlowTrendChartPlot({
         </div>
       )}
 
-      {displayLoading && (
-        <div className="bg-background/60 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
-          <LoadingSpinner message="Actualizando..." />
-        </div>
-      )}
+      {displayLoading ? <DashboardUpdatingOverlay className="rounded-lg" /> : null}
     </div>
   );
 }
