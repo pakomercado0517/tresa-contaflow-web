@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/common/EmptyState';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
+import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { Expense } from '@/lib/types/expenses';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 
@@ -133,7 +134,7 @@ export function ExpensesManualExpensesSection({
           </Table>
         )}
         {manualExpensesState === 'updating' && manualExpenses.length > 0 && (
-          <div className="bg-background/80 absolute inset-0 backdrop-blur-[1px]" />
+          <DashboardUpdatingOverlay />
         )}
       </div>
     </div>

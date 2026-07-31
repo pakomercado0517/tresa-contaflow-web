@@ -81,6 +81,14 @@ function getActiveProfiles(profiles: Profile[]): Profile[] {
   return profiles.filter((profile) => !profile.frozen);
 }
 
+/** Primer régimen del perfil cuando tiene 2+; undefined si no aplica filtro por régimen. */
+export function getDefaultRegimenFiscalForProfile(
+  profile: Profile | undefined
+): string | undefined {
+  const regimenes = profile?.regimenes_fiscales ?? [];
+  return regimenes.length >= 2 ? regimenes[0] : undefined;
+}
+
 export function buildListFiltersSearchParams(
   filters: ResolvedDashboardListFilters
 ): URLSearchParams {
@@ -166,8 +174,17 @@ export function resolveDashboardListFilters(
   }
 
   const regimenParam = searchParams.get('regimen_fiscal');
-  const regimen_fiscal =
+  let regimen_fiscal =
     regimenParam && regimenParam !== 'all' ? regimenParam : undefined;
+
+  if (regimenParam === null && profileId) {
+    const profile = profiles.find((item) => item.id === profileId);
+    const defaultRegimen = getDefaultRegimenFiscalForProfile(profile);
+    if (defaultRegimen) {
+      regimen_fiscal = defaultRegimen;
+      didRestore = true;
+    }
+  }
   const searchRaw = searchParams.get('search');
   const search = searchRaw && searchRaw.length > 0 ? searchRaw : undefined;
 

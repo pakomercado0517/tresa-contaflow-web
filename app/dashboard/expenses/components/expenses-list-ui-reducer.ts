@@ -75,7 +75,7 @@ export type ExpensesListUiAction =
       search: string;
     }
   | { type: 'clear_filters'; mes: number; año: number }
-  | { type: 'profile_change'; profileId: string }
+  | { type: 'profile_change'; profileId: string; regimenFiscal: string }
   | { type: 'set_manual_expense_dialog_open'; open: boolean }
   | { type: 'set_show_profile_warning'; value: boolean }
   | { type: 'set_initial_load_done' }
@@ -133,7 +133,11 @@ export function expensesListUiReducer(
         selectedRegimenFiscal: 'all',
       };
     case 'profile_change':
-      return { ...state, selectedProfileId: action.profileId, selectedRegimenFiscal: 'all' };
+      return {
+        ...state,
+        selectedProfileId: action.profileId,
+        selectedRegimenFiscal: action.regimenFiscal,
+      };
     case 'set_manual_expense_dialog_open':
       return { ...state, isManualExpenseDialogOpen: action.open };
     case 'set_show_profile_warning':

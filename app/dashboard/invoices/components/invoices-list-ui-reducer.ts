@@ -71,7 +71,7 @@ export type InvoicesListUiAction =
   | { type: 'patch'; patch: Partial<InvoicesListUiState> }
   | { type: 'sync_from_url'; profileId: string; mes: number; año: number; regimen: string; search: string }
   | { type: 'clear_filters'; mes: number; año: number }
-  | { type: 'profile_change'; profileId: string }
+  | { type: 'profile_change'; profileId: string; regimenFiscal: string }
   | { type: 'set_initial_load_done' }
   | { type: 'open_delete_invoice'; invoice: Invoice }
   | { type: 'close_delete_invoice' }
@@ -104,7 +104,11 @@ export function invoicesListUiReducer(
         selectedRegimenFiscal: 'all',
       };
     case 'profile_change':
-      return { ...state, selectedProfileId: action.profileId, selectedRegimenFiscal: 'all' };
+      return {
+        ...state,
+        selectedProfileId: action.profileId,
+        selectedRegimenFiscal: action.regimenFiscal,
+      };
     case 'set_initial_load_done':
       return { ...state, isInitialLoad: false };
     case 'open_delete_invoice':

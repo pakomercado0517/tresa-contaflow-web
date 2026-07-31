@@ -82,6 +82,7 @@ export function DashboardHomePageClient() {
     data: invoicesData,
     error: invoicesError,
     isLoading: isInvoicesLoading,
+    isFetching: isInvoicesFetching,
   } = useQuery<GetInvoicesResponse, Error>({
     queryKey: [
       'dashboard-home',
@@ -100,6 +101,7 @@ export function DashboardHomePageClient() {
         limit: 3,
       }),
     enabled: canFetchData,
+    placeholderData: keepPreviousData,
     ...dashboardHeavyQueryOptions,
   });
 
@@ -107,6 +109,7 @@ export function DashboardHomePageClient() {
     data: expensesData,
     error: expensesError,
     isLoading: isExpensesLoading,
+    isFetching: isExpensesFetching,
   } = useQuery<GetExpensesResponse, Error>({
     queryKey: [
       'dashboard-home',
@@ -125,10 +128,16 @@ export function DashboardHomePageClient() {
         limit: 3,
       }),
     enabled: canFetchData,
+    placeholderData: keepPreviousData,
     ...dashboardHeavyQueryOptions,
   });
 
   const currentUserData = useHydratedCurrentUser();
+
+  const isContentUpdating =
+    (isMetricsFetching && !isMetricsLoading) ||
+    (isInvoicesFetching && !isInvoicesLoading) ||
+    (isExpensesFetching && !isExpensesLoading);
 
   const isFiltersLoading = !filtersReady || (filtersReady && replaceSearch !== null);
   const isKpisInitialLoading = canFetchData && isMetricsLoading && metrics === undefined;
@@ -189,7 +198,7 @@ export function DashboardHomePageClient() {
         año={filters.año}
         regimenFiscal={filters.regimen_fiscal}
         metrics={metrics}
-        isMetricsFetching={isMetricsFetching && !isMetricsLoading}
+        isContentUpdating={isContentUpdating}
         invoices={invoicesData?.data}
         isInvoicesLoading={isInvoicesLoading}
         expenses={expensesData?.data}

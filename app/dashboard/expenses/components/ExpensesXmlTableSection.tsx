@@ -17,6 +17,7 @@ import {
   DashboardListMobile,
 } from '@/components/common/dashboard-list-responsive';
 import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkeleton';
+import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { Expense } from '@/lib/types/expenses';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import {
@@ -225,11 +226,13 @@ export function ExpensesXmlTableSection({
         </div>
       </DashboardListDesktop>
 
-      {tableState !== 'idle' && (
-        <div className="bg-background/90 absolute inset-0 backdrop-blur-[2px]">
+      {tableState === 'loading' && (
+        <div className="absolute inset-0 z-10">
+          <DashboardUpdatingOverlay />
           <TableRowsSkeleton rows={10} />
         </div>
       )}
+      {tableState === 'updating' && <DashboardUpdatingOverlay />}
     </div>
   );
 }
