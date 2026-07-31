@@ -31,20 +31,14 @@ export function ProfileSelector({
   const searchParams = useSearchParams();
 
   function handleProfileChange(profileId: string) {
-    if (profileId !== 'all') {
-      const selectedProfile = profiles.find((p) => p.id === profileId);
-      if (selectedProfile?.frozen) {
-        return;
-      }
+    const selectedProfile = profiles.find((p) => p.id === profileId);
+    if (selectedProfile?.frozen) {
+      return;
     }
-    setStoredDashboardFilters({ profileId: profileId || 'all' });
+    setStoredDashboardFilters({ profileId });
 
     const params = new URLSearchParams(searchParams.toString());
-    if (profileId) {
-      params.set('profileId', profileId);
-    } else {
-      params.delete('profileId');
-    }
+    params.set('profileId', profileId);
     for (const param of clearParamsOnChange) {
       params.delete(param);
     }
@@ -52,12 +46,11 @@ export function ProfileSelector({
   }
 
   return (
-    <Select value={selectedProfileId || 'all'} onValueChange={handleProfileChange}>
+    <Select value={selectedProfileId} onValueChange={handleProfileChange}>
       <SelectTrigger className={triggerClassName} aria-label="Seleccionar perfil">
-        <SelectValue placeholder="Seleccionar perfil" />
+        <SelectValue placeholder="Selecciona un RFC" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">Todos los perfiles</SelectItem>
         {profiles.map((profile) => (
           <SelectItem key={profile.id} value={profile.id} disabled={profile.frozen}>
             <span className="flex items-center gap-2">

@@ -53,7 +53,7 @@ function toPositiveInt(value: string | null, fallback: number): number {
 export function syncUrlFiltersToStorage(searchParams: ReadonlyURLSearchParams): void {
   const partial: DashboardFiltersPartial = {};
   const urlProfileId = searchParams.get('profileId');
-  if (urlProfileId !== null) {
+  if (urlProfileId !== null && urlProfileId !== 'all') {
     partial.profileId = urlProfileId;
   }
   const urlMes = parseUrlMes(searchParams.get('mes'));
@@ -69,9 +69,16 @@ export function syncUrlFiltersToStorage(searchParams: ReadonlyURLSearchParams): 
   }
 }
 
-export function isStoredProfileRestorable(storedProfileId: string, profiles: Profile[]): boolean {
-  if (storedProfileId === 'all') return false;
+export function isStoredProfileRestorable(
+  storedProfileId: string | undefined,
+  profiles: Profile[]
+): boolean {
+  if (!storedProfileId || storedProfileId === 'all') return false;
   return profiles.some((profile) => profile.id === storedProfileId && !profile.frozen);
+}
+
+function getActiveProfiles(profiles: Profile[]): Profile[] {
+  return profiles.filter((profile) => !profile.frozen);
 }
 
 export function buildListFiltersSearchParams(
@@ -133,8 +140,16 @@ export function resolveDashboardListFilters(
     if (isStoredProfileRestorable(stored.profileId, profiles)) {
       profileId = stored.profileId;
       didRestore = true;
-    } else if (stored.profileId !== 'all') {
+    } else if (stored.profileId) {
       clearStoredDashboardFiltersProfile();
+    }
+  }
+
+  if (!profileId && profiles.length > 0) {
+    const activeProfiles = getActiveProfiles(profiles);
+    if (activeProfiles.length === 1) {
+      profileId = activeProfiles[0].id;
+      didRestore = true;
     }
   }
 

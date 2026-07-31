@@ -1,51 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CreateDiscountCodeForm } from './CreateDiscountCodeForm';
 import { DiscountCodesList } from './DiscountCodesList';
-import type { DiscountCode } from '@/lib/types/discounts';
 import { getDiscountCodesClient } from '@/lib/api/discounts.client';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorState } from '@/components/common/ErrorState';
 import { startDiscountAdminLogout } from '@/lib/auth/client-logout';
 import { ArrowLeft, LogOut, ShieldCheck } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+const DISCOUNT_CODES_QUERY_KEY = ['discount-codes']
 
 export function DiscountManagementContent() {
-  const [codes, setCodes] = useState<DiscountCode[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const loadCodes = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await getDiscountCodesClient();
-      setCodes(response.data);
-    } catch (err) {
-      if (err && typeof err === 'object' && 'message' in err) {
-        setError((err as { message: string }).message || 'Error al cargar códigos');
-      } else {
-        setError('Error al cargar códigos de descuento');
-      }
-    } finally {
-      setIsLoading(false);
+  const queryClient = useQueryClient()
+  const { data: codes = [], isPending, isError, error, refetch} = useQuery({
+    queryKey: DISCOUNT_CODES_QUERY_KEY,
+    queryFn: async () => {
+      const response = await getDiscountCodesClient()
+      return response.data
     }
-  };
-
-  useEffect(() => {
-    loadCodes();
-  }, [refreshKey]);
+  })
 
   const handleCodeCreated = () => {
-    setRefreshKey((prev) => prev + 1);
+    queryClient.invalidateQueries({queryKey: DISCOUNT_CODES_QUERY_KEY})
   };
 
   const handleCodeUpdated = () => {
-    setRefreshKey((prev) => prev + 1);
+    queryClient.invalidateQueries({queryKey: DISCOUNT_CODES_QUERY_KEY})
   };
 
   return (
@@ -119,10 +103,10 @@ export function DiscountManagementContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isPending ? (
                 <LoadingSpinner />
-              ) : error ? (
-                <ErrorState message={error} onRetry={loadCodes} />
+              ) : isError ? (
+                <ErrorState message={error instanceof Error ? error.message : 'Error al cargar códigos de descuento'} onRetry={() => refetch()} />
               ) : (
                 <DiscountCodesList codes={codes} onUpdate={handleCodeUpdated} />
               )}

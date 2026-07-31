@@ -59,7 +59,7 @@ export function DashboardHeader({
       setStoredDashboardFilters({
         mes: newMonth,
         año: newYear,
-        profileId: selectedProfileId ?? 'all',
+        ...(selectedProfileId ? { profileId: selectedProfileId } : {}),
       });
 
       // Solo push: con searchParams nuevos Next ya re-renderiza Server Components.

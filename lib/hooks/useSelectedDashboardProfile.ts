@@ -24,7 +24,7 @@ export function useSelectedDashboardProfile(
     const companyName = selectedProfileId
       ? activeProfile?.nombre
       : profiles.length > 0
-        ? 'Todas las empresas'
+        ? 'Selecciona un RFC'
         : undefined;
 
     return { profiles, activeProfile, companyName };

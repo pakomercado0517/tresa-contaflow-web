@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { getTrendDataClient, type TrendDataPoint } from '@/lib/api/invoices.client';
+import { getTrendDataClient } from '@/lib/api/invoices.client';
 import {
   FLOW_TREND_PERIOD_VIEW_LABELS,
   MOBILE_CHART_MAX_POINTS,
@@ -27,19 +27,21 @@ import {
 import type { TrendPeriodView } from '@/lib/api/invoices';
 import { Filter } from 'lucide-react';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { metricsTrendQueryKey } from '@/lib/query/query-keys';
+import { dashboardHeavyQueryOptions } from '@/lib/query/dashboard-home-query';
+import { useInView } from '@/lib/hooks/use-in-view';
 import { MD_UP_QUERY, useIsMdUp } from '@/lib/hooks/use-media-query';
 import { sliceTrendDataForMobileWindow } from '@/lib/utils/slice-trend-data-for-mobile';
 
+const CHART_VIEWPORT_ROOT_MARGIN = '160px 0px';
+
 const FlowTrendChartPlot = dynamic(() => import('./FlowTrendChartPlot'), {
   ssr: false,
-  loading: () => (
-    <div className="relative flex h-64 items-center justify-center md:h-80">
-      <LoadingSpinner message="Cargando gráfica..." />
-    </div>
-  ),
 });
+
+function ChartPlotSkeleton() {
+  return <div className="bg-muted/40 relative h-64 animate-pulse rounded-md md:h-80" />;
+}
 
 const MONTHS_SHORT = [
   'Ene',
@@ -94,7 +96,6 @@ function getInitialVisibleSeries(): VisibleSeries {
 }
 
 interface FlowTrendChartProps {
-  initialData: TrendDataPoint[];
   profileId?: string;
   año?: number;
   mes?: number;
@@ -102,7 +103,6 @@ interface FlowTrendChartProps {
 }
 
 export function FlowTrendChart({
-  initialData,
   profileId,
   año,
   mes,
@@ -110,26 +110,41 @@ export function FlowTrendChart({
 }: FlowTrendChartProps) {
   const isMdUp = useIsMdUp();
   const [visibleSeries, setVisibleSeries] = useState<VisibleSeries>(getInitialVisibleSeries);
-  const [periodView, setPeriodView] = useState<TrendPeriodView>('año-actual');
+  const [periodView, setPeriodView] = useState<TrendPeriodView>('últimos-3-meses');
   const { mes: appBusinessMes, año: appBusinessAño } = getCurrentMonthYearInAppTimezone();
   const selectedYear = año ?? appBusinessAño;
   const selectedMonth = mes ?? appBusinessMes;
-  const shouldUseInitialData = periodView === 'año-actual';
+  const canFetch = Boolean(profileId);
+  const { ref: chartViewportRef, inView: isChartInView } = useInView<HTMLDivElement>({
+    rootMargin: CHART_VIEWPORT_ROOT_MARGIN,
+    threshold: 0.05,
+    triggerOnce: true,
+  });
+  const shouldFetchTrend = canFetch && isChartInView;
 
   const {
-    data: fetchedData,
+    data: trendData,
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: metricsTrendQueryKey(profileId, selectedYear, periodView, selectedMonth, regimenFiscal),
+    queryKey: metricsTrendQueryKey(
+      profileId,
+      selectedYear,
+      periodView,
+      selectedMonth,
+      regimenFiscal
+    ),
     queryFn: () =>
       getTrendDataClient(profileId, selectedYear, periodView, selectedMonth, regimenFiscal),
-    enabled: !shouldUseInitialData,
-    staleTime: 2 * 60 * 1000,
+    enabled: shouldFetchTrend,
+    placeholderData: keepPreviousData,
+    ...dashboardHeavyQueryOptions,
   });
 
-  const data = shouldUseInitialData ? initialData : (fetchedData ?? []);
-  const displayLoading = !shouldUseInitialData && (isLoading || isFetching);
+  const data = trendData ?? [];
+  const showPlotSkeleton =
+    !isChartInView || (shouldFetchTrend && isLoading && data.length === 0);
+  const displayLoading = shouldFetchTrend && isFetching && data.length > 0;
 
   const mobileCutoffAño = selectedYear > appBusinessAño ? appBusinessAño : selectedYear;
   const mobileCutoffMes =
@@ -186,6 +201,9 @@ export function FlowTrendChart({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="últimos-3-meses">
+                  {FLOW_TREND_PERIOD_VIEW_LABELS['últimos-3-meses']}
+                </SelectItem>
                 <SelectItem value="año-actual">{FLOW_TREND_PERIOD_VIEW_LABELS['año-actual']}</SelectItem>
                 <SelectItem value="últimos-12-meses">
                   {FLOW_TREND_PERIOD_VIEW_LABELS['últimos-12-meses']}
@@ -222,13 +240,19 @@ export function FlowTrendChart({
           </div>
         </div>
 
-        <FlowTrendChartPlot
-          chartData={chartData}
-          visibleSeries={visibleSeries}
-          hasData={hasData}
-          displayLoading={displayLoading}
-          compact={!isMdUp}
-        />
+        <div ref={chartViewportRef} className="min-h-64 md:min-h-80">
+          {showPlotSkeleton ? (
+            <ChartPlotSkeleton />
+          ) : (
+            <FlowTrendChartPlot
+              chartData={chartData}
+              visibleSeries={visibleSeries}
+              hasData={hasData}
+              displayLoading={displayLoading}
+              compact={!isMdUp}
+            />
+          )}
+        </div>
       </div>
     </Card>
   );

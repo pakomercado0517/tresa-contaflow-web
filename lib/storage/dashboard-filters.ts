@@ -6,8 +6,11 @@ const DASHBOARD_FILTERS_STORAGE_PREFIX = 'contafy:dashboard-filters';
 const LEGACY_PROFILE_SELECTION_PREFIX = 'contafy:profile-selection';
 const GLOBAL_SCOPE_KEY = 'global';
 
+/** Valor legado en localStorage; ya no se persiste como selección activa. */
+const LEGACY_ALL_PROFILES_VALUE = 'all';
+
 export interface DashboardFiltersSelection {
-  profileId: string;
+  profileId?: string;
   mes: number;
   año: number;
 }
@@ -32,9 +35,12 @@ function canUseStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
 
-function normalizeProfileId(profileId: string): string {
+function parseStoredProfileId(profileId: string | undefined): string | undefined {
+  if (!profileId || profileId === LEGACY_ALL_PROFILES_VALUE) {
+    return undefined;
+  }
   const value = profileId.trim();
-  return value.length > 0 ? value : 'all';
+  return value.length > 0 ? value : undefined;
 }
 
 function isValidMes(mes: number): boolean {
@@ -47,7 +53,7 @@ function isValidAño(año: number): boolean {
 
 function getDefaultFilters(): DashboardFiltersSelection {
   const { mes, año } = getCurrentMonthYearInAppTimezone();
-  return { profileId: 'all', mes, año };
+  return { mes, año };
 }
 
 function parseStoredJson(raw: string): DashboardFiltersSelection | null {
@@ -56,13 +62,15 @@ function parseStoredJson(raw: string): DashboardFiltersSelection | null {
     if (typeof parsed !== 'object' || parsed === null) return null;
 
     const profileId =
-      typeof parsed.profileId === 'string' ? normalizeProfileId(parsed.profileId) : 'all';
+      typeof parsed.profileId === 'string'
+        ? parseStoredProfileId(parsed.profileId)
+        : undefined;
     const mes = typeof parsed.mes === 'number' ? parsed.mes : NaN;
     const año = typeof parsed.año === 'number' ? parsed.año : NaN;
 
     if (!isValidMes(mes) || !isValidAño(año)) return null;
 
-    return { profileId, mes, año };
+    return profileId ? { profileId, mes, año } : { mes, año };
   } catch {
     return null;
   }
@@ -90,10 +98,10 @@ function migrateFromLegacyProfileSelection(userId?: string): DashboardFiltersSel
   if (!legacyValue) return null;
 
   const defaults = getDefaultFilters();
-  const migrated: DashboardFiltersSelection = {
-    ...defaults,
-    profileId: normalizeProfileId(legacyValue),
-  };
+  const profileId = parseStoredProfileId(legacyValue);
+  const migrated: DashboardFiltersSelection = profileId
+    ? { ...defaults, profileId }
+    : defaults;
 
   window.localStorage.setItem(getStorageKey(userId), JSON.stringify(migrated));
   window.localStorage.removeItem(legacyKey);
@@ -126,15 +134,20 @@ export function setStoredDashboardFilters(
   const current = getStoredDashboardFilters(userId) ?? getDefaultFilters();
 
   const next: DashboardFiltersSelection = {
-    profileId:
-      partial.profileId !== undefined
-        ? normalizeProfileId(partial.profileId)
-        : current.profileId,
     mes:
       partial.mes !== undefined && isValidMes(partial.mes) ? partial.mes : current.mes,
     año:
       partial.año !== undefined && isValidAño(partial.año) ? partial.año : current.año,
   };
+
+  if (partial.profileId !== undefined) {
+    const profileId = parseStoredProfileId(partial.profileId);
+    if (profileId) {
+      next.profileId = profileId;
+    }
+  } else if (current.profileId) {
+    next.profileId = current.profileId;
+  }
 
   window.localStorage.setItem(getStorageKey(userId), JSON.stringify(next));
 }
@@ -145,7 +158,8 @@ export function clearStoredDashboardFiltersProfile(userId?: string): void {
   const current = getStoredDashboardFilters(userId);
   if (!current) return;
 
-  setStoredDashboardFilters({ profileId: 'all' }, userId);
+  const { mes, año } = current;
+  window.localStorage.setItem(getStorageKey(userId), JSON.stringify({ mes, año }));
 }
 
 export function clearAllStoredDashboardFilters(): void {

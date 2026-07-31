@@ -1,26 +1,22 @@
 'use client';
 
-import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { DashboardHeader } from './DashboardHeader';
 import { MetricsCards } from './MetricsCards';
 import { RecentInvoicesTable } from './RecentInvoicesTable';
 import { RecentExpensesTable } from './RecentExpensesTable';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { RecentTableSkeleton } from './RecentTableSkeleton';
 import { TrialBannerWrapper } from './TrialBannerWrapper';
 import { DashboardHomeIntro } from './DashboardHomeIntro';
-import type { TrendDataPoint } from '@/lib/api/invoices.client';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Expense } from '@/lib/types/expenses';
-import type { PeriodMetricsResponse } from '@/lib/types/metrics';
+import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 
 const FlowTrendChart = dynamic(
   () => import('./FlowTrendChart').then((mod) => ({ default: mod.FlowTrendChart })),
   {
     loading: () => (
-      <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
-        <LoadingSpinner message="Cargando gráfico..." />
-      </div>
+      <div className="bg-muted border-border h-96 w-full animate-pulse rounded-lg border" />
     ),
   }
 );
@@ -44,14 +40,16 @@ const DashboardTaxEstimateCriticalBanner = dynamic(
 );
 
 export interface DashboardHomeViewProps {
-  profileId?: string;
+  profileId: string;
   mes: number;
   año: number;
   regimenFiscal?: string;
-  metrics: PeriodMetricsResponse;
-  trendData: TrendDataPoint[];
-  invoices: Invoice[];
-  expenses: Expense[];
+  metrics?: PeriodMetricsResponse;
+  isMetricsFetching?: boolean;
+  invoices?: Invoice[];
+  isInvoicesLoading?: boolean;
+  expenses?: Expense[];
+  isExpensesLoading?: boolean;
   userName: string;
 }
 
@@ -61,11 +59,15 @@ export function DashboardHomeView({
   año,
   regimenFiscal,
   metrics,
-  trendData,
+  isMetricsFetching = false,
   invoices,
+  isInvoicesLoading = false,
   expenses,
+  isExpensesLoading = false,
   userName,
 }: DashboardHomeViewProps) {
+  const displayMetrics = metrics ?? DEFAULT_PERIOD_METRICS;
+
   return (
     <>
       <DashboardHeader
@@ -85,30 +87,30 @@ export function DashboardHomeView({
         />
 
         <DashboardHomeIntro userName={userName} profileId={profileId} mes={mes} año={año} />
-        <MetricsCards metrics={metrics} profileId={profileId} mes={mes} año={año} />
-        <Suspense
-          fallback={
-            <div className="bg-muted flex h-96 w-full animate-pulse items-center justify-center rounded-lg">
-              <LoadingSpinner message="Cargando gráfico..." />
-            </div>
-          }
-        >
-          <FlowTrendChart
-            initialData={trendData}
-            profileId={profileId}
-            año={año}
-            mes={mes}
-            regimenFiscal={regimenFiscal}
-          />
-        </Suspense>
+
+        <div className={isMetricsFetching ? 'opacity-80 transition-opacity duration-300' : undefined}>
+          <MetricsCards metrics={displayMetrics} profileId={profileId} mes={mes} año={año} />
+        </div>
+
+        <FlowTrendChart profileId={profileId} año={año} mes={mes} regimenFiscal={regimenFiscal} />
+
         <div className="grid w-full min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
           <div className="min-w-0">
-            <RecentInvoicesTable invoices={invoices} />
+            {isInvoicesLoading && !invoices ? (
+              <RecentTableSkeleton title="Últimos Ingresos" />
+            ) : (
+              <RecentInvoicesTable invoices={invoices ?? []} />
+            )}
           </div>
           <div className="min-w-0">
-            <RecentExpensesTable expenses={expenses} />
+            {isExpensesLoading && !expenses ? (
+              <RecentTableSkeleton title="Últimos Gastos" />
+            ) : (
+              <RecentExpensesTable expenses={expenses ?? []} />
+            )}
           </div>
         </div>
+
         <DashboardTaxEstimateSection
           profileId={profileId}
           mes={mes}

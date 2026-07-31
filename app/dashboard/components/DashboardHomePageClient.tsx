@@ -6,30 +6,25 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { getExpensesClient } from '@/lib/api/expenses.client';
-import { getInvoicesClient, getMetricsClient, getMetricsRangeClient } from '@/lib/api/invoices.client';
+import { getInvoicesClient, getMetricsClient } from '@/lib/api/invoices.client';
 import {
   getDashboardHomeReplaceSearch,
   resolveDashboardListFilters,
 } from '@/lib/navigation/resolve-dashboard-list-filters';
 import { useDashboardHomeFiltersUrlRestoreRef } from '@/lib/navigation/use-dashboard-home-filters-url-restore-ref';
-import { currentUserQueryOptions } from '@/lib/query/current-user-query';
+import { dashboardHeavyQueryOptions } from '@/lib/query/dashboard-home-query';
+import {
+  getCurrentUserDisplayName,
+  useHydratedCurrentUser,
+} from '@/lib/query/current-user-query';
 import { profilesQueryOptions } from '@/lib/query/profiles-query';
 import type { GetExpensesResponse } from '@/lib/types/expenses';
 import type { GetInvoicesResponse } from '@/lib/types/invoices';
 import type { GetProfilesResponse } from '@/lib/types/profiles';
-import type { GetCurrentUserResponse } from '@/lib/types/auth';
-import {
-  metricsByMonthItemToPeriodMetrics,
-  DEFAULT_PERIOD_METRICS,
-  type MetricsRangeResponse,
-  type PeriodMetricsResponse,
-} from '@/lib/types/metrics';
-import {
-  buildTrendSeriesForView,
-  findMetricsItemForMonth,
-  getTrendRangeBounds,
-} from '@/lib/utils/metrics-trend-range';
+import type { PeriodMetricsResponse } from '@/lib/types/metrics';
 import { DashboardHomeView } from './DashboardHomeView';
+import { DashboardHeader } from './DashboardHeader';
+import { DashboardSelectProfilePrompt } from './DashboardSelectProfilePrompt';
 
 export function DashboardHomePageClient() {
   const searchParams = useSearchParams();
@@ -37,7 +32,6 @@ export function DashboardHomePageClient() {
   const {
     data: profilesData,
     error: profilesError,
-    isLoading: isProfilesLoading,
   } = useQuery<GetProfilesResponse, Error>(profilesQueryOptions());
 
   const filtersReady = profilesData !== undefined;
@@ -59,46 +53,15 @@ export function DashboardHomePageClient() {
   );
 
   const filters = resolved?.filters;
-  const canFetchData = Boolean(filtersReady && resolved && replaceSearch === null);
+  const filtersSynced = Boolean(filtersReady && resolved && replaceSearch === null);
+  const hasSelectedProfile = Boolean(filters?.profileId);
+  const canFetchData = filtersSynced && hasSelectedProfile;
 
   const {
-    data: trendRangeData,
-    error: trendRangeError,
-    isLoading: isTrendRangeLoading,
-  } = useQuery<MetricsRangeResponse, Error>({
-    queryKey: [
-      'dashboard-home',
-      'metrics-range',
-      filters?.profileId ?? null,
-      filters?.mes ?? null,
-      filters?.año ?? null,
-      filters?.regimen_fiscal ?? null,
-    ],
-    queryFn: async () => {
-      const bounds = getTrendRangeBounds('año-actual', filters!.año, filters!.mes);
-      return getMetricsRangeClient({
-        ...bounds,
-        profileId: filters!.profileId,
-        regimenFiscal: filters!.regimen_fiscal,
-      });
-    },
-    enabled: canFetchData,
-    placeholderData: keepPreviousData,
-  });
-
-  const monthItem = useMemo(() => {
-    const resolvedFilters = resolved?.filters;
-    return trendRangeData && resolvedFilters
-      ? findMetricsItemForMonth(trendRangeData.items, resolvedFilters.mes, resolvedFilters.año)
-      : undefined;
-  }, [trendRangeData, resolved]);
-
-  const needsMetricsFallback = canFetchData && trendRangeData !== undefined && monthItem === undefined;
-
-  const {
-    data: fallbackMetrics,
-    error: fallbackMetricsError,
-    isLoading: isFallbackMetricsLoading,
+    data: metrics,
+    error: metricsError,
+    isLoading: isMetricsLoading,
+    isFetching: isMetricsFetching,
   } = useQuery<PeriodMetricsResponse, Error>({
     queryKey: [
       'dashboard-home',
@@ -110,28 +73,10 @@ export function DashboardHomePageClient() {
     ],
     queryFn: () =>
       getMetricsClient(filters!.profileId, filters!.mes, filters!.año, filters!.regimen_fiscal),
-    enabled: needsMetricsFallback,
+    enabled: canFetchData,
+    placeholderData: keepPreviousData,
+    ...dashboardHeavyQueryOptions,
   });
-
-  const metrics: PeriodMetricsResponse | undefined = useMemo(() => {
-    const resolvedFilters = resolved?.filters;
-    if (!resolvedFilters || !trendRangeData) return undefined;
-    if (monthItem !== undefined) {
-      return metricsByMonthItemToPeriodMetrics(monthItem);
-    }
-    return fallbackMetrics;
-  }, [resolved, trendRangeData, monthItem, fallbackMetrics]);
-
-  const trendData = useMemo(() => {
-    const resolvedFilters = resolved?.filters;
-    if (!trendRangeData || !resolvedFilters) return [];
-    return buildTrendSeriesForView(
-      trendRangeData.items,
-      'año-actual',
-      resolvedFilters.año,
-      resolvedFilters.mes
-    );
-  }, [trendRangeData, resolved]);
 
   const {
     data: invoicesData,
@@ -155,7 +100,7 @@ export function DashboardHomePageClient() {
         limit: 3,
       }),
     enabled: canFetchData,
-    placeholderData: keepPreviousData,
+    ...dashboardHeavyQueryOptions,
   });
 
   const {
@@ -180,41 +125,17 @@ export function DashboardHomePageClient() {
         limit: 3,
       }),
     enabled: canFetchData,
-    placeholderData: keepPreviousData,
+    ...dashboardHeavyQueryOptions,
   });
 
-  const {
-    data: currentUserData,
-    error: currentUserError,
-    isLoading: isCurrentUserLoading,
-  } = useQuery<GetCurrentUserResponse, Error>({
-    ...currentUserQueryOptions(),
-    enabled: canFetchData,
-  });
+  const currentUserData = useHydratedCurrentUser();
 
-  const metricsReady =
-    trendRangeData !== undefined &&
-    (monthItem !== undefined || fallbackMetrics !== undefined);
-
-  const isInitialLoading =
-    !canFetchData ||
-    (isProfilesLoading && !profilesData) ||
-    (canFetchData &&
-      ((isTrendRangeLoading && !trendRangeData) ||
-        (needsMetricsFallback && isFallbackMetricsLoading && !fallbackMetrics) ||
-        (isInvoicesLoading && !invoicesData) ||
-        (isExpensesLoading && !expensesData) ||
-        (isCurrentUserLoading && !currentUserData)));
+  const isFiltersLoading = !filtersReady || (filtersReady && replaceSearch !== null);
+  const isKpisInitialLoading = canFetchData && isMetricsLoading && metrics === undefined;
 
   const fatalError =
     profilesError ??
-    (canFetchData
-      ? trendRangeError ??
-        fallbackMetricsError ??
-        invoicesError ??
-        expensesError ??
-        currentUserError
-      : null);
+    (canFetchData ? metricsError ?? invoicesError ?? expensesError : null);
 
   if (fatalError) {
     return (
@@ -228,7 +149,23 @@ export function DashboardHomePageClient() {
     );
   }
 
-  if (isInitialLoading || !filters || !metricsReady || !currentUserData) {
+  if (filtersSynced && !hasSelectedProfile && filters) {
+    return (
+      <>
+        <DashboardHeader
+          selectedProfileId={filters.profileId}
+          selectedMonth={filters.mes}
+          selectedYear={filters.año}
+          selectedRegimenFiscal={filters.regimen_fiscal ?? 'all'}
+        />
+        <main className="w-full min-w-0 flex-1 space-y-6 p-4 pt-72 md:p-6 md:pt-52 lg:p-8 lg:pt-40">
+          <DashboardSelectProfilePrompt hasProfiles={profiles.length > 0} />
+        </main>
+      </>
+    );
+  }
+
+  if (isFiltersLoading || isKpisInitialLoading || !filters?.profileId) {
     return (
       <div className="flex min-h-50 items-center justify-center p-8">
         {filtersReady ? (
@@ -239,22 +176,26 @@ export function DashboardHomePageClient() {
     );
   }
 
-  const userName =
-    currentUserData.user.nombre || currentUserData.user.email.split('@')[0];
-
-  const displayMetrics = metrics ?? DEFAULT_PERIOD_METRICS;
+  const userName = getCurrentUserDisplayName(currentUserData);
 
   return (
-    <DashboardHomeView
-      profileId={filters.profileId}
-      mes={filters.mes}
-      año={filters.año}
-      regimenFiscal={filters.regimen_fiscal}
-      metrics={displayMetrics}
-      trendData={trendData}
-      invoices={invoicesData?.data ?? []}
-      expenses={expensesData?.data ?? []}
-      userName={userName}
-    />
+    <>
+      {filtersReady ? (
+        <div ref={dashboardHomeFiltersUrlRestoreRef} className="hidden" aria-hidden />
+      ) : null}
+      <DashboardHomeView
+        profileId={filters.profileId}
+        mes={filters.mes}
+        año={filters.año}
+        regimenFiscal={filters.regimen_fiscal}
+        metrics={metrics}
+        isMetricsFetching={isMetricsFetching && !isMetricsLoading}
+        invoices={invoicesData?.data}
+        isInvoicesLoading={isInvoicesLoading}
+        expenses={expensesData?.data}
+        isExpensesLoading={isExpensesLoading}
+        userName={userName}
+      />
+    </>
   );
 }
