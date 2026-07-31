@@ -21,6 +21,7 @@ import { availablePlansQueryOptions } from '@/lib/query/available-plans-query';
 import { PromotionCodeInput } from './PromotionCodeInput';
 import { Leaf, Rocket, Gem, Building2, LucideIcon } from 'lucide-react';
 import type { Plan } from '@/lib/types/subscription';
+import { redirectToExternalUrl } from '@/lib/navigation/redirect-to-external-url';
 
 interface AvailablePlansProps {
   currentPlan: Plan;
@@ -88,7 +89,7 @@ export function AvailablePlans({ currentPlan }: AvailablePlansProps) {
 
       if (data.url) {
         // Redirigir a Stripe Checkout
-        window.location.href = data.url;
+        redirectToExternalUrl(data.url)
       } else {
         throw new Error('No se recibió URL de checkout');
       }

@@ -441,7 +441,9 @@ export function useExpensesListViewModel({
 
   const xmlExpenses = expenses.filter((e) => e.tipo_origen === 'XML');
   const manualExpensesForSection =
-    periodId != null ? manualExpensesFromPeriod : expenses.filter((e) => e.tipo_origen === 'MANUAL');
+    periodId != null
+      ? manualExpensesFromPeriod
+      : expenses.filter((e) => e.tipo_origen === 'MANUAL');
   const validXmlExpenses = xmlExpenses.filter((e) => e.validacion?.valido);
   const canAddManualExpense = !!profileId && !!periodId;
 
