@@ -89,6 +89,7 @@ export const getMetrics = cache(fetchMetrics);
  * Modos de visualización para la tendencia
  */
 export type TrendPeriodView =
+  | 'últimos-3-meses'
   | 'año-actual'
   | 'últimos-12-meses'
   | 'año-completo'

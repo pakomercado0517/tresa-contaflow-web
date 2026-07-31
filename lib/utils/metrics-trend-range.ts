@@ -3,6 +3,7 @@ import type { MetricsByMonthItem } from '@/lib/types/metrics';
 import {
   getCurrentMonthYearInAppTimezone,
   getLast12CalendarMonthsAscending,
+  getLastNCalendarMonthsAscending,
 } from '@/lib/utils/app-calendar';
 
 export interface TrendRangeBounds {
@@ -68,6 +69,19 @@ export function getTrendRangeBounds(
   let bounds: TrendRangeBounds;
 
   switch (periodView) {
+    case 'últimos-3-meses': {
+      const endMes = resolveCutoffMonth(year, mesCorte, currentMonth, currentYear);
+      const months = getLastNCalendarMonthsAscending(endMes, year, 3);
+      const first = months[0];
+      const last = months[months.length - 1];
+      bounds = {
+        mesDesde: first.mes,
+        añoDesde: first.año,
+        mesHasta: last.mes,
+        añoHasta: last.año,
+      };
+      break;
+    }
     case 'año-actual':
       bounds = {
         mesDesde: 1,
@@ -196,6 +210,7 @@ export function buildTrendSeriesForView(
   const previousYearMonths = [10, 11, 12];
 
   switch (periodView) {
+    case 'últimos-3-meses':
     case 'últimos-12-meses':
       return mapRangeItemsToTrendDataPoints(items);
 

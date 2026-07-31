@@ -53,26 +53,30 @@ export function getTodayIsoDateInAppTimezone(instant: Date = new Date()): string
 }
 
 /**
- * 12 meses consecutivos en orden cronológico (el más antiguo primero),
- * terminando en (endMes, endAño). Equivale al rango que armaba getTrendData con Date(y,m,d) local.
+ * N meses consecutivos en orden cronológico (el más antiguo primero),
+ * terminando en (endMes, endAño).
  */
-export function getLast12CalendarMonthsAscending(
+export function getLastNCalendarMonthsAscending(
   endMes: number,
-  endAño: number
+  endAño: number,
+  count: number
 ): Array<{ mes: number; año: number }> {
+  if (count < 1) return [];
+
   let mes = endMes;
   let año = endAño;
-  for (let k = 0; k < 11; k++) {
+  for (let k = 0; k < count - 1; k++) {
     mes -= 1;
     if (mes < 1) {
       mes = 12;
       año -= 1;
     }
   }
+
   const out: Array<{ mes: number; año: number }> = [];
   let m = mes;
   let y = año;
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < count; i++) {
     out.push({ mes: m, año: y });
     m += 1;
     if (m > 12) {
@@ -81,4 +85,15 @@ export function getLast12CalendarMonthsAscending(
     }
   }
   return out;
+}
+
+/**
+ * 12 meses consecutivos en orden cronológico (el más antiguo primero),
+ * terminando en (endMes, endAño). Equivale al rango que armaba getTrendData con Date(y,m,d) local.
+ */
+export function getLast12CalendarMonthsAscending(
+  endMes: number,
+  endAño: number
+): Array<{ mes: number; año: number }> {
+  return getLastNCalendarMonthsAscending(endMes, endAño, 12);
 }
