@@ -1,3 +1,5 @@
+import type { ManualEntryIvaRateOption } from '@/lib/utils/manual-entry-iva';
+
 interface ManualExpenseFormState {
   isSubmitting: boolean;
   error: string;
@@ -5,7 +7,8 @@ interface ManualExpenseFormState {
   fecha: string;
   total: string;
   subtotal: string;
-  iva: string;
+  ivaAmount: string;
+  ivaRateOption: ManualEntryIvaRateOption;
   concepto: string;
   categoria: string;
 }
@@ -19,7 +22,8 @@ export function createInitialManualExpenseFormState(profileId: string): ManualEx
     fecha: today.toISOString().split('T')[0],
     total: '',
     subtotal: '',
-    iva: '',
+    ivaAmount: '',
+    ivaRateOption: '16',
     concepto: '',
     categoria: '',
   };
@@ -30,9 +34,16 @@ export type ManualExpenseFormAction =
   | { type: 'set_error'; message: string }
   | { type: 'set_selected_profile_id'; value: string }
   | { type: 'set_fecha'; value: string }
-  | { type: 'set_total'; value: string; subtotal: string; iva: string }
-  | { type: 'set_subtotal'; value: string; iva: string; total: string }
-  | { type: 'set_iva'; value: string }
+  | { type: 'set_total'; value: string; subtotal: string; ivaAmount: string }
+  | { type: 'set_subtotal'; value: string; ivaAmount: string; total: string }
+  | {
+      type: 'set_iva_rate_option';
+      value: ManualEntryIvaRateOption;
+      subtotal?: string;
+      ivaAmount?: string;
+      total?: string;
+    }
+  | { type: 'set_iva_amount'; value: string; total: string }
   | { type: 'set_concepto'; value: string }
   | { type: 'set_categoria'; value: string }
   | { type: 'submit_start' }
@@ -52,11 +63,29 @@ export function manualExpenseFormReducer(
     case 'set_fecha':
       return { ...state, fecha: action.value };
     case 'set_total':
-      return { ...state, total: action.value, subtotal: action.subtotal, iva: action.iva };
+      return {
+        ...state,
+        total: action.value,
+        subtotal: action.subtotal,
+        ivaAmount: action.ivaAmount,
+      };
     case 'set_subtotal':
-      return { ...state, subtotal: action.value, iva: action.iva, total: action.total };
-    case 'set_iva':
-      return { ...state, iva: action.value };
+      return {
+        ...state,
+        subtotal: action.value,
+        ivaAmount: action.ivaAmount,
+        total: action.total,
+      };
+    case 'set_iva_rate_option':
+      return {
+        ...state,
+        ivaRateOption: action.value,
+        ...(action.subtotal !== undefined ? { subtotal: action.subtotal } : {}),
+        ...(action.ivaAmount !== undefined ? { ivaAmount: action.ivaAmount } : {}),
+        ...(action.total !== undefined ? { total: action.total } : {}),
+      };
+    case 'set_iva_amount':
+      return { ...state, ivaAmount: action.value, total: action.total };
     case 'set_concepto':
       return { ...state, concepto: action.value };
     case 'set_categoria':

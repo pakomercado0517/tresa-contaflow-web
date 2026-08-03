@@ -16,6 +16,10 @@ import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkelet
 import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
+import {
+  getManualEntryTotal,
+  resolveManualEntryIvaAmount,
+} from '@/lib/utils/manual-entry-iva';
 
 interface ManualIncomesSectionProps {
   canAddManualIncome: boolean;
@@ -87,7 +91,8 @@ export function ManualIncomesSection({
             </TableHeader>
             <TableBody>
               {manualIncomes.map((income) => {
-                const total = income.subtotal + income.iva_amount;
+                const ivaAmount = resolveManualEntryIvaAmount(income);
+                const total = getManualEntryTotal(income);
                 return (
                   <TableRow key={income.id}>
                     <TableCell className="font-medium">{income.concept}</TableCell>
@@ -98,7 +103,7 @@ export function ManualIncomesSection({
                       {formatCurrency(income.subtotal)}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-right tabular-nums">
-                      {formatCurrency(income.iva_amount)}
+                      {formatCurrency(ivaAmount)}
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(total)}

@@ -33,6 +33,11 @@ import {
   getInvoiceDeleteErrorMessage,
   getManualIncomeDeleteErrorMessage,
 } from './invoices-list-display-utils';
+import {
+  calculateIvaAmountFromSubtotal,
+  getIvaRateForApi,
+  type ManualEntryIvaRateOption,
+} from '@/lib/utils/manual-entry-iva';
 
 export interface InvoicesListViewModelInput {
   invoices: Invoice[];
@@ -123,8 +128,10 @@ export function useInvoicesListViewModel({
     setManualIncomeConcept,
     manualIncomeSubtotal,
     setManualIncomeSubtotal,
-    manualIncomeIva,
-    setManualIncomeIva,
+    manualIncomeIvaAmount,
+    setManualIncomeIvaAmount,
+    manualIncomeIvaRateOption,
+    setManualIncomeIvaRateOption,
     manualIncomeFecha,
     setManualIncomeFecha,
     manualIncomeNotes,
@@ -145,6 +152,7 @@ export function useInvoicesListViewModel({
     setManualIncomeDeleteError,
     isDeletingManualIncome,
     setIsDeletingManualIncome,
+    patchUi,
   } = useInvoicesListUiState({
     initialSearch,
     initialProfileId,
@@ -198,7 +206,8 @@ export function useInvoicesListViewModel({
   function resetManualIncomeForm() {
     setManualIncomeConcept('');
     setManualIncomeSubtotal('');
-    setManualIncomeIva('');
+    setManualIncomeIvaAmount('');
+    setManualIncomeIvaRateOption('16');
     setManualIncomeFecha('');
     setManualIncomeNotes('');
     setManualIncomeFormError(null);
@@ -401,15 +410,50 @@ export function useInvoicesListViewModel({
 
   const handleOpenEditManualIncome = (income: ManualIncome) => {
     setEditingManualIncome(income);
-    setManualIncomeConcept(income.concept);
-    setManualIncomeSubtotal(income.subtotal.toString());
-    setManualIncomeIva(income.iva_amount.toString());
-    setManualIncomeFecha(income.fecha);
-    setManualIncomeNotes(income.notes ?? '');
-    setManualIncomeIsPaid(income.is_paid);
-    setManualIncomePaymentDate(income.payment_date ?? '');
-    setManualIncomeFormError(null);
     setAddManualIncomeOpen(true);
+  };
+
+  const handleManualIncomeSubtotalChange = (value: string) => {
+    const subtotalNum = Number(value.replace(/,/g, '.'));
+    if (
+      manualIncomeIvaRateOption !== 'otro' &&
+      Number.isFinite(subtotalNum) &&
+      subtotalNum >= 0 &&
+      value.trim() !== ''
+    ) {
+      const ivaNum = calculateIvaAmountFromSubtotal(subtotalNum, manualIncomeIvaRateOption);
+      patchUi({
+        manualIncomeSubtotal: value,
+        manualIncomeIvaAmount: ivaNum.toFixed(2),
+      });
+      return;
+    }
+    setManualIncomeSubtotal(value);
+  };
+
+  const handleManualIncomeIvaRateOptionChange = (option: ManualEntryIvaRateOption) => {
+    if (option === 'otro') {
+      setManualIncomeIvaRateOption(option);
+      return;
+    }
+
+    const subtotalNum = Number(manualIncomeSubtotal.replace(/,/g, '.'));
+    if (Number.isFinite(subtotalNum) && subtotalNum >= 0 && manualIncomeSubtotal.trim() !== '') {
+      const ivaNum = calculateIvaAmountFromSubtotal(subtotalNum, option);
+      patchUi({
+        manualIncomeIvaRateOption: option,
+        manualIncomeIvaAmount: ivaNum.toFixed(2),
+      });
+      return;
+    }
+
+    setManualIncomeIvaRateOption(option);
+  };
+
+  const handleManualIncomeIvaAmountChange = (value: string) => {
+    if (manualIncomeIvaRateOption === 'otro') {
+      setManualIncomeIvaAmount(value);
+    }
   };
 
   const handleCloseManualIncomeDialog = (open: boolean) => {
@@ -423,7 +467,7 @@ export function useInvoicesListViewModel({
     setManualIncomeFormError(null);
     const concept = manualIncomeConcept.trim();
     const subtotalNum = Number(manualIncomeSubtotal.replace(/,/g, '.'));
-    const ivaNum = Number(manualIncomeIva.replace(/,/g, '.')) || 0;
+    const ivaNum = Number(manualIncomeIvaAmount.replace(/,/g, '.')) || 0;
 
     if (!concept) {
       setManualIncomeFormError('El concepto es obligatorio.');
@@ -462,6 +506,7 @@ export function useInvoicesListViewModel({
           body: {
             concept,
             subtotal: subtotalNum,
+            iva: getIvaRateForApi(manualIncomeIvaRateOption, subtotalNum, ivaNum),
             iva_amount: ivaNum,
             notes: manualIncomeNotes.trim() || null,
             is_paid: manualIncomeIsPaid,
@@ -483,6 +528,7 @@ export function useInvoicesListViewModel({
           period_id: periodId,
           concept,
           subtotal: subtotalNum,
+          iva: getIvaRateForApi(manualIncomeIvaRateOption, subtotalNum, ivaNum),
           iva_amount: ivaNum,
           fecha: fechaStr,
           notes: manualIncomeNotes.trim() || undefined,
@@ -689,9 +735,11 @@ export function useInvoicesListViewModel({
     manualIncomeConcept,
     setManualIncomeConcept,
     manualIncomeSubtotal,
-    setManualIncomeSubtotal,
-    manualIncomeIva,
-    setManualIncomeIva,
+    manualIncomeIvaAmount,
+    manualIncomeIvaRateOption,
+    handleManualIncomeSubtotalChange,
+    handleManualIncomeIvaRateOptionChange,
+    handleManualIncomeIvaAmountChange,
     manualIncomeFecha,
     setManualIncomeFecha,
     manualIncomeNotes,

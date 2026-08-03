@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useReducer } from 'react';
+import type { ManualEntryIvaRateOption } from '@/lib/utils/manual-entry-iva';
 import type { Expense } from '@/lib/types/expenses';
 import {
   createInitialExpensesListUiState,
@@ -74,8 +75,12 @@ export function useExpensesListUiState(init: ExpensesListUiInit) {
     dispatch({ type: 'set_edit_subtotal', value });
   }, []);
 
-  const setEditIva = useCallback((value: string) => {
-    dispatch({ type: 'set_edit_iva', value });
+  const setEditIvaAmount = useCallback((value: string) => {
+    dispatch({ type: 'set_edit_iva_amount', value });
+  }, []);
+
+  const setEditIvaRateOption = useCallback((value: ManualEntryIvaRateOption) => {
+    dispatch({ type: 'set_edit_iva_rate_option', value });
   }, []);
 
   const setEditIsPaid = useCallback((value: boolean) => {
@@ -131,8 +136,10 @@ export function useExpensesListUiState(init: ExpensesListUiInit) {
     setEditConcept,
     editSubtotal: state.editSubtotal,
     setEditSubtotal,
-    editIva: state.editIva,
-    setEditIva,
+    editIvaAmount: state.editIvaAmount,
+    setEditIvaAmount,
+    editIvaRateOption: state.editIvaRateOption,
+    setEditIvaRateOption,
     editIsPaid: state.editIsPaid,
     setEditIsPaid,
     editPaymentDate: state.editPaymentDate,

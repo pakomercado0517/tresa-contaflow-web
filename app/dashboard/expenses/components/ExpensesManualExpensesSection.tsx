@@ -16,6 +16,10 @@ import { TableRowsSkeleton } from '@/components/common/skeletons/TableRowsSkelet
 import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { Expense } from '@/lib/types/expenses';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
+import {
+  getManualEntryTotal,
+  resolveManualEntryIvaAmount,
+} from '@/lib/utils/manual-entry-iva';
 
 interface ExpensesManualExpensesSectionProps {
   canAddManualExpense: boolean;
@@ -87,7 +91,8 @@ export function ExpensesManualExpensesSection({
             </TableHeader>
             <TableBody>
               {manualExpenses.map((expense) => {
-                const total = expense.subtotal + (expense.iva_amount ?? expense.iva ?? 0);
+                const ivaAmount = resolveManualEntryIvaAmount(expense);
+                const total = getManualEntryTotal(expense);
                 return (
                   <TableRow key={expense.id}>
                     <TableCell className="font-medium">
@@ -100,7 +105,7 @@ export function ExpensesManualExpensesSection({
                       {formatCurrency(expense.subtotal)}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-right tabular-nums">
-                      {formatCurrency(expense.iva_amount ?? expense.iva ?? 0)}
+                      {formatCurrency(ivaAmount)}
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(total)}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useReducer } from 'react';
+import type { ManualEntryIvaRateOption } from '@/lib/utils/manual-entry-iva';
 import {
   createInitialInvoicesListUiState,
   invoicesListUiReducer,
@@ -63,8 +64,12 @@ export function useInvoicesListUiState(init: InvoicesListUiInit) {
     (value: string) => patchUi({ manualIncomeSubtotal: value }),
     [patchUi]
   );
-  const setManualIncomeIva = useCallback(
-    (value: string) => patchUi({ manualIncomeIva: value }),
+  const setManualIncomeIvaAmount = useCallback(
+    (value: string) => patchUi({ manualIncomeIvaAmount: value }),
+    [patchUi]
+  );
+  const setManualIncomeIvaRateOption = useCallback(
+    (value: ManualEntryIvaRateOption) => patchUi({ manualIncomeIvaRateOption: value }),
     [patchUi]
   );
   const setManualIncomeFecha = useCallback(
@@ -141,8 +146,10 @@ export function useInvoicesListUiState(init: InvoicesListUiInit) {
     setManualIncomeConcept,
     manualIncomeSubtotal: state.manualIncomeSubtotal,
     setManualIncomeSubtotal,
-    manualIncomeIva: state.manualIncomeIva,
-    setManualIncomeIva,
+    manualIncomeIvaAmount: state.manualIncomeIvaAmount,
+    setManualIncomeIvaAmount,
+    manualIncomeIvaRateOption: state.manualIncomeIvaRateOption,
+    setManualIncomeIvaRateOption,
     manualIncomeFecha: state.manualIncomeFecha,
     setManualIncomeFecha,
     manualIncomeNotes: state.manualIncomeNotes,

@@ -77,9 +77,11 @@ export function ExpensesListContent(props: ExpensesListContentProps) {
     editConcept,
     setEditConcept,
     editSubtotal,
-    setEditSubtotal,
-    editIva,
-    setEditIva,
+    editIvaAmount,
+    editIvaRateOption,
+    handleEditSubtotalChange,
+    handleEditIvaRateOptionChange,
+    handleEditIvaAmountChange,
     editIsPaid,
     setEditIsPaid,
     editPaymentDate,
@@ -208,9 +210,11 @@ export function ExpensesListContent(props: ExpensesListContentProps) {
           editConcept={editConcept}
           onEditConceptChange={setEditConcept}
           editSubtotal={editSubtotal}
-          onEditSubtotalChange={setEditSubtotal}
-          editIva={editIva}
-          onEditIvaChange={setEditIva}
+          onEditSubtotalChange={handleEditSubtotalChange}
+          editIvaAmount={editIvaAmount}
+          onEditIvaAmountChange={handleEditIvaAmountChange}
+          editIvaRateOption={editIvaRateOption}
+          onEditIvaRateOptionChange={handleEditIvaRateOptionChange}
           editIsPaid={editIsPaid}
           onEditIsPaidChange={setEditIsPaid}
           editPaymentDate={editPaymentDate}
