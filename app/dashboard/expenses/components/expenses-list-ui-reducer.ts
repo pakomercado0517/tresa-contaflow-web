@@ -1,4 +1,9 @@
 import type { Expense } from '@/lib/types/expenses';
+import type { ManualEntryIvaRateOption } from '@/lib/utils/manual-entry-iva';
+import {
+  inferIvaRateOption,
+  resolveManualEntryIvaAmount,
+} from '@/lib/utils/manual-entry-iva';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 export interface ExpensesListUiState {
@@ -17,7 +22,8 @@ export interface ExpensesListUiState {
   editingManualExpense: Expense | null;
   editConcept: string;
   editSubtotal: string;
-  editIva: string;
+  editIvaAmount: string;
+  editIvaRateOption: ManualEntryIvaRateOption;
   editIsPaid: boolean;
   editPaymentDate: string;
   editCategoria: string;
@@ -51,7 +57,8 @@ export function createInitialExpensesListUiState(init: ExpensesListUiInit): Expe
     editingManualExpense: null,
     editConcept: '',
     editSubtotal: '',
-    editIva: '',
+    editIvaAmount: '',
+    editIvaRateOption: '16',
     editIsPaid: false,
     editPaymentDate: '',
     editCategoria: '',
@@ -90,8 +97,9 @@ export type ExpensesListUiAction =
   | { type: 'open_edit_manual'; expense: Expense }
   | { type: 'close_edit_manual' }
   | { type: 'set_edit_concept'; value: string }
-  | { type: 'set_edit_subtotal'; value: string }
-  | { type: 'set_edit_iva'; value: string }
+  | { type: 'set_edit_subtotal'; value: string; ivaAmount?: string }
+  | { type: 'set_edit_iva_amount'; value: string }
+  | { type: 'set_edit_iva_rate_option'; value: ManualEntryIvaRateOption; ivaAmount?: string }
   | { type: 'set_edit_is_paid'; value: boolean }
   | { type: 'set_edit_payment_date'; value: string }
   | { type: 'set_edit_categoria'; value: string }
@@ -170,18 +178,21 @@ export function expensesListUiReducer(
       return { ...state, deleteError: action.message, isDeleting: false };
     case 'delete_end':
       return { ...state, isDeleting: false };
-    case 'open_edit_manual':
+    case 'open_edit_manual': {
+      const ivaAmount = resolveManualEntryIvaAmount(action.expense);
       return {
         ...state,
         editingManualExpense: action.expense,
         editConcept: action.expense.concepto ?? '',
         editSubtotal: action.expense.subtotal.toString(),
-        editIva: String(action.expense.iva_amount ?? action.expense.iva ?? 0),
+        editIvaAmount: String(ivaAmount),
+        editIvaRateOption: inferIvaRateOption(action.expense.iva),
         editIsPaid: action.expense.is_paid ?? false,
         editPaymentDate: action.expense.payment_date ?? '',
         editCategoria: action.expense.categoria ?? '',
         editError: null,
       };
+    }
     case 'close_edit_manual':
       return state.isUpdatingManual
         ? state
@@ -189,9 +200,19 @@ export function expensesListUiReducer(
     case 'set_edit_concept':
       return { ...state, editConcept: action.value };
     case 'set_edit_subtotal':
-      return { ...state, editSubtotal: action.value };
-    case 'set_edit_iva':
-      return { ...state, editIva: action.value };
+      return {
+        ...state,
+        editSubtotal: action.value,
+        ...(action.ivaAmount !== undefined ? { editIvaAmount: action.ivaAmount } : {}),
+      };
+    case 'set_edit_iva_amount':
+      return { ...state, editIvaAmount: action.value };
+    case 'set_edit_iva_rate_option':
+      return {
+        ...state,
+        editIvaRateOption: action.value,
+        ...(action.ivaAmount !== undefined ? { editIvaAmount: action.ivaAmount } : {}),
+      };
     case 'set_edit_is_paid':
       return { ...state, editIsPaid: action.value };
     case 'set_edit_payment_date':

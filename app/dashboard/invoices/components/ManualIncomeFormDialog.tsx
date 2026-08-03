@@ -5,6 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -14,6 +21,10 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
+import {
+  MANUAL_ENTRY_IVA_RATE_OPTIONS,
+  type ManualEntryIvaRateOption,
+} from '@/lib/utils/manual-entry-iva';
 
 interface ManualIncomeFormDialogProps {
   open: boolean;
@@ -22,8 +33,10 @@ interface ManualIncomeFormDialogProps {
   onConceptChange: (value: string) => void;
   subtotal: string;
   onSubtotalChange: (value: string) => void;
-  iva: string;
-  onIvaChange: (value: string) => void;
+  ivaAmount: string;
+  onIvaAmountChange: (value: string) => void;
+  ivaRateOption: ManualEntryIvaRateOption;
+  onIvaRateOptionChange: (value: ManualEntryIvaRateOption) => void;
   fecha: string;
   onFechaChange: (value: string) => void;
   notes: string;
@@ -45,8 +58,10 @@ export function ManualIncomeFormDialog({
   onConceptChange,
   subtotal,
   onSubtotalChange,
-  iva,
-  onIvaChange,
+  ivaAmount,
+  onIvaAmountChange,
+  ivaRateOption,
+  onIvaRateOptionChange,
   fecha,
   onFechaChange,
   notes,
@@ -60,6 +75,10 @@ export function ManualIncomeFormDialog({
   onOpenChange,
   onSubmit,
 }: ManualIncomeFormDialogProps) {
+  const isIvaManual = ivaRateOption === 'otro';
+  const selectedRateLabel =
+    MANUAL_ENTRY_IVA_RATE_OPTIONS.find((option) => option.value === ivaRateOption)?.label ?? 'IVA';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-105">
@@ -83,6 +102,29 @@ export function ManualIncomeFormDialog({
               placeholder="Ej. Honorarios diciembre"
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="manual-income-iva-rate">Tasa de IVA</Label>
+            <Select
+              value={ivaRateOption}
+              onValueChange={(value) => onIvaRateOptionChange(value as ManualEntryIvaRateOption)}
+            >
+              <SelectTrigger id="manual-income-iva-rate">
+                <SelectValue placeholder="Selecciona la tasa de IVA" />
+              </SelectTrigger>
+              <SelectContent>
+                {MANUAL_ENTRY_IVA_RATE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isIvaManual && (
+              <p className="text-muted-foreground text-xs">
+                Captura el monto de IVA manualmente en el campo inferior.
+              </p>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="manual-income-subtotal">Subtotal (MXN)</Label>
@@ -96,14 +138,21 @@ export function ManualIncomeFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="manual-income-iva">IVA (MXN)</Label>
+              <Label htmlFor="manual-income-iva-amount">
+                IVA (MXN){' '}
+                <span className="text-muted-foreground">
+                  ({isIvaManual ? 'manual' : selectedRateLabel})
+                </span>
+              </Label>
               <Input
-                id="manual-income-iva"
+                id="manual-income-iva-amount"
                 type="text"
                 inputMode="decimal"
-                value={iva}
-                onChange={(e) => onIvaChange(e.target.value)}
+                value={ivaAmount}
+                onChange={(e) => onIvaAmountChange(e.target.value)}
                 placeholder="0.00"
+                disabled={!isIvaManual}
+                className={isIvaManual ? undefined : 'bg-muted/50'}
               />
             </div>
           </div>

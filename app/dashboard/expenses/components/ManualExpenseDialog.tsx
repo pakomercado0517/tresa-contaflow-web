@@ -73,7 +73,8 @@ export function ManualExpenseDialog({
             fecha={vm.form.fecha}
             total={vm.form.total}
             subtotal={vm.form.subtotal}
-            iva={vm.form.iva}
+            ivaAmount={vm.form.ivaAmount}
+            ivaRateOption={vm.form.ivaRateOption}
             concepto={vm.form.concepto}
             categoria={vm.form.categoria}
             error={vm.form.error}
@@ -81,6 +82,8 @@ export function ManualExpenseDialog({
             onFechaChange={(value) => vm.dispatchForm({ type: 'set_fecha', value })}
             onTotalChange={vm.handleTotalChange}
             onSubtotalChange={vm.handleSubtotalChange}
+            onIvaRateOptionChange={vm.handleIvaRateOptionChange}
+            onIvaAmountChange={vm.handleIvaAmountChange}
             onConceptoChange={(value) => vm.dispatchForm({ type: 'set_concepto', value })}
             onCategoriaChange={(value) => vm.dispatchForm({ type: 'set_categoria', value })}
           />

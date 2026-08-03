@@ -1,5 +1,10 @@
 import type { Invoice } from '@/lib/types/invoices';
 import type { ManualIncome } from '@/lib/types/manual-incomes';
+import type { ManualEntryIvaRateOption } from '@/lib/utils/manual-entry-iva';
+import {
+  inferIvaRateOption,
+  resolveManualEntryIvaAmount,
+} from '@/lib/utils/manual-entry-iva';
 import { getCurrentMonthYearInAppTimezone } from '@/lib/utils/app-calendar';
 
 export interface InvoicesListUiState {
@@ -16,7 +21,8 @@ export interface InvoicesListUiState {
   addManualIncomeOpen: boolean;
   manualIncomeConcept: string;
   manualIncomeSubtotal: string;
-  manualIncomeIva: string;
+  manualIncomeIvaAmount: string;
+  manualIncomeIvaRateOption: ManualEntryIvaRateOption;
   manualIncomeFecha: string;
   manualIncomeNotes: string;
   manualIncomeFormError: string | null;
@@ -53,7 +59,8 @@ export function createInitialInvoicesListUiState(init: InvoicesListUiInit): Invo
     addManualIncomeOpen: false,
     manualIncomeConcept: '',
     manualIncomeSubtotal: '',
-    manualIncomeIva: '',
+    manualIncomeIvaAmount: '',
+    manualIncomeIvaRateOption: '16',
     manualIncomeFecha: '',
     manualIncomeNotes: '',
     manualIncomeFormError: null,
@@ -125,19 +132,22 @@ export function invoicesListUiReducer(
         deleteError: null,
         deleteConfirmation: '',
       };
-    case 'open_edit_manual_income':
+    case 'open_edit_manual_income': {
+      const ivaAmount = resolveManualEntryIvaAmount(action.income);
       return {
         ...state,
         editingManualIncome: action.income,
         manualIncomeConcept: action.income.concept,
         manualIncomeSubtotal: String(action.income.subtotal),
-        manualIncomeIva: String(action.income.iva_amount ?? 0),
+        manualIncomeIvaAmount: String(ivaAmount),
+        manualIncomeIvaRateOption: inferIvaRateOption(action.income.iva),
         manualIncomeFecha: action.income.fecha,
         manualIncomeNotes: action.income.notes ?? '',
         manualIncomeIsPaid: action.income.is_paid,
         manualIncomePaymentDate: action.income.payment_date ?? '',
         manualIncomeFormError: null,
       };
+    }
     case 'close_edit_manual_income':
       return state.isDeletingManualIncome
         ? state
@@ -147,7 +157,8 @@ export function invoicesListUiReducer(
         ...state,
         manualIncomeConcept: '',
         manualIncomeSubtotal: '',
-        manualIncomeIva: '',
+        manualIncomeIvaAmount: '',
+        manualIncomeIvaRateOption: '16',
         manualIncomeFecha: '',
         manualIncomeNotes: '',
         manualIncomeFormError: null,

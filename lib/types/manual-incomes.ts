@@ -9,7 +9,9 @@ export interface ManualIncome {
   period_id: string;
   concept: string;
   subtotal: number;
-  iva_amount: number;
+  /** Tasa de IVA en porcentaje (16, 8 u otro valor derivado) */
+  iva: number;
+  iva_amount?: number;
   fecha: string;
   is_paid: boolean;
   payment_date: string | null;
@@ -34,6 +36,8 @@ export interface CreateManualIncomeRequest {
   period_id: string;
   concept: string;
   subtotal: number;
+  /** Tasa de IVA en porcentaje (16, 8 u otro valor derivado) */
+  iva: number;
   iva_amount?: number;
   fecha: string;
   notes?: string;
@@ -42,6 +46,8 @@ export interface CreateManualIncomeRequest {
 export interface UpdateManualIncomeRequest {
   concept?: string;
   subtotal?: number;
+  /** Tasa de IVA en porcentaje (16, 8 u otro valor derivado) */
+  iva?: number;
   iva_amount?: number;
   is_paid?: boolean;
   payment_date?: string | null;

@@ -11,6 +11,13 @@ import {
 import type { Subscription } from '@/lib/types/subscription';
 import type { Profile } from '@/lib/types/profiles';
 import {
+  calculateAmountsFromTotal,
+  calculateIvaAmountFromSubtotal,
+  getIvaRateForApi,
+  type ManualEntryIvaRateOption,
+  calculateSubtotalFromTotalAndIvaAmount,
+} from '@/lib/utils/manual-entry-iva';
+import {
   createInitialManualExpenseFormState,
   manualExpenseFormReducer,
 } from './manual-expense-form-reducer';
@@ -60,7 +67,8 @@ export function useManualExpenseDialogForm({
     fecha,
     total,
     subtotal,
-    iva,
+    ivaAmount,
+    ivaRateOption,
     concepto,
     categoria,
   } = form;
@@ -79,33 +87,99 @@ export function useManualExpenseDialogForm({
   const handleTotalChange = (value: string) => {
     if (value && !isNaN(parseFloat(value))) {
       const totalNum = parseFloat(value);
-      const subtotalNum = totalNum / 1.16;
-      const ivaNum = totalNum - subtotalNum;
+
+      if (ivaRateOption === 'otro') {
+        const ivaNum = parseFloat(ivaAmount) || 0;
+        const subtotalNum = calculateSubtotalFromTotalAndIvaAmount(totalNum, ivaNum);
+        dispatchForm({
+          type: 'set_total',
+          value,
+          subtotal: subtotalNum.toFixed(2),
+          ivaAmount: ivaNum.toFixed(2),
+        });
+        return;
+      }
+
+      const { subtotal: subtotalNum, ivaAmount: ivaNum } = calculateAmountsFromTotal(
+        totalNum,
+        ivaRateOption
+      );
       dispatchForm({
         type: 'set_total',
         value,
         subtotal: subtotalNum.toFixed(2),
-        iva: ivaNum.toFixed(2),
+        ivaAmount: ivaNum.toFixed(2),
       });
     } else {
-      dispatchForm({ type: 'set_total', value, subtotal: '', iva: '' });
+      dispatchForm({ type: 'set_total', value, subtotal: '', ivaAmount: '' });
     }
   };
 
   const handleSubtotalChange = (value: string) => {
     if (value && !isNaN(parseFloat(value))) {
       const subtotalNum = parseFloat(value);
-      const ivaNum = subtotalNum * 0.16;
+      const ivaNum =
+        ivaRateOption === 'otro'
+          ? parseFloat(ivaAmount) || 0
+          : calculateIvaAmountFromSubtotal(subtotalNum, ivaRateOption);
       const totalNum = subtotalNum + ivaNum;
       dispatchForm({
         type: 'set_subtotal',
         value,
-        iva: ivaNum.toFixed(2),
+        ivaAmount: ivaNum.toFixed(2),
         total: totalNum.toFixed(2),
       });
     } else {
-      dispatchForm({ type: 'set_subtotal', value, iva: '', total: '' });
+      dispatchForm({ type: 'set_subtotal', value, ivaAmount: '', total: '' });
     }
+  };
+
+  const handleIvaRateOptionChange = (option: ManualEntryIvaRateOption) => {
+    if (option === 'otro') {
+      dispatchForm({ type: 'set_iva_rate_option', value: option });
+      return;
+    }
+
+    const subtotalNum = parseFloat(subtotal);
+    if (subtotalNum && !isNaN(subtotalNum)) {
+      const ivaNum = calculateIvaAmountFromSubtotal(subtotalNum, option);
+      dispatchForm({
+        type: 'set_iva_rate_option',
+        value: option,
+        ivaAmount: ivaNum.toFixed(2),
+        total: (subtotalNum + ivaNum).toFixed(2),
+      });
+      return;
+    }
+
+    const totalNum = parseFloat(total);
+    if (totalNum && !isNaN(totalNum)) {
+      const { subtotal: nextSubtotal, ivaAmount: nextIva } = calculateAmountsFromTotal(
+        totalNum,
+        option
+      );
+      dispatchForm({
+        type: 'set_iva_rate_option',
+        value: option,
+        subtotal: nextSubtotal.toFixed(2),
+        ivaAmount: nextIva.toFixed(2),
+        total: totalNum.toFixed(2),
+      });
+      return;
+    }
+
+    dispatchForm({ type: 'set_iva_rate_option', value: option });
+  };
+
+  const handleIvaAmountChange = (value: string) => {
+    if (ivaRateOption !== 'otro') return;
+
+    const subtotalNum = parseFloat(subtotal);
+    const ivaNum = parseFloat(value) || 0;
+    const nextTotal =
+      subtotalNum && !isNaN(subtotalNum) ? (subtotalNum + ivaNum).toFixed(2) : total;
+
+    dispatchForm({ type: 'set_iva_amount', value, total: nextTotal });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -143,7 +217,7 @@ export function useManualExpenseDialogForm({
     }
 
     const subtotalNum = parseFloat(subtotal);
-    const ivaNum = parseFloat(iva) || 0;
+    const ivaNum = parseFloat(ivaAmount) || 0;
 
     if (!Number.isFinite(subtotalNum) || subtotalNum < 0) {
       dispatchForm({
@@ -171,6 +245,7 @@ export function useManualExpenseDialogForm({
         period_id: periodId,
         concept,
         subtotal: subtotalNum,
+        iva: getIvaRateForApi(ivaRateOption, subtotalNum, ivaNum),
         iva_amount: ivaNum,
         fecha,
         type: 'manual',
@@ -208,7 +283,8 @@ export function useManualExpenseDialogForm({
       fecha,
       total,
       subtotal,
-      iva,
+      ivaAmount,
+      ivaRateOption,
       concepto,
       categoria,
     },
@@ -222,6 +298,8 @@ export function useManualExpenseDialogForm({
     dispatchForm,
     handleTotalChange,
     handleSubtotalChange,
+    handleIvaRateOptionChange,
+    handleIvaAmountChange,
     handleSubmit,
     handleOpenChange,
   };

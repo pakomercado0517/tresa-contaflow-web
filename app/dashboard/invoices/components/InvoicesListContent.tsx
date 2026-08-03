@@ -76,9 +76,11 @@ export function InvoicesListContent(props: InvoicesListContentProps) {
     manualIncomeConcept,
     setManualIncomeConcept,
     manualIncomeSubtotal,
-    setManualIncomeSubtotal,
-    manualIncomeIva,
-    setManualIncomeIva,
+    manualIncomeIvaAmount,
+    manualIncomeIvaRateOption,
+    handleManualIncomeSubtotalChange,
+    handleManualIncomeIvaRateOptionChange,
+    handleManualIncomeIvaAmountChange,
     manualIncomeFecha,
     setManualIncomeFecha,
     manualIncomeNotes,
@@ -202,9 +204,11 @@ export function InvoicesListContent(props: InvoicesListContentProps) {
         concept={manualIncomeConcept}
         onConceptChange={setManualIncomeConcept}
         subtotal={manualIncomeSubtotal}
-        onSubtotalChange={setManualIncomeSubtotal}
-        iva={manualIncomeIva}
-        onIvaChange={setManualIncomeIva}
+        onSubtotalChange={handleManualIncomeSubtotalChange}
+        ivaAmount={manualIncomeIvaAmount}
+        onIvaAmountChange={handleManualIncomeIvaAmountChange}
+        ivaRateOption={manualIncomeIvaRateOption}
+        onIvaRateOptionChange={handleManualIncomeIvaRateOptionChange}
         fecha={manualIncomeFecha}
         onFechaChange={setManualIncomeFecha}
         notes={manualIncomeNotes}

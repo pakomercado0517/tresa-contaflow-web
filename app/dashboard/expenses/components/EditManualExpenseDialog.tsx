@@ -20,6 +20,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  MANUAL_ENTRY_IVA_RATE_OPTIONS,
+  type ManualEntryIvaRateOption,
+} from '@/lib/utils/manual-entry-iva';
 import { MANUAL_EXPENSE_CATEGORIES } from './expenses-list-display-utils';
 
 interface EditManualExpenseDialogProps {
@@ -28,8 +32,10 @@ interface EditManualExpenseDialogProps {
   onEditConceptChange: (value: string) => void;
   editSubtotal: string;
   onEditSubtotalChange: (value: string) => void;
-  editIva: string;
-  onEditIvaChange: (value: string) => void;
+  editIvaAmount: string;
+  onEditIvaAmountChange: (value: string) => void;
+  editIvaRateOption: ManualEntryIvaRateOption;
+  onEditIvaRateOptionChange: (value: ManualEntryIvaRateOption) => void;
   editIsPaid: boolean;
   onEditIsPaidChange: (value: boolean) => void;
   editPaymentDate: string;
@@ -48,8 +54,10 @@ export function EditManualExpenseDialog({
   onEditConceptChange,
   editSubtotal,
   onEditSubtotalChange,
-  editIva,
-  onEditIvaChange,
+  editIvaAmount,
+  onEditIvaAmountChange,
+  editIvaRateOption,
+  onEditIvaRateOptionChange,
   editIsPaid,
   onEditIsPaidChange,
   editPaymentDate,
@@ -61,6 +69,8 @@ export function EditManualExpenseDialog({
   onClose,
   onSubmit,
 }: EditManualExpenseDialogProps) {
+  const isIvaManual = editIvaRateOption === 'otro';
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="sm:max-w-105">
@@ -80,6 +90,24 @@ export function EditManualExpenseDialog({
               placeholder="Ej. Viáticos marzo"
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="edit-iva-rate">Tasa de IVA</Label>
+            <Select
+              value={editIvaRateOption}
+              onValueChange={(value) => onEditIvaRateOptionChange(value as ManualEntryIvaRateOption)}
+            >
+              <SelectTrigger id="edit-iva-rate">
+                <SelectValue placeholder="Selecciona la tasa de IVA" />
+              </SelectTrigger>
+              <SelectContent>
+                {MANUAL_ENTRY_IVA_RATE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-subtotal">Subtotal (MXN)</Label>
@@ -93,14 +121,18 @@ export function EditManualExpenseDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-iva">IVA (MXN)</Label>
+              <Label htmlFor="edit-iva-amount">
+                IVA (MXN) {isIvaManual ? '(manual)' : ''}
+              </Label>
               <Input
-                id="edit-iva"
+                id="edit-iva-amount"
                 type="text"
                 inputMode="decimal"
-                value={editIva}
-                onChange={(e) => onEditIvaChange(e.target.value)}
+                value={editIvaAmount}
+                onChange={(e) => onEditIvaAmountChange(e.target.value)}
                 placeholder="0.00"
+                disabled={!isIvaManual}
+                className={isIvaManual ? undefined : 'bg-muted/50'}
               />
             </div>
           </div>

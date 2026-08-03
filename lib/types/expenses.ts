@@ -119,6 +119,8 @@ export interface CreateAccruedExpenseRequest {
   period_id: string;
   concept: string;
   subtotal: number;
+  /** Tasa de IVA en porcentaje (16, 8 u otro valor derivado) */
+  iva: number;
   iva_amount?: number;
   fecha: string;
   type: 'manual';
@@ -129,6 +131,8 @@ export interface CreateAccruedExpenseRequest {
 export interface UpdateAccruedExpenseRequest {
   concept?: string;
   subtotal?: number;
+  /** Tasa de IVA en porcentaje (16, 8 u otro valor derivado) */
+  iva?: number;
   iva_amount?: number;
   is_paid?: boolean;
   payment_date?: string | null;

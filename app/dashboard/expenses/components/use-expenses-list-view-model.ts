@@ -29,6 +29,11 @@ import type {
   PaymentComplementsPagination,
 } from '@/lib/types/payment-complements';
 import { getExpenseDeleteErrorMessage } from './expenses-list-display-utils';
+import {
+  calculateIvaAmountFromSubtotal,
+  getIvaRateForApi,
+  type ManualEntryIvaRateOption,
+} from '@/lib/utils/manual-entry-iva';
 
 export interface ExpensesListViewModelInput {
   expenses: Expense[];
@@ -118,8 +123,10 @@ export function useExpensesListViewModel({
     setEditConcept,
     editSubtotal,
     setEditSubtotal,
-    editIva,
-    setEditIva,
+    editIvaAmount,
+    setEditIvaAmount,
+    editIvaRateOption,
+    setEditIvaRateOption,
     editIsPaid,
     setEditIsPaid,
     editPaymentDate,
@@ -408,12 +415,57 @@ export function useExpensesListViewModel({
     dispatchUi({ type: 'close_edit_manual' });
   };
 
+  const handleEditSubtotalChange = (value: string) => {
+    const subtotalNum = Number(value.replace(/,/g, '.'));
+    if (
+      editIvaRateOption !== 'otro' &&
+      Number.isFinite(subtotalNum) &&
+      subtotalNum >= 0 &&
+      value.trim() !== ''
+    ) {
+      const ivaNum = calculateIvaAmountFromSubtotal(subtotalNum, editIvaRateOption);
+      dispatchUi({
+        type: 'set_edit_subtotal',
+        value,
+        ivaAmount: ivaNum.toFixed(2),
+      });
+      return;
+    }
+    setEditSubtotal(value);
+  };
+
+  const handleEditIvaRateOptionChange = (option: ManualEntryIvaRateOption) => {
+    if (option === 'otro') {
+      setEditIvaRateOption(option);
+      return;
+    }
+
+    const subtotalNum = Number(editSubtotal.replace(/,/g, '.'));
+    if (Number.isFinite(subtotalNum) && subtotalNum >= 0 && editSubtotal.trim() !== '') {
+      const ivaNum = calculateIvaAmountFromSubtotal(subtotalNum, option);
+      dispatchUi({
+        type: 'set_edit_iva_rate_option',
+        value: option,
+        ivaAmount: ivaNum.toFixed(2),
+      });
+      return;
+    }
+
+    setEditIvaRateOption(option);
+  };
+
+  const handleEditIvaAmountChange = (value: string) => {
+    if (editIvaRateOption === 'otro') {
+      setEditIvaAmount(value);
+    }
+  };
+
   const handleSubmitEditManual = async () => {
     if (!editingManualExpense) return;
     dispatchUi({ type: 'set_edit_error', message: null });
     const concept = editConcept.trim();
     const subtotalNum = Number(editSubtotal.replace(/,/g, '.'));
-    const ivaNum = Number(editIva.replace(/,/g, '.')) || 0;
+    const ivaNum = Number(editIvaAmount.replace(/,/g, '.')) || 0;
     if (!concept) {
       dispatchUi({ type: 'set_edit_error', message: 'El concepto es obligatorio.' });
       return;
@@ -431,6 +483,7 @@ export function useExpensesListViewModel({
       await updateAccruedExpenseClient(editingManualExpense.id, {
         concept,
         subtotal: subtotalNum,
+        iva: getIvaRateForApi(editIvaRateOption, subtotalNum, ivaNum),
         iva_amount: ivaNum,
         is_paid: editIsPaid,
         payment_date: editIsPaid ? editPaymentDate || null : null,
@@ -515,9 +568,11 @@ export function useExpensesListViewModel({
     editConcept,
     setEditConcept,
     editSubtotal,
-    setEditSubtotal,
-    editIva,
-    setEditIva,
+    editIvaAmount,
+    editIvaRateOption,
+    handleEditSubtotalChange,
+    handleEditIvaRateOptionChange,
+    handleEditIvaAmountChange,
     editIsPaid,
     setEditIsPaid,
     editPaymentDate,
