@@ -12,12 +12,14 @@ export interface LoginRequest {
   password: string;
 }
 
+/** Dual: body opcional si ya hay cookie refreshToken */
 export interface RefreshTokenRequest {
-  refreshToken: string;
+  refreshToken?: string;
 }
 
+/** Dual: body opcional si ya hay cookie refreshToken */
 export interface LogoutRequest {
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export interface VerifyEmailRequest {
@@ -52,14 +54,31 @@ export interface RegisterResponse {
   user: User;
 }
 
+/**
+ * Respuesta de login/Google del API (modo dual).
+ * En el browser vía BFF solo se usa `user` / mensajes; no persistir tokens.
+ */
 export interface LoginResponse {
   message: string;
+  /** Presente en dual/migración; no usar en el cliente web */
   accessToken: string;
+  /** Presente en dual/migración; no usar en el cliente web */
   refreshToken: string;
   user: User;
 }
 
+/** Respuesta segura para UI tras login (sin JWT) */
+export interface LoginSessionResult {
+  message?: string;
+  user: Pick<User, "email_verified"> & Partial<User>;
+}
+
+/**
+ * Refresh (modo dual). El browser vía BFF no debe leer ni guardar accessToken.
+ */
 export interface RefreshTokenResponse {
+  message?: string;
+  /** Presente en dual/migración; la cookie Set-Cookie es la fuente de verdad */
   accessToken: string;
 }
 

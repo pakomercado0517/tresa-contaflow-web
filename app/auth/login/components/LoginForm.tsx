@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
-import { loginAction } from '../actions';
+import { loginWithPassword } from '@/lib/api/auth-session.client';
 
 const GoogleLoginButton = dynamic(
   () => import('./GoogleLoginButton').then((mod) => mod.GoogleLoginButton),
@@ -24,6 +24,7 @@ const GoogleLoginButton = dynamic(
 );
 
 export function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +36,22 @@ export function LoginForm() {
 
   async function handleSubmit(formData: FormData) {
     setError(null);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
     startTransition(async () => {
-      const result = await loginAction(formData);
+      const result = await loginWithPassword(email, password);
       if (result.error) {
         setError(result.error);
+        return;
       }
+
+      if (result.emailVerified === false) {
+        router.replace('/auth/verify-email');
+        return;
+      }
+
+      router.replace('/dashboard');
     });
   }
 

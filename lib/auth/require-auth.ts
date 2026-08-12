@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 interface AuthenticatedSession {
-  accessToken: string;
+  hasSession: true;
 }
 
 /**
@@ -16,5 +16,5 @@ export async function requireAuth(): Promise<AuthenticatedSession> {
     redirect('/auth/login');
   }
 
-  return { accessToken };
+  return { hasSession: true };
 }
