@@ -1,6 +1,6 @@
 import "./report-pdf.css";
-import { getInvoices } from "@/lib/api/invoices";
-import { listPaymentComplements } from "@/lib/api/payment-complements";
+import { getAllInvoices } from "@/lib/api/invoices";
+import { listAllPaymentComplements } from "@/lib/api/payment-complements";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
@@ -61,34 +61,28 @@ export default async function InvoicesReportePreviewPage({ searchParams }: Previ
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
     : defaultAño;
 
-  const [profilesRes, invoicesRes, complementsRes, regimenesCatalog, currentUser] =
+  const [profilesRes, invoicesRaw, complements, regimenesCatalog, currentUser] =
     await Promise.all([
       getProfiles(),
-      getInvoices({
+      getAllInvoices({
         profileId,
         mes,
         año,
         regimen_fiscal: regimenFiscal,
-        limit: 1000,
-        page: 1,
         search,
       }),
-      listPaymentComplements({
+      listAllPaymentComplements({
         role: "INGRESO",
         profile_id: profileId,
         mes,
         año,
-        limit: 100,
-        page: 1,
       }),
       getRegimenesFiscales(),
       getCurrentUser(),
     ]);
 
   const profiles = profilesRes.data ?? [];
-  const invoicesRaw = invoicesRes.data ?? [];
   const invoices = invoicesRaw.filter((inv) => inv.tipo !== "COMPLEMENTO_PAGO");
-  const complements = complementsRes.data ?? [];
   const activeProfile = profileId
     ? (profiles.find((p) => p.id === profileId) ?? null)
     : null;

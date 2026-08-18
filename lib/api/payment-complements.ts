@@ -1,7 +1,9 @@
 import { serverApiClient } from './server-client';
+import { fetchAllPages } from './fetch-all-pages';
 import type {
   ComplementRole,
   ListPaymentComplementsResponse,
+  PaymentComplementListItem,
 } from '@/lib/types/payment-complements';
 
 export interface ListPaymentComplementsParams {
@@ -27,12 +29,20 @@ function buildPaymentComplementsQuery(params: ListPaymentComplementsParams): str
 /**
  * Lista complementos de pago (Server Component only).
  */
-export async function listPaymentComplements(
+async function listPaymentComplements(
   params: ListPaymentComplementsParams
 ): Promise<ListPaymentComplementsResponse> {
   const queryString = buildPaymentComplementsQuery(params);
   return serverApiClient<ListPaymentComplementsResponse>(
     `/api/payment-complements?${queryString}`,
     { redirectOnAuthError: true }
+  );
+}
+
+export async function listAllPaymentComplements(
+  params: Omit<ListPaymentComplementsParams, 'page' | 'limit'>
+): Promise<PaymentComplementListItem[]> {
+  return fetchAllPages((page, limit) =>
+    listPaymentComplements({ ...params, page, limit })
   );
 }

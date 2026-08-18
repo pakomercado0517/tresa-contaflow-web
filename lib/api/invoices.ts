@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { serverApiClient } from './server-client';
-import type { GetInvoicesResponse } from '@/lib/types/invoices';
+import { fetchAllPages } from './fetch-all-pages';
+import type { GetInvoicesResponse, Invoice } from '@/lib/types/invoices';
 import {
   DEFAULT_PERIOD_METRICS,
   type PeriodMetricsResponse,
@@ -59,6 +60,12 @@ export async function getInvoices(params?: GetInvoicesParams): Promise<GetInvoic
     params?.limit,
     params?.search
   );
+}
+
+export async function getAllInvoices(
+  params?: Omit<GetInvoicesParams, 'page' | 'limit'>
+): Promise<Invoice[]> {
+  return fetchAllPages((page, limit) => getInvoices({ ...params, page, limit }));
 }
 
 async function fetchMetrics(

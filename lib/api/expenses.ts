@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { serverApiClient } from "./server-client";
-import type { GetExpensesResponse } from "@/lib/types/expenses";
+import { fetchAllPages } from "./fetch-all-pages";
+import type { Expense, GetExpensesResponse } from "@/lib/types/expenses";
 
 interface GetExpensesParams {
   profileId?: string;
@@ -65,4 +66,10 @@ export async function getExpenses(
     params?.limit,
     params?.search
   );
+}
+
+export async function getAllExpenses(
+  params?: Omit<GetExpensesParams, "page" | "limit">
+): Promise<Expense[]> {
+  return fetchAllPages((page, limit) => getExpenses({ ...params, page, limit }));
 }
