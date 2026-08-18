@@ -1,8 +1,10 @@
 import { apiClient } from './client';
+import { fetchAllPages } from './fetch-all-pages';
 import type {
   UploadExpenseResponse,
   DeleteExpenseResponse,
   GetExpensesResponse,
+  Expense,
 } from '@/lib/types/expenses';
 
 export interface GetExpensesClientParams {
@@ -39,6 +41,12 @@ export async function getExpensesClient(
   return apiClient<GetExpensesResponse>(endpoint, {
     requireAuth: true,
   });
+}
+
+export async function getAllExpensesClient(
+  params?: Omit<GetExpensesClientParams, 'page' | 'limit'>
+): Promise<Expense[]> {
+  return fetchAllPages((page, limit) => getExpensesClient({ ...params, page, limit }));
 }
 
 /**

@@ -1,6 +1,6 @@
 import "./report-pdf.css";
-import { getMetrics, getInvoices } from "@/lib/api/invoices";
-import { getExpenses } from "@/lib/api/expenses";
+import { getMetrics, getAllInvoices } from "@/lib/api/invoices";
+import { getAllExpenses } from "@/lib/api/expenses";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
@@ -81,12 +81,12 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
   const añoValid =
     Number.isFinite(año) && año >= 2000 && año <= 2100 ? año : defaultAño;
 
-  const [metrics, profiles, invoicesRes, expensesRes, regimenesCatalog, currentUser] =
+  const [metrics, profiles, invoices, expenses, regimenesCatalog, currentUser] =
     await Promise.all([
       getMetrics(profileId, mesValid, añoValid),
       getProfiles(),
-      getInvoices({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
-      getExpenses({ profileId, mes: mesValid, año: añoValid, limit: 1000 }),
+      getAllInvoices({ profileId, mes: mesValid, año: añoValid }),
+      getAllExpenses({ profileId, mes: mesValid, año: añoValid }),
       getRegimenesFiscales(),
       getCurrentUser(),
     ]);
@@ -179,11 +179,11 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
 
   const allProfileRfcs = (profiles.data ?? []).flatMap((p) => (p.rfc ? [p.rfc] : []));
   const ingresosRows = buildIngresosRows(
-    invoicesRes.data ?? [],
+    invoices,
     profileRfc,
     allProfileRfcs
   );
-  const egresosRows = buildEgresosRows(expensesRes.data ?? []);
+  const egresosRows = buildEgresosRows(expenses);
   const totalIngresos = ingresosRows.reduce((s, r) => s + r.montoTotal, 0);
   const totalEgresos = egresosRows.reduce((s, r) => s + r.montoTotal, 0);
   const utilidadBruta = totalIngresos - totalEgresos;

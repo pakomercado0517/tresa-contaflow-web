@@ -1,8 +1,10 @@
 import { apiClient } from './client';
+import { fetchAllPages } from './fetch-all-pages';
 import type {
   UploadInvoiceResponse,
   DeleteInvoiceResponse,
   GetInvoicesResponse,
+  Invoice,
 } from '@/lib/types/invoices';
 import {
   createEmptyMetricsRangeResponse,
@@ -53,6 +55,12 @@ export async function getInvoicesClient(
   return apiClient<GetInvoicesResponse>(endpoint, {
     requireAuth: true,
   });
+}
+
+export async function getAllInvoicesClient(
+  params?: Omit<GetInvoicesClientParams, 'page' | 'limit'>
+): Promise<Invoice[]> {
+  return fetchAllPages((page, limit) => getInvoicesClient({ ...params, page, limit }));
 }
 
 /**

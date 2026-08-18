@@ -1,6 +1,6 @@
 import "./report-pdf.css";
-import { getExpenses } from "@/lib/api/expenses";
-import { listPaymentComplements } from "@/lib/api/payment-complements";
+import { getAllExpenses } from "@/lib/api/expenses";
+import { listAllPaymentComplements } from "@/lib/api/payment-complements";
 import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
@@ -60,34 +60,28 @@ export default async function ExpensesReportePreviewPage({ searchParams }: Previ
     ? Math.min(2100, Math.max(2000, toNumber(añoParam)))
     : defaultAño;
 
-  const [profilesRes, expensesRes, complementsRes, regimenesCatalog, currentUser] =
+  const [profilesRes, expensesRaw, complements, regimenesCatalog, currentUser] =
     await Promise.all([
       getProfiles(),
-      getExpenses({
+      getAllExpenses({
         profileId,
         mes,
         año,
         regimen_fiscal: regimenFiscal,
-        limit: 1000,
-        page: 1,
         search,
       }),
-      listPaymentComplements({
+      listAllPaymentComplements({
         role: "EGRESO",
         profile_id: profileId,
         mes,
         año,
-        limit: 100,
-        page: 1,
       }),
       getRegimenesFiscales(),
       getCurrentUser(),
     ]);
 
   const profiles = profilesRes.data ?? [];
-  const expensesRaw = expensesRes.data ?? [];
   const expenses = expensesRaw.filter((exp) => exp.tipo !== "COMPLEMENTO_PAGO");
-  const complements = complementsRes.data ?? [];
   const activeProfile = profileId
     ? (profiles.find((p) => p.id === profileId) ?? null)
     : null;
