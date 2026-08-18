@@ -199,7 +199,7 @@ export async function logoutAction() {
     logger.error("Error al cerrar sesión", error);
   }
 
-  // Eliminar cookies locales
+  // Complementar clear: Set-Cookie del API en fetch server-side no limpia el browser
   const cookieStore = await cookies();
   cookieStore.delete("accessToken");
   cookieStore.delete("refreshToken");

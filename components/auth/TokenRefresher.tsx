@@ -3,30 +3,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { logger } from '@/lib/utils/logger';
+import { refreshSessionCookies } from '@/lib/api/auth-session.client';
 
 async function refreshSessionToken(): Promise<null> {
-  const response = await fetch('/api/auth/refresh', {
-    method: 'POST',
-    credentials: 'include',
-  });
+  const ok = await refreshSessionCookies();
 
-  if (response.ok) {
+  if (ok) {
     logger.debug('Token refrescado automáticamente');
     return null;
   }
 
-  const data = (await response.json()) as { redirect?: boolean };
-  if (response.status === 401 || data.redirect) {
-    logger.warn('Refresh token expirado, redirigiendo a login');
-    window.location.href = '/auth/login';
-  }
-
+  logger.warn('Refresh token expirado, redirigiendo a login');
+  window.location.href = '/auth/login';
   return null;
 }
 
 /**
  * Mantiene la sesión activa en rutas del dashboard refrescando el access token
- * cada 12 minutos (expira a los 15).
+ * cada 12 minutos (expira a los 15) vía /backend/api/auth/refresh.
  */
 export function TokenRefresher() {
   const pathname = usePathname();

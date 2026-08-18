@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { getFirebaseAuth } from '@/lib/firebase/config';
-import { loginWithGoogleAction } from '../actions';
+import { loginWithGoogleIdToken } from '@/lib/api/auth-session.client';
 
 export function GoogleLoginButton() {
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,11 +23,19 @@ export function GoogleLoginButton() {
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
 
-      const actionResult = await loginWithGoogleAction(idToken);
+      const actionResult = await loginWithGoogleIdToken(idToken);
 
       if (actionResult.error) {
         setError(actionResult.error);
+        return;
       }
+
+      if (actionResult.emailVerified === false) {
+        router.replace('/auth/verify-email');
+        return;
+      }
+
+      router.replace('/dashboard');
     } catch (err) {
       const firebaseError = err as { code?: string; message?: string } | null;
       const code = firebaseError?.code ?? '';

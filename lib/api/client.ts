@@ -1,4 +1,5 @@
 import { logger } from "@/lib/utils/logger";
+import { refreshSessionCookies } from "@/lib/api/auth-session.client";
 
 interface ApiClientOptions extends RequestInit {
   requireAuth?: boolean;
@@ -20,38 +21,13 @@ export class ApiError extends Error {
 
 // Flag para evitar múltiples refresh simultáneos
 let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<boolean> | null = null;
 
 /**
- * Obtiene el access token actual desde las cookies mediante una API route
- * @returns El access token o null si no está disponible
+ * Renueva cookies de sesión vía /backend (API Set-Cookie).
+ * No lee ni usa JWT del body.
  */
-async function getAccessToken(): Promise<string | null> {
-  try {
-    // Usar la API route de Next.js para leer las cookies httpOnly
-    const response = await fetch("/api/auth/token", {
-      method: "GET",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.accessToken || null;
-  } catch (error) {
-    logger.error("Error al obtener token", error);
-    return null;
-  }
-}
-
-/**
- * Intenta refrescar el access token usando el refresh token
- * @returns El nuevo access token o null si falla
- */
-async function refreshAccessToken(): Promise<string | null> {
-  // Si ya hay un refresh en proceso, esperar a que termine
+async function refreshAccessToken(): Promise<boolean> {
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }
@@ -59,32 +35,22 @@ async function refreshAccessToken(): Promise<string | null> {
   isRefreshing = true;
   refreshPromise = (async () => {
     try {
-      const response = await fetch("/api/auth/refresh", {
-        method: "POST",
-        credentials: "include",
-      });
+      const ok = await refreshSessionCookies();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Si el refresh token también expiró, redirigir a login
-        if (response.status === 401 || data.redirect) {
-          // Limpiar cualquier estado local
-          if (typeof window !== "undefined") {
-            window.location.href = "/auth/login";
-          }
-          return null;
+      if (!ok) {
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login";
         }
-        return null;
+        return false;
       }
 
-      return data.accessToken || null;
+      return true;
     } catch (error) {
       logger.error("Error al refrescar token", error);
       if (typeof window !== "undefined") {
         window.location.href = "/auth/login";
       }
-      return null;
+      return false;
     } finally {
       isRefreshing = false;
       refreshPromise = null;
@@ -100,9 +66,10 @@ export async function apiClient<T>(
 ): Promise<T> {
   // Usar proxy de Next.js en el navegador para evitar problemas de CORS
   // En el servidor (SSR), usar la URL del backend directamente
-  const apiUrl = typeof window !== "undefined" 
-    ? "/backend" // Proxy de Next.js (sin CORS)
-    : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001");
+  const apiUrl =
+    typeof window !== "undefined"
+      ? "/backend" // Proxy de Next.js (sin CORS); cookies httpOnly del origen Next
+      : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
   const headers: Record<string, string> = {
     ...(options?.headers as Record<string, string>),
@@ -114,15 +81,7 @@ export async function apiClient<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  // Si se requiere autenticación, agregar el token al header
-  if (options?.requireAuth && typeof window !== "undefined") {
-    const accessToken = await getAccessToken();
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-    }
-  }
-
-  // Primera petición
+  // Auth en browser: cookies httpOnly vía credentials (sin Bearer / sin /api/auth/token)
   let response = await fetch(`${apiUrl}${endpoint}`, {
     ...options,
     credentials: "include",
@@ -131,36 +90,28 @@ export async function apiClient<T>(
 
   let data = await response.json().catch(() => ({}));
 
-  // Si recibimos 401 y no estamos en un retry, intentar refrescar token
+  // Si recibimos 401 y no estamos en un retry, intentar refrescar cookie de access
   if (
     response.status === 401 &&
     !options?.skipAuthRetry &&
     typeof window !== "undefined"
   ) {
-    const newAccessToken = await refreshAccessToken();
+    const refreshed = await refreshAccessToken();
 
-    if (newAccessToken) {
-      // Reintentar la petición original con el nuevo token
-      // Usar skipAuthRetry para evitar loops infinitos
+    if (refreshed) {
       const retryOptions: ApiClientOptions = {
         ...options,
         skipAuthRetry: true,
       };
 
-      const retryHeaders: HeadersInit = {
-        ...headers,
-        Authorization: `Bearer ${newAccessToken}`,
-      };
-      
       response = await fetch(`${apiUrl}${endpoint}`, {
         ...retryOptions,
         credentials: "include",
-        headers: retryHeaders,
+        headers,
       });
 
       data = await response.json().catch(() => ({}));
     } else {
-      // Si el refresh falló, ya se redirigió a login
       throw new ApiError(
         "Sesión expirada. Redirigiendo a login...",
         401,
@@ -184,5 +135,3 @@ export async function apiClient<T>(
 
   return data as T;
 }
-
-

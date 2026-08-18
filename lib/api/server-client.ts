@@ -1,7 +1,9 @@
 /**
  * Cliente HTTP para Server Components
- * Los Server Components NO pueden refrescar tokens (no pueden modificar cookies)
- * Si reciben 401, redirigen automáticamente a login
+ * Los Server Components NO pueden refrescar tokens (Set-Cookie del API no llega al browser desde aquí).
+ * Si reciben 401, redirigen automáticamente a login.
+ *
+ * Auth: reenvía cookies httpOnly (accessToken / refreshToken) al API.
  */
 
 import { cookies } from "next/headers";
@@ -26,12 +28,27 @@ interface ServerApiClientOptions extends RequestInit {
   notFoundDefault?: unknown;
 }
 
+function buildCookieHeader(
+  accessToken: string | undefined,
+  refreshToken: string | undefined
+): string | undefined {
+  const parts: string[] = [];
+  if (accessToken) {
+    parts.push(`accessToken=${accessToken}`);
+  }
+  if (refreshToken) {
+    parts.push(`refreshToken=${refreshToken}`);
+  }
+  return parts.length > 0 ? parts.join("; ") : undefined;
+}
+
 /**
  * Cliente HTTP para Server Components
- * 
- * IMPORTANTE: Los Server Components NO pueden refrescar tokens porque no pueden modificar cookies.
+ *
+ * IMPORTANTE: Los Server Components NO pueden refrescar tokens porque el Set-Cookie
+ * de un fetch server-side no actualiza las cookies del browser.
  * Si se recibe un 401, se redirige automáticamente a /auth/login.
- * 
+ *
  * El refresh automático de tokens solo funciona en Client Components a través de apiClient.
  */
 export async function serverApiClient<T>(
@@ -40,11 +57,12 @@ export async function serverApiClient<T>(
 ): Promise<T> {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
-  
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+  const cookieHeader = buildCookieHeader(accessToken, refreshToken);
+
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    // Enviar el token en el header Authorization (como espera el backend)
-    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+    ...(cookieHeader && { Cookie: cookieHeader }),
     ...options?.headers,
   };
 
@@ -52,13 +70,13 @@ export async function serverApiClient<T>(
     ...options,
     headers,
     // Evitar caché HTTP entre requests; la dedupe del mismo render la hace React.cache / Next fetch memo.
-    cache: options?.cache ?? 'no-store',
+    cache: options?.cache ?? "no-store",
   });
 
   const data = await response.json().catch(() => ({}));
 
   // Si recibimos 401, redirigir a login
-  // Los Server Components no pueden refrescar tokens (no pueden modificar cookies)
+  // Los Server Components no pueden refrescar tokens (no pueden modificar cookies del browser)
   if (response.status === 401) {
     if (options?.redirectOnAuthError !== false) {
       redirect("/auth/login");
@@ -86,4 +104,3 @@ export async function serverApiClient<T>(
 
   return data as T;
 }
-
