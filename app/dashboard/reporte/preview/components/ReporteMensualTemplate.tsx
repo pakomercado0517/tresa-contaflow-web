@@ -12,6 +12,7 @@ import { ReporteMensualEstadoPorRegimenSection } from './ReporteMensualEstadoPor
 import { ReporteMensualEstadoDevengadoSection } from './ReporteMensualEstadoDevengadoSection';
 import { ReporteMensualEstimacionesFiscalesSection } from './ReporteMensualEstimacionesFiscalesSection';
 import { ReporteMensualFooter } from './ReporteMensualFooter';
+import { PRODUCT_FEATURES } from '@/lib/constants/product-features';
 
 export type {
   EstadoPorRegimen,
@@ -42,7 +43,9 @@ export function ReporteMensualTemplate({
     data.ingresosDevengados > 0 ? (data.utilidadOperativa / data.ingresosDevengados) * 100 : 0;
 
   const hasEstadoPorRegimen = Boolean(data.estadoPorRegimen && data.estadoPorRegimen.length > 0);
-  const hasTaxEstimates = Boolean(data.estimacionesFiscales && data.estimacionesFiscales.length > 0);
+  const hasTaxEstimates = Boolean(
+    PRODUCT_FEATURES.taxEstimate && data.estimacionesFiscales && data.estimacionesFiscales.length > 0
+  );
 
   return (
     <article

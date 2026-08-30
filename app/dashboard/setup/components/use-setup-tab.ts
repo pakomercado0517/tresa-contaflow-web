@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { PRODUCT_FEATURES } from "@/lib/constants/product-features";
 
 export type SetupTab = "profiles" | "account" | "subscription" | "sat-download";
 
@@ -11,7 +12,7 @@ export function resolveSetupTab(
 ): SetupTab {
   if (tabParam === "account") return "account";
   if (tabParam === "subscription") return "subscription";
-  if (tabParam === "sat-download") return "sat-download";
+  if (tabParam === "sat-download" && PRODUCT_FEATURES.satDownload) return "sat-download";
   if (pathname?.includes("/profiles")) return "profiles";
   if (pathname?.includes("/account")) return "account";
   if (pathname?.includes("/subscription")) return "subscription";
@@ -29,12 +30,11 @@ export function setupTabToPath(tab: SetupTab): string {
 }
 
 export function isSetupTab(value: string): value is SetupTab {
-  return (
-    value === "profiles" ||
-    value === "account" ||
-    value === "subscription" ||
-    value === "sat-download"
-  );
+  if (value === "sat-download") {
+    return PRODUCT_FEATURES.satDownload;
+  }
+
+  return value === "profiles" || value === "account" || value === "subscription";
 }
 
 export function useSetupTab(): {

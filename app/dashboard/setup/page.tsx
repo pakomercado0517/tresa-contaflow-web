@@ -5,6 +5,7 @@ import { ProfilesSectionView } from "./components/ProfilesSectionView";
 import { AccountContent } from "./components/AccountContent";
 import { SubscriptionContent } from "./components/SubscriptionContent";
 import { SATDownloadContent } from "./components/SATDownloadContent";
+import { PRODUCT_FEATURES } from "@/lib/constants/product-features";
 import { getSubscription } from "@/lib/api/subscription";
 import { getProfiles } from "@/lib/api/profiles";
 import { getCurrentUser } from "@/lib/api/auth.server";
@@ -58,7 +59,11 @@ export default async function SetupPage() {
                 satPlanInfo={satStats?.planInfo}
               />
             }
-            satDownloadContent={<SATDownloadContent profiles={profiles.data || []} />}
+            satDownloadContent={
+              PRODUCT_FEATURES.satDownload ? (
+                <SATDownloadContent profiles={profiles.data || []} />
+              ) : null
+            }
           />
         </Suspense>
       </div>

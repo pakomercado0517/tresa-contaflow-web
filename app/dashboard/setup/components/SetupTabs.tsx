@@ -4,13 +4,14 @@ import { ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard, Settings, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRODUCT_FEATURES } from "@/lib/constants/product-features";
 import { isSetupTab, useSetupTab } from "./use-setup-tab";
 
 interface SetupTabsProps {
   profilesContent: ReactNode;
   accountContent: ReactNode;
   subscriptionContent: ReactNode;
-  satDownloadContent: ReactNode;
+  satDownloadContent?: ReactNode;
 }
 
 export function SetupTabs({
@@ -57,13 +58,15 @@ export function SetupTabs({
             <CreditCard className="h-4 w-4" />
             Suscripción
           </TabsTrigger>
-          <TabsTrigger
-            value="sat-download"
-            className="flex items-center gap-2 rounded-md px-4 py-2 transition-all border-none bg-transparent text-white data-[state=active]:bg-[#00ff80]! data-[state=active]:text-gray-900! data-[state=active]:shadow-none dark:data-[state=active]:bg-[#00ff80]! dark:data-[state=active]:text-gray-900! [&_svg]:text-gray-400 [&_svg]:data-[state=active]:text-gray-900!"
-          >
-            <Download className="h-4 w-4" />
-            SAT Descarga
-          </TabsTrigger>
+          {PRODUCT_FEATURES.satDownload ? (
+            <TabsTrigger
+              value="sat-download"
+              className="flex items-center gap-2 rounded-md px-4 py-2 transition-all border-none bg-transparent text-white data-[state=active]:bg-[#00ff80]! data-[state=active]:text-gray-900! data-[state=active]:shadow-none dark:data-[state=active]:bg-[#00ff80]! dark:data-[state=active]:text-gray-900! [&_svg]:text-gray-400 [&_svg]:data-[state=active]:text-gray-900!"
+            >
+              <Download className="h-4 w-4" />
+              SAT Descarga
+            </TabsTrigger>
+          ) : null}
         </TabsList>
       </div>
 
@@ -79,9 +82,11 @@ export function SetupTabs({
         {subscriptionContent}
       </TabsContent>
 
-      <TabsContent value="sat-download" className="mt-6">
-        {satDownloadContent}
-      </TabsContent>
+      {PRODUCT_FEATURES.satDownload ? (
+        <TabsContent value="sat-download" className="mt-6">
+          {satDownloadContent}
+        </TabsContent>
+      ) : null}
     </Tabs>
   );
 }

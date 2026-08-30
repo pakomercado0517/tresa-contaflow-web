@@ -34,6 +34,7 @@ import {
   initialShareReportUiState,
   shareReportUiReducer,
 } from './share-report-ui-reducer';
+import { PRODUCT_FEATURES } from '@/lib/constants/product-features';
 const MONTHS_ES = [
   'enero',
   'febrero',
@@ -172,9 +173,9 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
             <DialogDescription>
               Genera un link de acceso para que{' '}
               <span className="text-foreground font-medium">{clientName ?? 'el cliente'}</span>{' '}
-              pueda ver sus cifras del periodo y una estimación fiscal informativa (ISR y IVA
-              orientativos), sin necesidad de crear una cuenta. No sustituye declaraciones ante el
-              SAT.
+              {PRODUCT_FEATURES.taxEstimate
+                ? 'pueda ver sus cifras del periodo y una estimación fiscal informativa (ISR y IVA orientativos), sin necesidad de crear una cuenta. No sustituye declaraciones ante el SAT.'
+                : 'pueda ver sus cifras del periodo, sin necesidad de crear una cuenta.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -193,8 +194,10 @@ export function ShareReportButton({ profileId, clientName, mes, año }: ShareRep
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     El reporte mostrará las cifras del periodo seleccionado en el dashboard. El link
-                    público usa el mismo mes y año en la URL e incluye la estimación fiscal por
-                    régimen cuando esté disponible.
+                    público usa el mismo mes y año en la URL
+                    {PRODUCT_FEATURES.taxEstimate
+                      ? ' e incluye la estimación fiscal por régimen cuando esté disponible.'
+                      : '.'}
                   </p>
                 </div>
               </div>

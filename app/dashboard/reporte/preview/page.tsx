@@ -5,6 +5,7 @@ import { getProfiles } from "@/lib/api/profiles";
 import { getRegimenesFiscales } from "@/lib/api/sat";
 import { getCurrentUser } from "@/lib/api/auth.server";
 import { getTaxEstimates } from "@/lib/api/tax-estimates";
+import { PRODUCT_FEATURES } from "@/lib/constants/product-features";
 import { ReportePreviewContent } from "./components/ReportePreviewContent";
 import type {
   ReporteMensualData,
@@ -139,7 +140,7 @@ export default async function ReportePreviewPage({ searchParams }: PreviewPagePr
   }
 
   let estimacionesFiscales: ReporteTaxEstimateItem[] | undefined;
-  if (profileId) {
+  if (PRODUCT_FEATURES.taxEstimate && profileId) {
     try {
       const taxResponse = await getTaxEstimates({
         profileId,

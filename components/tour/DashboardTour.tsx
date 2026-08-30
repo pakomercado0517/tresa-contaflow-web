@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { NextStep, NextStepProvider, useNextStep } from 'nextstepjs';
 import { useTour } from '@/lib/hooks/useTour';
 import { TOUR_IDS } from '@/lib/constants/tour';
+import { PRODUCT_FEATURES } from '@/lib/constants/product-features';
 import type { CardComponentProps, Tour, Step } from 'nextstepjs';
 import type { User } from '@/lib/types/auth';
 import {
@@ -24,6 +25,7 @@ interface DashboardTourProps {
 
 interface CustomStep extends Step {
   isLastTour?: boolean;
+  nextRoute?: string;
 }
 
 // Used to prevent re-starting the same tour between `skipTour()` and `router.push()`.
@@ -341,9 +343,39 @@ const tourSteps: Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> = [
   },
 ];
 
+const TAX_ESTIMATE_TOUR_SELECTOR = "[data-tour='tax-estimate-section']";
+
+function getVisibleTourSteps(): Array<Omit<Tour, 'steps'> & { steps: CustomStep[] }> {
+  if (PRODUCT_FEATURES.taxEstimate) {
+    return tourSteps;
+  }
+
+  return tourSteps.map((tour) => {
+    if (tour.tour !== TOUR_IDS.dashboard) {
+      return tour;
+    }
+
+    const hiddenStep = tour.steps.find((step) => step.selector === TAX_ESTIMATE_TOUR_SELECTOR);
+    const visibleSteps = tour.steps.filter((step) => step.selector !== TAX_ESTIMATE_TOUR_SELECTOR);
+
+    if (!hiddenStep?.nextRoute || visibleSteps.length === 0) {
+      return { ...tour, steps: visibleSteps };
+    }
+
+    const lastStepIndex = visibleSteps.length - 1;
+    const patchedSteps = visibleSteps.map((step, index) =>
+      index === lastStepIndex ? { ...step, nextRoute: hiddenStep.nextRoute } : step
+    );
+
+    return { ...tour, steps: patchedSteps };
+  });
+}
+
+const visibleTourSteps = getVisibleTourSteps();
+
 function getCurrentStepConfig(tourName: string | null, stepIndex: number): CustomStep | null {
   if (!tourName || stepIndex < 0) return null;
-  const activeTour = tourSteps.find((tour) => tour.tour === tourName);
+  const activeTour = visibleTourSteps.find((tour) => tour.tour === tourName);
   if (!activeTour) return null;
   return activeTour.steps[stepIndex] ?? null;
 }
@@ -1078,7 +1110,7 @@ export function DashboardTour({ children, user }: DashboardTourProps) {
   return (
     <NextStepProvider>
       <NextStep
-        steps={tourSteps}
+        steps={visibleTourSteps}
         cardComponent={CustomTourCard}
         shadowRgb="0, 0, 0"
         shadowOpacity="0.85"
