@@ -11,6 +11,7 @@ import { DashboardHomeIntro } from './DashboardHomeIntro';
 import { DashboardUpdatingOverlay } from '@/components/common/DashboardUpdatingOverlay';
 import type { Invoice } from '@/lib/types/invoices';
 import type { Expense } from '@/lib/types/expenses';
+import { PRODUCT_FEATURES } from '@/lib/constants/product-features';
 import { DEFAULT_PERIOD_METRICS, type PeriodMetricsResponse } from '@/lib/types/metrics';
 
 const FlowTrendChart = dynamic(
@@ -82,12 +83,14 @@ export function DashboardHomeView({
 
         <TrialBannerWrapper />
 
-        <DashboardTaxEstimateCriticalBanner
-          profileId={profileId}
-          mes={mes}
-          año={año}
-          regimenFiscal={regimenFiscal}
-        />
+        {PRODUCT_FEATURES.taxEstimate ? (
+          <DashboardTaxEstimateCriticalBanner
+            profileId={profileId}
+            mes={mes}
+            año={año}
+            regimenFiscal={regimenFiscal}
+          />
+        ) : null}
 
         <DashboardHomeIntro userName={userName} profileId={profileId} mes={mes} año={año} />
 
@@ -112,12 +115,14 @@ export function DashboardHomeView({
           </div>
         </div>
 
-        <DashboardTaxEstimateSection
-          profileId={profileId}
-          mes={mes}
-          año={año}
-          regimenFiscal={regimenFiscal}
-        />
+        {PRODUCT_FEATURES.taxEstimate ? (
+          <DashboardTaxEstimateSection
+            profileId={profileId}
+            mes={mes}
+            año={año}
+            regimenFiscal={regimenFiscal}
+          />
+        ) : null}
       </main>
     </>
   );

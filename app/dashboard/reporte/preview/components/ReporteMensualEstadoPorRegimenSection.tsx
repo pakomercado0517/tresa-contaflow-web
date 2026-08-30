@@ -1,6 +1,7 @@
 'use client';
 
 import { BarChart3 } from 'lucide-react';
+import { PRODUCT_FEATURES } from '@/lib/constants/product-features';
 import type { EstadoPorRegimen } from './reporte-mensual-types';
 import { formatReporteCurrency } from './reporte-mensual-format';
 
@@ -24,24 +25,28 @@ function RegimenResultCard({ regimen }: { regimen: EstadoPorRegimen }) {
           <span className="text-gray-600">Egresos (pagados / deducidos)</span>
           <span className="font-medium text-red-600">({formatReporteCurrency(regimen.egresos)})</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Retenciones de terceros (IVA)</span>
-          <span className="font-medium text-gray-900">
-            {formatReporteCurrency(regimen.retencionesIva)}
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Retenciones de terceros (ISR)</span>
-          <span className="font-medium text-gray-900">
-            {formatReporteCurrency(regimen.retencionesIsr)}
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Impuesto trasladado</span>
-          <span className="font-medium text-gray-900">
-            {formatReporteCurrency(regimen.impuestoTrasladado)}
-          </span>
-        </div>
+        {PRODUCT_FEATURES.taxEstimate ? (
+          <>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Retenciones de terceros (IVA)</span>
+              <span className="font-medium text-gray-900">
+                {formatReporteCurrency(regimen.retencionesIva)}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Retenciones de terceros (ISR)</span>
+              <span className="font-medium text-gray-900">
+                {formatReporteCurrency(regimen.retencionesIsr)}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Impuesto trasladado</span>
+              <span className="font-medium text-gray-900">
+                {formatReporteCurrency(regimen.impuestoTrasladado)}
+              </span>
+            </div>
+          </>
+        ) : null}
         <div className="flex justify-between border-t border-gray-200 pt-3">
           <span className="font-bold text-emerald-700">Utilidad neta del régimen</span>
           <span className="text-lg font-bold text-emerald-700">

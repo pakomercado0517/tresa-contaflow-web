@@ -7,6 +7,7 @@ import { PublicMetricsCards } from './PublicMetricsCards';
 import { PublicChartWrapper } from './PublicChartWrapper';
 import { TaxEstimateRegimenHint } from './TaxEstimateRegimenHint';
 import { TaxEstimatePanel } from '@/components/common/TaxEstimatePanel';
+import { PRODUCT_FEATURES } from '@/lib/constants/product-features';
 import type { PublicReportMetrics, PublicReportMetricsByRegimen } from '@/lib/types/public-reports';
 import type { TaxEstimateResult } from '@/lib/types/tax-estimates';
 import { AlertTriangle, Layers } from 'lucide-react';
@@ -47,9 +48,12 @@ export function PublicRegimenView({ metrics, metricsByRegimen }: PublicRegimenVi
   const [selected, setSelected] = useState<string>(ALL_KEY);
 
   const hasMultiple = metricsByRegimen.length >= 2;
-  const showTaxEstimateHint = hasMultiple && selected === ALL_KEY;
+  const showTaxEstimateHint =
+    PRODUCT_FEATURES.taxEstimate && hasMultiple && selected === ALL_KEY;
   const showTaxEstimatePanel =
-    metricsByRegimen.length > 0 && !(hasMultiple && selected === ALL_KEY);
+    PRODUCT_FEATURES.taxEstimate &&
+    metricsByRegimen.length > 0 &&
+    !(hasMultiple && selected === ALL_KEY);
 
   const activeRegimenItem = resolveActiveRegimenItem(selected, metricsByRegimen, hasMultiple);
   const activeTaxEstimate = resolveActiveTaxEstimate(selected, metricsByRegimen, hasMultiple);
